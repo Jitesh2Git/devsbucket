@@ -23,7 +23,10 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Note: shadcn 4.23.0, `init -c apps/web -t next -b radix --no-monorepo` → style `radix-nova`, lucide icons. `lib/utils.ts` re-exports `cn` from the `cn` package (replaces clsx + tailwind-merge); `shadcn` is a runtime dependency because `globals.css` imports `shadcn/tailwind.css`.
   - Note: the generated `globals.css` expects the layout font on `--font-sans`; Geist is loaded with `variable: "--font-sans"`.
   - Note: theme via next-themes 0.4.6 (`attribute="class"`, system default); icon toggle switches icons with CSS to avoid hydration mismatches. Our components use arrow functions + default exports; `components/ui/` keeps shadcn's style.
-- [ ] 7. **Docker Compose (dev):** Postgres 18 (volume + healthcheck) and the S3-compatible storage container (pick SeaweedFS or Garage here), plus `.env.example`
+- [x] 7. **Docker Compose (dev):** Postgres 18 (volume + healthcheck) and the S3-compatible storage container (pick SeaweedFS or Garage here), plus `.env.example`
+  - Note: picked **Garage** v2.5.0 (decision 0004). Postgres `18.6-alpine`. Both bound to `127.0.0.1` only (5432, 3900), both with healthchecks; `pnpm docker:up` waits until healthy.
+  - Note: Postgres 18 images keep data in `/var/lib/postgresql/18/docker`, so the volume mounts at `/var/lib/postgresql` (not `/data` as in older guides).
+  - Note: Garage's `--single-node --default-bucket` creates the key and bucket on first start. Key format is strict: RPC secret and secret key are 64 hex chars, key ID is `GK` + 24 hex. Secrets live in `docker/.env` (ignored); `docker/.env.example` and `garage.toml` are committed.
 - [ ] 8. **Shared TypeScript config** and `packages/shared` (Zod)
 - [ ] 9. **packages/db:** Drizzle + drizzle-kit, connection, first migration (Better Auth tables, user profile fields, Invite), seed script
 - [ ] 10. **Better Auth:** Drizzle adapter, route handler, email/password, invite-only sign-up, sign-in and sign-up pages

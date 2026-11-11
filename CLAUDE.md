@@ -66,4 +66,11 @@ Run from the repo root. Turborepo runs each task in every package that has that 
 - `pnpm test`: wired into turbo, empty until Vitest (step 13).
 - `pnpm --filter web <script>`: run a script in one package only.
 
-Still to add as they're set up: how to run a single test, `docker compose -f docker/compose.dev.yml up -d`, and the db migrate/seed commands.
+Local services (Docker Desktop must be running; config in `docker/compose.dev.yml`, secrets in `docker/.env`, copied from `docker/.env.example`):
+
+- `pnpm docker:up`: start Postgres 18 (`127.0.0.1:5432`) and Garage S3 (`127.0.0.1:3900`, region `garage`), waiting until both are healthy.
+- `pnpm docker:ps`, `pnpm docker:logs`: status and logs.
+- `pnpm docker:down`: stop and remove the containers; data stays in the named volumes (`down -v` would delete it).
+- `docker compose -f docker/compose.dev.yml exec postgres psql -U devsbucket -d devsbucket`: a psql shell.
+
+Still to add as they're set up: how to run a single test, and the db migrate/seed commands.
