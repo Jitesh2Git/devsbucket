@@ -141,6 +141,7 @@ flowchart TD
 
 The User, Session and Account tables come from Better Auth. The User table has extra fields added.
 Value sets used below:
+
 - `Item.type`: folder, file, note
 - `Item.status`: pending, ready
 - `role`: editor, viewer

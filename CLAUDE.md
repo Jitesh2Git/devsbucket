@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project
 
 DevsBucket is a developer-focused file drive. Users can:
+
 - upload files and organize them in folders,
 - share with Drive-style roles (Owner, Editor, Viewer),
 - edit any text file live with other people, with cursors and git-like version history,
@@ -18,7 +19,7 @@ It's a from-scratch rebuild of an older Next.js + Supabase app; see `docs/decisi
 
 The user is building this **by hand to learn**. Unless the user explicitly says "you do it" (or similar) for a specific step:
 
-1. **Explain the next step:** what it is, why it matters, and the exact command or code to write. Keep it short. Check current docs or `--help` for flags and versions rather than assuming them, because tools change.
+1. **Explain the next step:** what it is, why it matters, and the exact command or code to write. Keep it short. Check current docs or `--help` for flags and versions rather than assuming them, because tools change. Put "📍 where to run it" above every block of commands (the repo root by default; prefer `--filter <pkg>` over `cd`). Give config files whole, ready to paste, rather than placeholders or fragments to merge.
 2. **Wait** for the user to run it or write it themselves.
 3. **Verify:** read the files they created and run read-only checks (`git status`, `cat`, `pnpm typecheck`, `pnpm lint`, `docker compose ps`, curl a local URL, and so on). Report clearly whether it passed.
 4. **If something is wrong:** explain the problem and the fix, and let the user apply it. Only make the change yourself if they ask.
@@ -29,10 +30,12 @@ The user is building this **by hand to learn**. Unless the user explicitly says 
 When the user says "you do it", do that step fully, then go back to learning mode.
 
 ## Machine (as of 2026-11-11)
+
 - Installed: Node 24.21 LTS, pnpm 12.18.0 (via corepack, pinned by `packageManager` in the root `package.json`), Docker 29.9.3. Docker Desktop must be running for Compose.
 - Not installed: GitHub CLI (`gh`). The user creates GitHub repos on github.com.
 
 ## Conventions
+
 - **Repo layout:** pnpm workspaces + Turborepo monorepo:
   - `apps/web`: Next.js
   - `apps/realtime`: Hocuspocus + WebSocket events
@@ -43,19 +46,23 @@ When the user says "you do it", do that step fully, then go back to learning mod
   - `docker/`: Compose files and Caddyfile
   - `docs/`
 - **Commits:** conventional commits (`feat:`, `fix:`, `chore:`, `docs:`), one small commit per step.
-- **Branches:** never commit to `main` directly (merging to `main` deploys). One branch per step or feature, named `<type>/<short-name>` (e.g. `chore/turborepo`, `feat/auth-invites`). Push it, open a PR on github.com, and merge with "Squash and merge" using a conventional-commit PR title. Then `git switch main && git pull` and delete the local branch (`git branch -D`, since squash merges aren't seen as merged). From Phase 1 step 14, `main` gets branch protection: PR required, CI must pass.
+- **Branches:** never commit to `main` directly (merging to `main` deploys). One branch per step or feature, named `<type>/<short-name>` (e.g. `chore/turborepo`, `feat/auth-invites`). Push it, open a PR on github.com with a conventional-commit title and a Markdown description (What / Changes / How to test / Checklist), and merge with a normal merge commit ("Create a merge commit"). Then `git switch main && git pull`. Branches are kept, locally and on GitHub (the user's choice); don't delete them. From Phase 1 step 14, `main` gets branch protection: PR required, CI must pass.
 - **Secrets:** never commit `.env*` files. Only `.env.example` files with placeholder values are committed.
 - **Environments:** exactly two, local (Docker Compose on the Mac) and prod (Oracle VM). They never share data or secrets.
 - **Permissions:** every server action and realtime handler goes through `packages/authz`. Never trust ids from the client without checking the role.
 - **Bugs and ideas:** tracked as GitHub Issues. Progress is tracked in `docs/PROGRESS.md`.
 
 ## Commands
+
 Run from the repo root. Turborepo runs each task in every package that has that script, and caches the results.
+
 - `pnpm install`: install all workspace dependencies (never use npm).
 - `pnpm dev`: start every app's dev server (web on http://localhost:3000).
 - `pnpm build`: production build of every package.
 - `pnpm typecheck`: `tsc --noEmit` in every package.
-- `pnpm lint`, `pnpm test`: wired into turbo, but empty until Biome (step 5) and Vitest (step 13).
+- `pnpm lint`: Biome lint + format check + import sorting over the whole repo, without changing files (what CI runs).
+- `pnpm lint:fix`: same, and applies safe fixes and formatting. `pnpm format`: formatting only.
+- `pnpm test`: wired into turbo, empty until Vitest (step 13).
 - `pnpm --filter web <script>`: run a script in one package only.
 
 Still to add as they're set up: how to run a single test, `docker compose -f docker/compose.dev.yml up -d`, and the db migrate/seed commands.

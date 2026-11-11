@@ -3,6 +3,7 @@
 Tick a step only after Claude has verified it. Add a note under a step for anything surprising (a bug, a workaround, a version quirk).
 
 ## Phase 1: Foundation (current)
+
 **Done when:** `docker compose up` + `pnpm dev` gives a working sign-up (with an invite), login (email or GitHub) and profile page, and CI passes.
 
 - [x] 1. **Repo root:** `git init`, root `.gitignore`, `package.json` (private, `packageManager`), `pnpm-workspace.yaml`, `.nvmrc` (24)
@@ -14,7 +15,10 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Note: create-next-app writes its own `pnpm-lock.yaml`, `pnpm-workspace.yaml` and `packageManager` into `apps/web`; removed all three. Build-script settings live in the root `pnpm-workspace.yaml` as `allowBuilds` (pnpm 12 name).
 - [x] 4. **Turborepo:** add `turbo`, `turbo.json` (dev/build/lint/typecheck/test tasks) and root scripts
   - Note: turbo 2.11.10. Task is named `typecheck` (Turborepo docs call it `check-types`). `lint` and `test` are empty until steps 5 and 13. First step done on a branch + PR (`chore/turborepo`).
-- [ ] 5. **Biome:** root config, plus lint and format scripts
+- [x] 5. **Biome:** root config, plus lint and format scripts
+  - Note: Biome 2.6.6, pinned exactly. Runs once from the root (`biome check .`), not through turbo, as Turborepo's Biome guide recommends; the `lint` turbo task was removed.
+  - Note: `linter.rules.recommended` is deprecated in 2.6; use `"preset": "recommended"`. `apps/web/public` is excluded (static assets; starter SVGs failed `noSvgWithoutTitle`).
+  - Note: Biome 2.6 also formats Markdown, so the first `lint:fix` reformatted the docs (blank lines, aligned tables; whitespace only).
 - [ ] 6. **shadcn/ui:** init in `apps/web`, base layout, light/dark theme
 - [ ] 7. **Docker Compose (dev):** Postgres 18 (volume + healthcheck) and the S3-compatible storage container (pick SeaweedFS or Garage here), plus `.env.example`
 - [ ] 8. **Shared TypeScript config** and `packages/shared` (Zod)
@@ -27,6 +31,7 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
 - [ ] 15. **Phase review:** update CLAUDE.md commands, tag `v0.1.0`
 
 ## Later phases (summary)
+
 2. **Drive basics:** items tree, direct uploads with quota and R2 guards, browsing with pagination, rename, move, trash, download, previews
 3. **Sharing:** authz package and role test grid, permissions, share links, access requests, activity, notifications, realtime events
 4. **Live editing:** Monaco + Yjs + Hocuspocus, cursors, versions, diff view, Markdown preview
