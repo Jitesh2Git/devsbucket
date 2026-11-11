@@ -29,7 +29,7 @@ The user is building this **by hand to learn**. Unless the user explicitly says 
 When the user says "you do it", do that step fully, then go back to learning mode.
 
 ## Machine (as of 2026-11-11)
-- Installed: Node 24.21 LTS, pnpm 10.28.1, Docker 29.9.3. Docker Desktop must be running for Compose.
+- Installed: Node 24.21 LTS, pnpm 12.18.0 (via corepack, pinned by `packageManager` in the root `package.json`), Docker 29.9.3. Docker Desktop must be running for Compose.
 - Not installed: GitHub CLI (`gh`). The user creates GitHub repos on github.com.
 
 ## Conventions

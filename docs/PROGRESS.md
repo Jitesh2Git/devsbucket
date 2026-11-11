@@ -6,8 +6,12 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
 **Done when:** `docker compose up` + `pnpm dev` gives a working sign-up (with an invite), login (email or GitHub) and profile page, and CI passes.
 
 - [x] 1. **Repo root:** `git init`, root `.gitignore`, `package.json` (private, `packageManager`), `pnpm-workspace.yaml`, `.nvmrc` (24)
-- [ ] 2. **GitHub:** create an empty public repo `devsbucket`, add the remote, push the first commit
-- [ ] 3. **apps/web:** create-next-app (TypeScript, App Router, Tailwind, no ESLint, no git, pnpm), and check that it runs
+- [x] 2. **GitHub:** create an empty public repo `devsbucket`, add the remote, push the first commit
+  - Note: no SSH key on this Mac, so `origin` uses HTTPS (`https://github.com/Jitesh2Git/devsbucket.git`) with the keychain credential.
+- [x] 3. **apps/web:** create-next-app (TypeScript, App Router, Tailwind, no ESLint, no git, pnpm), and check that it runs
+  - Note: Next.js 16.4.6, React 19.3, Tailwind 4.3, Cache Components on (the default).
+  - Note: pnpm had no shim under Node 24 (`spawn pnpm ENOENT`); fixed with `corepack enable pnpm`. Upgraded to pnpm 12.18.0 (`corepack use`).
+  - Note: create-next-app writes its own `pnpm-lock.yaml`, `pnpm-workspace.yaml` and `packageManager` into `apps/web`; removed all three. Build-script settings live in the root `pnpm-workspace.yaml` as `allowBuilds` (pnpm 12 name).
 - [ ] 4. **Turborepo:** add `turbo`, `turbo.json` (dev/build/lint/typecheck/test tasks) and root scripts
 - [ ] 5. **Biome:** root config, plus lint and format scripts
 - [ ] 6. **shadcn/ui:** init in `apps/web`, base layout, light/dark theme
