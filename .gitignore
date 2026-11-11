@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# build output
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# turborepo cache
+.turbo/
+
+# tests
+coverage/
+playwright-report/
+test-results/
+
+# env files: never commit secrets, only the example
+.env*
+!.env.example
+
+# logs and OS junk
+*.log
+.DS_Store
