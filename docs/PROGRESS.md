@@ -27,7 +27,11 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Note: picked **Garage** v2.5.0 (decision 0004). Postgres `18.6-alpine`. Both bound to `127.0.0.1` only (5432, 3900), both with healthchecks; `pnpm docker:up` waits until healthy.
   - Note: Postgres 18 images keep data in `/var/lib/postgresql/18/docker`, so the volume mounts at `/var/lib/postgresql` (not `/data` as in older guides).
   - Note: Garage's `--single-node --default-bucket` creates the key and bucket on first start. Key format is strict: RPC secret and secret key are 64 hex chars, key ID is `GK` + 24 hex. Secrets live in `docker/.env` (ignored); `docker/.env.example` and `garage.toml` are committed.
-- [ ] 8. **Shared TypeScript config** and `packages/shared` (Zod)
+- [x] 8. **Shared TypeScript config** and `packages/shared` (Zod)
+  - Note: `@devsbucket/typescript-config` (`base.json`, `nextjs.json`) and `@devsbucket/shared` (Zod 4.6.7). Shared is a Just-in-Time package: `exports: { "./*": "./src/*.ts" }`, no build step, no barrel file; Turbopack compiles it in web, and Node 24 type stripping can run it directly (hence `erasableSyntaxOnly`: no enums or namespaces).
+  - Note: web `typecheck` is `next typegen && tsc --noEmit`. Without typegen, a clean checkout (CI) fails on generated types like `LayoutProps`.
+  - Note: staying on TypeScript 5.9 although 7.0 is out; revisit once Next.js supports it.
+  - Gotcha (Docker): switching branches deleted and recreated `docker/garage/garage.toml`, which broke Garage's single-file bind mount (healthcheck failed). Fix: `docker compose -f docker/compose.dev.yml up -d --wait --force-recreate garage`.
 - [ ] 9. **packages/db:** Drizzle + drizzle-kit, connection, first migration (Better Auth tables, user profile fields, Invite), seed script
 - [ ] 10. **Better Auth:** Drizzle adapter, route handler, email/password, invite-only sign-up, sign-in and sign-up pages
 - [ ] 11. **GitHub login:** OAuth app for localhost (the user creates it and enters the secrets), login button
