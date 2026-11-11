@@ -19,7 +19,10 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Note: Biome 2.6.6, pinned exactly. Runs once from the root (`biome check .`), not through turbo, as Turborepo's Biome guide recommends; the `lint` turbo task was removed.
   - Note: `linter.rules.recommended` is deprecated in 2.6; use `"preset": "recommended"`. `apps/web/public` is excluded (static assets; starter SVGs failed `noSvgWithoutTitle`).
   - Note: Biome 2.6 also formats Markdown, so the first `lint:fix` reformatted the docs (blank lines, aligned tables; whitespace only).
-- [ ] 6. **shadcn/ui:** init in `apps/web`, base layout, light/dark theme
+- [x] 6. **shadcn/ui:** init in `apps/web`, base layout, light/dark theme
+  - Note: shadcn 4.23.0, `init -c apps/web -t next -b radix --no-monorepo` → style `radix-nova`, lucide icons. `lib/utils.ts` re-exports `cn` from the `cn` package (replaces clsx + tailwind-merge); `shadcn` is a runtime dependency because `globals.css` imports `shadcn/tailwind.css`.
+  - Note: the generated `globals.css` expects the layout font on `--font-sans`; Geist is loaded with `variable: "--font-sans"`.
+  - Note: theme via next-themes 0.4.6 (`attribute="class"`, system default); icon toggle switches icons with CSS to avoid hydration mismatches. Our components use arrow functions + default exports; `components/ui/` keeps shadcn's style.
 - [ ] 7. **Docker Compose (dev):** Postgres 18 (volume + healthcheck) and the S3-compatible storage container (pick SeaweedFS or Garage here), plus `.env.example`
 - [ ] 8. **Shared TypeScript config** and `packages/shared` (Zod)
 - [ ] 9. **packages/db:** Drizzle + drizzle-kit, connection, first migration (Better Auth tables, user profile fields, Invite), seed script

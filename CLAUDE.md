@@ -47,6 +47,7 @@ When the user says "you do it", do that step fully, then go back to learning mod
   - `docs/`
 - **Commits:** conventional commits (`feat:`, `fix:`, `chore:`, `docs:`), one small commit per step.
 - **Branches:** never commit to `main` directly (merging to `main` deploys). One branch per step or feature, named `<type>/<short-name>` (e.g. `chore/turborepo`, `feat/auth-invites`). Push it, open a PR on github.com with a conventional-commit title and a Markdown description (What / Changes / How to test / Checklist), and merge with a normal merge commit ("Create a merge commit"). Then `git switch main && git pull`. Branches are kept, locally and on GitHub (the user's choice); don't delete them. From Phase 1 step 14, `main` gets branch protection: PR required, CI must pass.
+- **React components:** arrow functions with a default export at the bottom (`const ModeToggle = () => { ... };` then `export default ModeToggle;`), imported as `import ModeToggle from "@/components/mode-toggle"`. Pages and layouts follow the same style. Exception: shadcn-generated files in `components/ui/` keep shadcn's own style (named exports), so `shadcn add` can update them cleanly.
 - **Secrets:** never commit `.env*` files. Only `.env.example` files with placeholder values are committed.
 - **Environments:** exactly two, local (Docker Compose on the Mac) and prod (Oracle VM). They never share data or secrets.
 - **Permissions:** every server action and realtime handler goes through `packages/authz`. Never trust ids from the client without checking the role.
