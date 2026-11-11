@@ -8,7 +8,11 @@
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "typecheck": "turbo run typecheck",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "docker:up": "docker compose -f docker/compose.dev.yml up -d --wait",
+    "docker:down": "docker compose -f docker/compose.dev.yml down",
+    "docker:ps": "docker compose -f docker/compose.dev.yml ps",
+    "docker:logs": "docker compose -f docker/compose.dev.yml logs -f"
   },
   "packageManager": "pnpm@12.18.0+sha512.9d7882d5dc82147ecfc4e062aa34834e0ad0296710a1837a1115ae012127d36b7109e321ac1598a1dd0a65597681b1e99917e12ed0d749eae91187943363beb3",
   "engines": {

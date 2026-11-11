@@ -17,7 +17,7 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 | Web          | Next.js App Router, Tailwind v4, shadcn/ui (other UI libraries allowed), TanStack Query, react-hook-form + Zod                                          |
 | Auth         | Better Auth: email/password and GitHub login. Sign-ups are invite-only. No email for now, so passwords are reset with an admin command.                 |
 | Database     | Postgres 18 in Docker (prod too), Drizzle ORM + drizzle-kit                                                                                             |
-| Files        | Cloudflare R2, private bucket, presigned URLs, browser uploads directly                                                                                 |
+| Files        | Cloudflare R2, private bucket, presigned URLs, browser uploads directly. Local dev uses Garage (S3-compatible) in Docker; see decision 0004.            |
 | Live editing | Yjs + Hocuspocus. Monaco (y-monaco) edits every text file. Tiptap handles rich notes only.                                                              |
 | Live events  | WebSockets in `realtime`, triggered by Postgres LISTEN/NOTIFY                                                                                           |
 | Jobs         | pg-boss in `worker`                                                                                                                                     |
