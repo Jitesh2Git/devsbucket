@@ -12,7 +12,8 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Note: Next.js 16.4.6, React 19.3, Tailwind 4.3, Cache Components on (the default).
   - Note: pnpm had no shim under Node 24 (`spawn pnpm ENOENT`); fixed with `corepack enable pnpm`. Upgraded to pnpm 12.18.0 (`corepack use`).
   - Note: create-next-app writes its own `pnpm-lock.yaml`, `pnpm-workspace.yaml` and `packageManager` into `apps/web`; removed all three. Build-script settings live in the root `pnpm-workspace.yaml` as `allowBuilds` (pnpm 12 name).
-- [ ] 4. **Turborepo:** add `turbo`, `turbo.json` (dev/build/lint/typecheck/test tasks) and root scripts
+- [x] 4. **Turborepo:** add `turbo`, `turbo.json` (dev/build/lint/typecheck/test tasks) and root scripts
+  - Note: turbo 2.11.10. Task is named `typecheck` (Turborepo docs call it `check-types`). `lint` and `test` are empty until steps 5 and 13. First step done on a branch + PR (`chore/turborepo`).
 - [ ] 5. **Biome:** root config, plus lint and format scripts
 - [ ] 6. **shadcn/ui:** init in `apps/web`, base layout, light/dark theme
 - [ ] 7. **Docker Compose (dev):** Postgres 18 (volume + healthcheck) and the S3-compatible storage container (pick SeaweedFS or Garage here), plus `.env.example`

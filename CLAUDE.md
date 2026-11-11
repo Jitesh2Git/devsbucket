@@ -43,10 +43,19 @@ When the user says "you do it", do that step fully, then go back to learning mod
   - `docker/`: Compose files and Caddyfile
   - `docs/`
 - **Commits:** conventional commits (`feat:`, `fix:`, `chore:`, `docs:`), one small commit per step.
+- **Branches:** never commit to `main` directly (merging to `main` deploys). One branch per step or feature, named `<type>/<short-name>` (e.g. `chore/turborepo`, `feat/auth-invites`). Push it, open a PR on github.com, and merge with "Squash and merge" using a conventional-commit PR title. Then `git switch main && git pull` and delete the local branch (`git branch -D`, since squash merges aren't seen as merged). From Phase 1 step 14, `main` gets branch protection: PR required, CI must pass.
 - **Secrets:** never commit `.env*` files. Only `.env.example` files with placeholder values are committed.
 - **Environments:** exactly two, local (Docker Compose on the Mac) and prod (Oracle VM). They never share data or secrets.
 - **Permissions:** every server action and realtime handler goes through `packages/authz`. Never trust ids from the client without checking the role.
 - **Bugs and ideas:** tracked as GitHub Issues. Progress is tracked in `docs/PROGRESS.md`.
 
 ## Commands
-None yet. Add the real commands here as each one is set up, e.g. `pnpm dev`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, how to run a single test, `docker compose -f docker/compose.dev.yml up -d`, and the db migrate/seed commands.
+Run from the repo root. Turborepo runs each task in every package that has that script, and caches the results.
+- `pnpm install`: install all workspace dependencies (never use npm).
+- `pnpm dev`: start every app's dev server (web on http://localhost:3000).
+- `pnpm build`: production build of every package.
+- `pnpm typecheck`: `tsc --noEmit` in every package.
+- `pnpm lint`, `pnpm test`: wired into turbo, but empty until Biome (step 5) and Vitest (step 13).
+- `pnpm --filter web <script>`: run a script in one package only.
+
+Still to add as they're set up: how to run a single test, `docker compose -f docker/compose.dev.yml up -d`, and the db migrate/seed commands.
