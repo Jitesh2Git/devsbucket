@@ -49,6 +49,7 @@ When the user says "you do it", do that step fully, then go back to learning mod
 - **Branches:** never commit to `main` directly (merging to `main` deploys). One branch per step or feature, named `<type>/<short-name>` (e.g. `chore/turborepo`, `feat/auth-invites`). Push it, open a PR on github.com with a conventional-commit title and a Markdown description (What / Changes / How to test / Checklist), and merge with a normal merge commit ("Create a merge commit"). Then `git switch main && git pull`. Branches are kept, locally and on GitHub (the user's choice); don't delete them. From Phase 1 step 14, `main` gets branch protection: PR required, CI must pass.
 - **React components:** arrow functions with a default export at the bottom (`const ModeToggle = () => { ... };` then `export default ModeToggle;`), imported as `import ModeToggle from "@/components/mode-toggle"`. Pages and layouts follow the same style. Exception: shadcn-generated files in `components/ui/` keep shadcn's own style (named exports), so `shadcn add` can update them cleanly.
 - **Internal packages:** scoped `@devsbucket/*`, depended on with `"workspace:*"`. Every tsconfig extends `@devsbucket/typescript-config`. `packages/shared` is Just-in-Time (exports TypeScript source, no build) with one entry per file (`@devsbucket/shared/user`), no barrel files. No enums or namespaces (`erasableSyntaxOnly`); use `as const` objects or Zod enums.
+- **Database schema:** plural snake_case table names, camelCase fields in TypeScript (`casing: "snake_case"` maps them), `uuid` ids defaulting to `uuidv7()`, `timestamp({ withTimezone: true })`, `bigint({ mode: "number" })` for byte counts. Schema changes always go through a generated, committed migration; never edit an applied migration.
 - **Secrets:** never commit `.env*` files. Only `.env.example` files with placeholder values are committed.
 - **Environments:** exactly two, local (Docker Compose on the Mac) and prod (Oracle VM). They never share data or secrets.
 - **Permissions:** every server action and realtime handler goes through `packages/authz`. Never trust ids from the client without checking the role.
@@ -74,4 +75,11 @@ Local services (Docker Desktop must be running; config in `docker/compose.dev.ym
 - `pnpm docker:down`: stop and remove the containers; data stays in the named volumes (`down -v` would delete it).
 - `docker compose -f docker/compose.dev.yml exec postgres psql -U devsbucket -d devsbucket`: a psql shell.
 
-Still to add as they're set up: how to run a single test, and the db migrate/seed commands.
+Database (`packages/db`, needs `packages/db/.env` copied from `.env.example` with the password from `docker/.env`):
+
+- `pnpm --filter @devsbucket/db db:generate --name <name>`: write a new SQL migration from schema changes (read it before applying).
+- `pnpm db:migrate`: apply pending migrations.
+- `pnpm db:seed`: create an open invite if none exists (safe to re-run).
+- `pnpm db:studio`: browse the tables in the browser.
+
+Still to add as they're set up: how to run a single test.
