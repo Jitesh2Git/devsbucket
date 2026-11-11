@@ -1,0 +1,27 @@
+{
+  "name": "@devsbucket/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:seed": "node --env-file=.env src/seed.ts"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.45.4",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@devsbucket/typescript-config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11",
+    "typescript": "^5.9.3"
+  }
+}

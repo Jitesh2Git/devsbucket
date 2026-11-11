@@ -32,7 +32,13 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Note: web `typecheck` is `next typegen && tsc --noEmit`. Without typegen, a clean checkout (CI) fails on generated types like `LayoutProps`.
   - Note: staying on TypeScript 5.9 although 7.0 is out; revisit once Next.js supports it.
   - Gotcha (Docker): switching branches deleted and recreated `docker/garage/garage.toml`, which broke Garage's single-file bind mount (healthcheck failed). Fix: `docker compose -f docker/compose.dev.yml up -d --wait --force-recreate garage`.
-- [ ] 9. **packages/db:** Drizzle + drizzle-kit, connection, first migration (Better Auth tables, user profile fields, Invite), seed script
+- [x] 9. **packages/db:** Drizzle + drizzle-kit, connection, first migration (Better Auth tables, user profile fields, Invite), seed script
+  - Note: drizzle-orm 0.45.4 + drizzle-kit 0.31.11 (stable; 1.0 is still RC), node-postgres. Migration `0000_init` creates `users`, `sessions`, `accounts`, `verifications`, `invites`.
+  - Note: the Better Auth tables are based on `auth generate` output for better-auth 1.7.21 with `usePlural: true` and `generateId: "uuid"`; sign-up and sign-in were tested against this schema. The Better Auth CLI is now the `auth` package (`@better-auth/cli` is deprecated).
+  - Note: ids are `uuid` with `uuidv7()` (Postgres 18), timestamps are `timestamptz`, columns are snake_case via `casing: "snake_case"` (must match in `client.ts` and `drizzle.config.ts`).
+  - Note: drizzle-kit needs esbuild's install script, approved with `allowBuilds: esbuild: true` (pnpm 12 fails interactive installs until you decide).
+  - Gotcha: when `drizzle-kit migrate` fails with no message, check `DATABASE_URL` first (here it still had the `change-me` placeholder).
+  - Note: added `.vscode/settings.json` so the editor formats with Biome (it had been formatting with Prettier at 80 columns).
 - [ ] 10. **Better Auth:** Drizzle adapter, route handler, email/password, invite-only sign-up, sign-in and sign-up pages
 - [ ] 11. **GitHub login:** OAuth app for localhost (the user creates it and enters the secrets), login button
 - [ ] 12. **Profile page:** username and avatar (GitHub avatar for now; uploading an avatar waits for storage in phase 2)

@@ -12,7 +12,11 @@
     "docker:up": "docker compose -f docker/compose.dev.yml up -d --wait",
     "docker:down": "docker compose -f docker/compose.dev.yml down",
     "docker:ps": "docker compose -f docker/compose.dev.yml ps",
-    "docker:logs": "docker compose -f docker/compose.dev.yml logs -f"
+    "docker:logs": "docker compose -f docker/compose.dev.yml logs -f",
+    "db:generate": "pnpm --filter @devsbucket/db db:generate",
+    "db:migrate": "pnpm --filter @devsbucket/db db:migrate",
+    "db:seed": "pnpm --filter @devsbucket/db db:seed",
+    "db:studio": "pnpm --filter @devsbucket/db db:studio"
   },
   "packageManager": "pnpm@12.18.0+sha512.9d7882d5dc82147ecfc4e062aa34834e0ad0296710a1837a1115ae012127d36b7109e321ac1598a1dd0a65597681b1e99917e12ed0d749eae91187943363beb3",
   "engines": {
@@ -20,7 +24,8 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.6",
-    "turbo": "^2.11.10"
+    "turbo": "^2.11.10",
+    "typescript": "^5.9.3"
   },
   "rules": {
     "preset": "recommended"
