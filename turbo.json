@@ -8,7 +8,6 @@
     "typecheck": {
       "dependsOn": ["^typecheck"]
     },
-    "lint": {},
     "test": {},
     "dev": {
       "persistent": true,

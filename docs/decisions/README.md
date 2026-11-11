@@ -6,14 +6,18 @@ Template:
 
 ```md
 # NNNN: Title
+
 Date: YYYY-MM-DD · Status: accepted | replaced by NNNN
 
 ## Context
+
 What problem or question led to this.
 
 ## Decision
+
 What we chose.
 
 ## Why / alternatives rejected
+
 Short reasons, plus what we considered and why we said no.
 ```
