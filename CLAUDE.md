@@ -13,7 +13,7 @@ DevsBucket is a developer-focused file drive. Users can:
 
 It's a from-scratch rebuild of an older Next.js + Supabase app; see `docs/decisions/0001-rebuild-and-drop-supabase.md` for why. **The budget is $0, permanently:** every service must be free, with a hard stop in the app before any free limit is reached.
 
-**Source of truth:** `docs/LOCKED.md` holds the stack, limits, roles, notifications, activity and environments. `docs/diagrams.md` holds the architecture diagrams. Never change a locked decision silently. Propose it, and once agreed, add a note in `docs/decisions/` and update `LOCKED.md`.
+**Source of truth:** `docs/LOCKED.md` holds the stack, limits, roles, notifications, activity and environments. `docs/diagrams.md` holds the architecture diagrams. `docs/plans/phase-N.md` holds the detailed plan for the current phase (design, step table); `docs/PROGRESS.md` tracks the steps. Never change a locked decision silently. Propose it, and once agreed, add a note in `docs/decisions/` and update `LOCKED.md`.
 
 ## Working mode: LEARNING MODE (read this first)
 
@@ -45,6 +45,7 @@ When the user says "you do it", do that step fully, then go back to learning mod
   - `packages/db`: Drizzle schema and migrations
   - `packages/authz`: `can(user, action, item)`
   - `packages/shared`: Zod schemas and types
+  - `packages/storage`: S3 client for Garage/R2, presigned URLs, usage counters (Phase 2, decision 0006)
   - `docker/`: Compose files and Caddyfile
   - `docs/`
 - **Commits:** conventional commits (`feat:`, `fix:`, `chore:`, `docs:`), one small commit per step.

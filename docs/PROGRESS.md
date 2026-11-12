@@ -108,9 +108,29 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
 - [ ] Ruleset `main`: allow only the **Merge** method (untick Squash and Rebase), so GitHub enforces the merge-commit convention.
 - [ ] Admin command for password resets and removing accounts (LOCKED.md; also the fix for someone taking another person's email first, decision 0005).
 
+## Phase 2: Drive basics (next)
+
+Full plan: `docs/plans/phase-2.md` (design, data model, limits, upload flow, step table). Decisions: 0006 (`packages/storage`), 0007 (unique names, 30-day trash).
+
+**Done when:** a signed-in user can create folders, upload files up to 100 MB straight to storage (Garage locally), browse with pagination, preview, download, rename, move, trash, restore and delete forever, with their quota and the app-wide storage limit enforced. CI covers it.
+
+Only the owner can see or touch their items in this phase. Sharing, the role grid, activity and realtime events stay in Phase 3, but every check already goes through `packages/authz` so Phase 3 extends it instead of retrofitting.
+
+- [ ] 1. **Items schema:** `items` table (folder / file / note, owner, parent, created by, name, MIME type, size, storage key, pending / ready, trash fields), indexes, migration. Also the Phase 1 follow-ups (release-age exclusions, ruleset merge method)
+- [ ] 2. **packages/authz v0:** `can(user, action, item)` with owner-only rules, unit tests. Phase 3 adds roles and grants
+- [ ] 3. **Drive shell:** `/drive` layout (sidebar: My Drive, Trash, storage meter), signed-in only, TanStack Query provider, empty state
+- [ ] 4. **Folders and browsing:** create folder, list a folder (folders first, then by name) with cursor pagination, breadcrumbs
+- [ ] 5. **Storage plumbing:** S3 client (Garage locally, R2 later), env vars, bucket CORS for browser uploads, app-wide usage counters and the 9 GB / operation guards
+- [ ] 6. **Uploads up to 50 MB:** request upload (checks + reserve quota + pending item) → presigned PUT from the browser with progress → complete (verify size) → ready. Drag and drop
+- [ ] 7. **Large uploads (50–100 MB):** multipart upload with presigned part URLs
+- [ ] 8. **Download and previews:** presigned GET; previews for images, video, audio, PDF and text
+- [ ] 9. **Rename and move:** rename dialog, move dialog with a folder picker, no moving a folder into itself
+- [ ] 10. **Trash:** move to trash, Trash view, restore, delete forever (removes the stored object, frees quota)
+- [ ] 11. **Worker:** `apps/worker` with pg-boss: clean up abandoned uploads, empty old trash automatically
+- [ ] 12. **Tests and phase review:** unit tests (authz, name rules), e2e (folder, upload, rename, trash, restore), Garage in CI, CLAUDE.md, tag `v0.2.0`
+
 ## Later phases (summary)
 
-2. **Drive basics:** items tree, direct uploads with quota and R2 guards, browsing with pagination, rename, move, trash, download, previews
 3. **Sharing:** authz package and role test grid, permissions, share links, access requests, activity, notifications, realtime events
 4. **Live editing:** Monaco + Yjs + Hocuspocus, cursors, versions, diff view, Markdown preview
 5. **Notes and extras:** Tiptap notes, Cmd+K search, starred and recent, activity panel, ZIP download
