@@ -10,6 +10,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@devsbucket/authz": "workspace:*",
     "@devsbucket/db": "workspace:*",
     "@devsbucket/shared": "workspace:*",
     "@hookform/resolvers": "^7.0.5",
@@ -33,8 +34,10 @@
     "@playwright/test": "^1.65.0",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "pg": "^8.23.1",
     "tailwindcss": "4.3.3",
     "typescript": "^5"
   }

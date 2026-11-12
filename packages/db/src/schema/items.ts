@@ -64,17 +64,15 @@ export const items = pgTable(
         sql`lower(${table.name})`,
       )
       .where(sql`${table.trashedAt} is null`),
-    // Listing a folder: folders first, then by name (keyset pagination).
-    index("items_parent_list_idx").on(
-      table.parentId,
-      table.type,
-      sql`lower(${table.name})`,
-      table.id,
-    ),
+    // Listing a folder: folders first, then by name, outside the trash
+    // (keyset pagination on the same three keys; see ../items.ts).
+    index("items_parent_list_idx")
+      .on(table.parentId, sql`(${table.type} <> 'folder')`, sql`lower(${table.name})`, table.id)
+      .where(sql`${table.trashedAt} is null`),
     // Listing the top level of My Drive.
     index("items_top_level_list_idx")
-      .on(table.ownerId, table.type, sql`lower(${table.name})`, table.id)
-      .where(sql`${table.parentId} is null`),
+      .on(table.ownerId, sql`(${table.type} <> 'folder')`, sql`lower(${table.name})`, table.id)
+      .where(sql`${table.parentId} is null and ${table.trashedAt} is null`),
     // Trash view.
     index("items_trash_idx").on(table.ownerId, table.trashedAt).where(sql`${table.trashRoot}`),
     // Worker: abandoned uploads.
