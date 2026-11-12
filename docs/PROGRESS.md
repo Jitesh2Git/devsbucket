@@ -39,7 +39,7 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Note: drizzle-kit needs esbuild's install script, approved with `allowBuilds: esbuild: true` (pnpm 12 fails interactive installs until you decide).
   - Gotcha: when `drizzle-kit migrate` fails with no message, check `DATABASE_URL` first (here it still had the `change-me` placeholder).
   - Note: added `.vscode/settings.json` so the editor formats with Biome (it had been formatting with Prettier at 80 columns).
-- [ ] 10. **Better Auth:** Drizzle adapter, route handler, email/password, invite-only sign-up, sign-in and sign-up pages
+- [x] 10. **Better Auth:** Drizzle adapter, route handler, email/password, invite-only sign-up, sign-in and sign-up pages
   - [x] 10a. Branch `feat/auth`, `better-auth@1.7.21` (exact) and `@devsbucket/db` in web, `apps/web/.env.example`
   - [x] 10b. `lib/auth.ts` + `/api/auth/[...all]` route handler (`/api/auth/ok` returns `{"ok":true}`)
   - [x] 10c. Invite-only sign-up (check and use up the invite on the server, in a transaction)
@@ -53,7 +53,9 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Gotcha: run `pnpm lint:fix` after every `shadcn add`. shadcn writes its own style (no semicolons, unsorted imports), which fails `pnpm lint` until Biome reformats it. The `components/ui/**` override turns off Biome's _linter_ there (shadcn's `field.tsx` breaks three rules) but keeps formatting.
   - [x] 10e. Invite-first sign-up: invite code in an httpOnly cookie (hook reads it), invite step + account form
   - Note: a server action that sets a cookie re-renders the current page by itself, so the page switches from the invite form to the account form with no `router.refresh()`. The page reads `cookies()`, so with Cache Components it sits inside `<Suspense>` (build shows `/sign-up` as ◐ Partial Prerender). `findOpenInvite` lives in `packages/db/src/invites.ts`; web has no direct `drizzle-orm` dependency.
-  - [ ] 10f. Sign-in page
+  - [x] 10f. Sign-in page, `proxy.ts` sends signed-in users away from `/sign-in` and `/sign-up`, show/hide toggle on password fields
+  - Note: Next.js 16 renamed middleware to Proxy (`apps/web/proxy.ts`, named export `proxy`). It checks the real session with `auth.api.getSession`, limited by `matcher` to the two auth pages. A cookie-only check (`getSessionCookie`) was rejected here: a stale or revoked session cookie would bounce the user from `/sign-in` forever.
+  - Gotcha: don't centre things inside a shadcn `Button` with `-translate-y-1/2`. The button's press effect (`active:translate-y-px`) uses the same Tailwind 4 variable (`--tw-translate-y`) and replaces it, so the button jumps on click. `PasswordInput` uses `top-0.5` instead (32px input, 28px button).
   - Decision: the invite code travels in an httpOnly cookie (`devsbucket.invite`, 1 hour), set by a server action after the code is checked. Same mechanism will carry it through the GitHub round trip in step 11. Header/body were rejected: Better Auth's typed client won't accept an extra body field, and OAuth has no body.
   - Note: pnpm 12 won't install versions less than a day old (`minimumReleaseAge`). better-auth 1.7.21 was a few hours old, so pnpm added exact-version entries to `minimumReleaseAgeExclude` in `pnpm-workspace.yaml`. They're harmless and can be removed once that version is old enough.
   - Note: the `@esbuild-kit/*` deprecation warning comes from drizzle-kit (also a dependency of better-auth). Nothing to fix.

@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
+import PasswordInput from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -86,10 +87,9 @@ const SignUpForm = ({ lockedEmail }: SignUpFormProps) => {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="sign-up-password">Password</FieldLabel>
-                  <Input
+                  <PasswordInput
                     {...field}
                     id="sign-up-password"
-                    type="password"
                     autoComplete="new-password"
                     aria-invalid={fieldState.invalid}
                   />
