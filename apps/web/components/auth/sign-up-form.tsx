@@ -5,10 +5,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
+import GitHubButton from "@/components/auth/github-button";
 import PasswordInput from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldSeparator,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 
@@ -105,6 +113,10 @@ const SignUpForm = ({ lockedEmail }: SignUpFormProps) => {
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 Create account
               </Button>
+            </Field>
+            <FieldSeparator>or</FieldSeparator>
+            <Field>
+              <GitHubButton mode="sign-up" />
               <FieldDescription className="text-center">
                 Already have an account? <Link href="/sign-in">Sign in</Link>
               </FieldDescription>

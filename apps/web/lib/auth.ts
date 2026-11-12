@@ -8,8 +8,19 @@ import { INVITE_COOKIE } from "@/lib/invite-cookie";
 
 type Invite = typeof schema.invites.$inferSelect;
 
+// Errors carry a `code`: email sign-up returns it in the JSON, and GitHub
+// sign-up redirects back with it as `?error=` (see oauth-error.tsx).
+const inviteRequired = () =>
+  new APIError("BAD_REQUEST", {
+    code: "INVITE_REQUIRED",
+    message: "An invite code is required to sign up.",
+  });
+
 const invalidInvite = () =>
-  new APIError("BAD_REQUEST", { message: "This invite code is invalid, used or expired." });
+  new APIError("BAD_REQUEST", {
+    code: "INVITE_INVALID",
+    message: "This invite code is invalid, used or expired.",
+  });
 
 // Tells Better Auth's adapter about our `invites` table (Drizzle owns the
 // real schema and migrations), so the sign-up hook can use it in the same
@@ -37,6 +48,15 @@ export const auth = betterAuth({
     database: { generateId: "uuid" },
   },
   emailAndPassword: { enabled: true },
+  socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID as string,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+      // "Continue with GitHub" on the sign-in page must not create accounts;
+      // only the sign-up page asks for that (requestSignUp: true).
+      disableImplicitSignUp: true,
+    },
+  },
   user: {
     additionalFields: {
       username: { type: "string", required: false, input: false },
@@ -50,11 +70,7 @@ export const auth = betterAuth({
       create: {
         before: async (user, ctx) => {
           const code = ctx?.getCookie(INVITE_COOKIE);
-          if (!ctx || !code) {
-            throw new APIError("BAD_REQUEST", {
-              message: "An invite code is required to sign up.",
-            });
-          }
+          if (!ctx || !code) throw inviteRequired();
           const adapter = await getCurrentAdapter(ctx.context.adapter);
           const invite = await adapter.update<Invite>({
             model: "invite",
