@@ -40,6 +40,14 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Gotcha: when `drizzle-kit migrate` fails with no message, check `DATABASE_URL` first (here it still had the `change-me` placeholder).
   - Note: added `.vscode/settings.json` so the editor formats with Biome (it had been formatting with Prettier at 80 columns).
 - [ ] 10. **Better Auth:** Drizzle adapter, route handler, email/password, invite-only sign-up, sign-in and sign-up pages
+  - [x] 10a. Branch `feat/auth`, `better-auth@1.7.21` (exact) and `@devsbucket/db` in web, `apps/web/.env.example`
+  - [ ] 10b. `lib/auth.ts` + `/api/auth/[...all]` route handler
+  - [ ] 10c. Invite-only sign-up (check and use up the invite on the server, in a transaction)
+  - [ ] 10d. Auth client, sign-up and sign-in pages
+  - Note: pnpm 12 won't install versions less than a day old (`minimumReleaseAge`). better-auth 1.7.21 was a few hours old, so pnpm added exact-version entries to `minimumReleaseAgeExclude` in `pnpm-workspace.yaml`. They're harmless and can be removed once that version is old enough.
+  - Note: the `@esbuild-kit/*` deprecation warning comes from drizzle-kit (also a dependency of better-auth). Nothing to fix.
+  - Gotcha (zsh): quote `workspace:*` specs, e.g. `pnpm add "@devsbucket/db@workspace:*"`. Unquoted, zsh treats `*` as a wildcard and fails with "no matches found".
+  - Gotcha: create-next-app's `apps/web/.gitignore` ignores `.env*` with no exception, which also hid `.env.example`; added `!.env.example`.
 - [ ] 11. **GitHub login:** OAuth app for localhost (the user creates it and enters the secrets), login button
 - [ ] 12. **Profile page:** username and avatar (GitHub avatar for now; uploading an avatar waits for storage in phase 2)
 - [ ] 13. **Tests:** Vitest with a first unit test, Playwright sign-in smoke test

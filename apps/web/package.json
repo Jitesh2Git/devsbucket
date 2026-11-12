@@ -9,7 +9,9 @@
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@devsbucket/db": "workspace:*",
     "@devsbucket/shared": "workspace:*",
+    "better-auth": "1.7.21",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
     "lucide-react": "^1.71.0",
