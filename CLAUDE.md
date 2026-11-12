@@ -29,9 +29,11 @@ The user is building this **by hand to learn**. Unless the user explicitly says 
 
 When the user says "you do it", do that step fully, then go back to learning mode.
 
-## Machine (as of 2026-11-11)
+## Machine (as of 2026-11-12)
 
 - Installed: Node 24.21 LTS, pnpm 12.18.0 (via corepack, pinned by `packageManager` in the root `package.json`), Docker 29.9.3. Docker Desktop must be running for Compose.
+- Also installed: DBeaver Community 26.2 (Homebrew), Playwright's Chromium (in `~/Library/Caches/ms-playwright`, installed with `pnpm --filter web exec playwright install chromium`; reinstall after a Playwright upgrade).
+- VS Code's GitHub Actions extension can falsely flag `uses:` versions as "not found" when it isn't signed in to GitHub. GitHub's own run is the source of truth.
 - Not installed: GitHub CLI (`gh`). The user creates GitHub repos on github.com.
 
 ## Conventions
@@ -46,13 +48,15 @@ When the user says "you do it", do that step fully, then go back to learning mod
   - `docker/`: Compose files and Caddyfile
   - `docs/`
 - **Commits:** conventional commits (`feat:`, `fix:`, `chore:`, `docs:`), one small commit per step.
-- **Branches:** never commit to `main` directly (merging to `main` deploys). One branch per step or feature, named `<type>/<short-name>` (e.g. `chore/turborepo`, `feat/auth-invites`). Push it, open a PR on github.com with a conventional-commit title and a Markdown description (What / Changes / How to test / Checklist), and merge with a normal merge commit ("Create a merge commit"). Then `git switch main && git pull`. Branches are kept, locally and on GitHub (the user's choice); don't delete them. From Phase 1 step 14, `main` gets branch protection: PR required, CI must pass.
+- **Branches:** never commit to `main` directly (merging to `main` deploys). One branch per step or feature, named `<type>/<short-name>` (e.g. `chore/turborepo`, `feat/auth-invites`). Push it, open a PR on github.com with a conventional-commit title and a Markdown description (What / Changes / How to test / Checklist), and merge with a normal merge commit ("Create a merge commit"). Then `git switch main && git pull`. Branches are kept, locally and on GitHub (the user's choice); don't delete them. `main` is protected by a repository ruleset: changes only through PRs, the CI check "Lint, typecheck and tests" must pass, no force pushes or deletion, nobody bypasses. Tags are not protected; release tags (`v0.1.0`, …) are annotated and pushed after the phase's last PR is merged.
 - **React components:** arrow functions with a default export at the bottom (`const ModeToggle = () => { ... };` then `export default ModeToggle;`), imported as `import ModeToggle from "@/components/mode-toggle"`. Pages and layouts follow the same style. Exception: shadcn-generated files in `components/ui/` keep shadcn's own style (named exports), so `shadcn add` can update them cleanly.
 - **Internal packages:** scoped `@devsbucket/*`, depended on with `"workspace:*"`. Every tsconfig extends `@devsbucket/typescript-config`. `packages/shared` is Just-in-Time (exports TypeScript source, no build) with one entry per file (`@devsbucket/shared/user`), no barrel files. No enums or namespaces (`erasableSyntaxOnly`); use `as const` objects or Zod enums.
 - **Database schema:** plural snake_case table names, camelCase fields in TypeScript (`casing: "snake_case"` maps them), `uuid` ids defaulting to `uuidv7()`, `timestamp({ withTimezone: true })`, `bigint({ mode: "number" })` for byte counts. Schema changes always go through a generated, committed migration; never edit an applied migration.
 - **Secrets:** never commit `.env*` files. Only `.env.example` files with placeholder values are committed.
 - **Environments:** exactly two, local (Docker Compose on the Mac) and prod (Oracle VM). They never share data or secrets.
 - **Permissions:** every server action and realtime handler goes through `packages/authz`. Never trust ids from the client without checking the role.
+- **Tests:** unit tests (Vitest) sit next to the code as `*.test.ts` and import `describe`/`it`/`expect` explicitly. End-to-end tests (Playwright) live in `apps/web/e2e/`, find elements by role and label (never CSS classes), and only ever use the `devsbucket_test` database.
+- **CI:** `.github/workflows/ci.yml` runs lint, typecheck, unit and e2e tests (with a Postgres service) on every PR and push to `main`. Values in it are CI-only for a throwaway database; real secrets (prod, phase 6) go in GitHub's encrypted Secrets, never in the file.
 - **Bugs and ideas:** tracked as GitHub Issues. Progress is tracked in `docs/PROGRESS.md`.
 
 ## Commands
