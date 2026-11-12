@@ -61,7 +61,15 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Note: the `@esbuild-kit/*` deprecation warning comes from drizzle-kit (also a dependency of better-auth). Nothing to fix.
   - Gotcha (zsh): quote `workspace:*` specs, e.g. `pnpm add "@devsbucket/db@workspace:*"`. Unquoted, zsh treats `*` as a wildcard and fails with "no matches found".
   - Gotcha: create-next-app's `apps/web/.gitignore` ignores `.env*` with no exception, which also hid `.env.example`; added `!.env.example`.
-- [ ] 11. **GitHub login:** OAuth app for localhost (the user creates it and enters the secrets), login button
+- [x] 11. **GitHub login:** OAuth app for localhost (the user creates it and enters the secrets), login button
+  - [x] 11a. Branch `feat/github-login`, GitHub OAuth app (local), `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` in `apps/web/.env.local` and `.env.example`
+  - Note: GitHub's 2026 OAuth App form has a "Redirect URIs" list (up to 10, optional wildcard matching: keep it off) and "Expire user access tokens" (kept on; the `accounts` table already stores refresh tokens and expiry).
+  - [x] 11b. Wire GitHub into Better Auth + buttons (sign-up needs the invite cookie; sign-in of an existing user doesn't)
+  - Note: GitHub sign-up goes through the same `create.before` invite hook (Better Auth creates OAuth users in a transaction too). `disableImplicitSignUp: true` means only the sign-up page (`requestSignUp: true`) can create accounts; from sign-in, an unknown GitHub user gets `?error=signup_disabled`. Tested for real: a GitHub sign-up used its invite, stored the avatar, `email_verified = true`, and a refresh token (token expiry is on).
+  - Gotcha: Better Auth only redirects OAuth failures to `errorCallbackURL?error=<code>` when the thrown `APIError` has a `code`, so the invite errors carry `INVITE_REQUIRED` / `INVITE_INVALID`. `oauth-error.tsx` maps known codes to text and never shows `error_description` (it comes from the URL, so anyone could craft it).
+  - Decision: no automatic linking of GitHub to an existing password account with the same email (`account_not_linked`). Password accounts are unverified (no email), so auto-linking would allow pre-account takeover. Connecting GitHub to an existing account is an explicit action on the profile page (step 12, `authClient.linkSocial`).
+  - Gotcha: `new Date()` while rendering a Server Component under Cache Components → "unstable value" dev error (red "1 issue" badge on `/sign-up` since 10e). `findOpenInvite` now uses SQL `now()`.
+  - Note: lucide-react 1.x has no brand icons; the GitHub mark is inline SVG from Octicons (MIT) with `aria-hidden`.
 - [ ] 12. **Profile page:** username and avatar (GitHub avatar for now; uploading an avatar waits for storage in phase 2)
 - [ ] 13. **Tests:** Vitest with a first unit test, Playwright sign-in smoke test
 - [ ] 14. **CI:** GitHub Actions runs Biome, typecheck, Vitest and Playwright (with a Postgres service), and it goes green
