@@ -1,12 +1,15 @@
 import { execFileSync } from "node:child_process";
-import { E2E_INVITE_CODE, testDatabaseUrl } from "./env";
+import { E2E_INVITE_CODE, testEnv } from "./env";
 
 // Runs once before all tests: a fresh, migrated test database with one invite
-// (packages/db/src/reset-test-db.ts).
+// (packages/db/src/reset-test-db.ts) and an empty test bucket
+// (packages/storage/src/reset-test-bucket.ts).
 const globalSetup = () => {
-  execFileSync("pnpm", ["--filter", "@devsbucket/db", "db:reset-test"], {
+  const env = { ...process.env, ...testEnv(), E2E_INVITE_CODE };
+  execFileSync("pnpm", ["--filter", "@devsbucket/db", "db:reset-test"], { stdio: "inherit", env });
+  execFileSync("pnpm", ["--filter", "@devsbucket/storage", "storage:reset-test"], {
     stdio: "inherit",
-    env: { ...process.env, DATABASE_URL: testDatabaseUrl(), E2E_INVITE_CODE },
+    env,
   });
 };
 

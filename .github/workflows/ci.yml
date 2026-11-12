@@ -87,8 +87,9 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
-      - name: Allow browser uploads (bucket CORS)
-        run: pnpm storage:setup
+      # The dev bucket and the e2e tests' own "<bucket>-test" bucket.
+      - name: Set up the buckets (CORS, test bucket)
+        run: pnpm storage:setup && pnpm storage:setup-test
 
       - name: Install Playwright's Chromium
         run: pnpm --filter web exec playwright install --with-deps chromium

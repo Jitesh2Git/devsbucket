@@ -1,5 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
-import { E2E_PORT, testDatabaseUrl } from "./e2e/env";
+import { E2E_PORT, testEnv } from "./e2e/env";
 
 // Locally, read DATABASE_URL and the auth secrets from .env.local.
 // In CI they come from the environment instead.
@@ -23,8 +23,8 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  // Its own app server on port 3100, pointed at the test database, so it
-  // never touches your dev data or your `pnpm dev` on port 3000.
+  // Its own app server on port 3100, pointed at the test database and test
+  // bucket, so it never touches your dev data or your `pnpm dev` on port 3000.
   webServer: {
     command: process.env.CI ? `next build && next start -p ${E2E_PORT}` : `next dev -p ${E2E_PORT}`,
     url: baseURL,
@@ -32,7 +32,8 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       ...process.env,
-      DATABASE_URL: testDatabaseUrl(),
+      // The test database and bucket, never the dev ones.
+      ...testEnv(),
       BETTER_AUTH_URL: baseURL,
       NEXT_DIST_DIR: ".next-e2e",
       // Every test signs up its own user; see lib/auth.ts.
