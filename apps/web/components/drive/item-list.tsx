@@ -4,19 +4,16 @@ import type { ListItemsPage } from "@devsbucket/db/items";
 import { formatBytes } from "@devsbucket/shared/bytes";
 import type { Cursor } from "@devsbucket/shared/item";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { Download, Eye, File, Folder, FolderOpen, MoreHorizontal } from "lucide-react";
+import { File, Folder, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import { useLayoutEffect, useState } from "react";
 import { loadItems } from "@/app/drive/actions";
-import FilePreview, { downloadUrl, type PreviewFile } from "@/components/drive/file-preview";
+import FilePreview, { type PreviewFile } from "@/components/drive/file-preview";
+import ItemMenu from "@/components/drive/item-menu";
+import MoveDialog from "@/components/drive/move-dialog";
+import RenameDialog, { type ItemRef } from "@/components/drive/rename-dialog";
 import LocalDate from "@/components/local-date";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Empty,
   EmptyDescription,
@@ -59,9 +56,18 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
   const rows = query.data.pages.flatMap((page) => page.items);
 
   const [previewing, setPreviewing] = useState<PreviewFile | null>(null);
-  // Leaving the page only hides it (Activity): close the preview, so a
-  // video doesn't keep playing out of sight.
-  useLayoutEffect(() => () => setPreviewing(null), []);
+  const [renaming, setRenaming] = useState<ItemRef | null>(null);
+  const [moving, setMoving] = useState<ItemRef | null>(null);
+  // Leaving the page only hides it (Activity): close any dialog, so a video
+  // doesn't keep playing out of sight and nothing is open on return.
+  useLayoutEffect(
+    () => () => {
+      setPreviewing(null);
+      setRenaming(null);
+      setMoving(null);
+    },
+    [],
+  );
 
   if (rows.length === 0) {
     return (
@@ -120,31 +126,12 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
                 <LocalDate value={item.updatedAt} />
               </TableCell>
               <TableCell>
-                {item.type === "file" && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        aria-label={`Actions for ${item.name}`}
-                      >
-                        <MoreHorizontal />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => setPreviewing(item)}>
-                        <Eye />
-                        Preview
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <a href={downloadUrl(item.id)}>
-                          <Download />
-                          Download
-                        </a>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+                <ItemMenu
+                  item={item}
+                  onPreview={() => setPreviewing(item)}
+                  onRename={() => setRenaming(item)}
+                  onMove={() => setMoving(item)}
+                />
               </TableCell>
             </TableRow>
           ))}
@@ -166,6 +153,8 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
         </p>
       )}
       <FilePreview file={previewing} onClose={() => setPreviewing(null)} />
+      <RenameDialog item={renaming} parentId={parentId} onClose={() => setRenaming(null)} />
+      <MoveDialog item={moving} parentId={parentId} onClose={() => setMoving(null)} />
     </div>
   );
 };
