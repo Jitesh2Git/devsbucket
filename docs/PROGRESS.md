@@ -39,7 +39,28 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Note: drizzle-kit needs esbuild's install script, approved with `allowBuilds: esbuild: true` (pnpm 12 fails interactive installs until you decide).
   - Gotcha: when `drizzle-kit migrate` fails with no message, check `DATABASE_URL` first (here it still had the `change-me` placeholder).
   - Note: added `.vscode/settings.json` so the editor formats with Biome (it had been formatting with Prettier at 80 columns).
-- [ ] 10. **Better Auth:** Drizzle adapter, route handler, email/password, invite-only sign-up, sign-in and sign-up pages
+- [x] 10. **Better Auth:** Drizzle adapter, route handler, email/password, invite-only sign-up, sign-in and sign-up pages
+  - [x] 10a. Branch `feat/auth`, `better-auth@1.7.21` (exact) and `@devsbucket/db` in web, `apps/web/.env.example`
+  - [x] 10b. `lib/auth.ts` + `/api/auth/[...all]` route handler (`/api/auth/ok` returns `{"ok":true}`)
+  - [x] 10c. Invite-only sign-up (check and use up the invite on the server, in a transaction)
+  - Note: the invite is claimed in `databaseHooks.user.create.before` with a conditional `UPDATE … WHERE used_at IS NULL AND expires_at > now()`, through `getCurrentAdapter()` so it runs in the sign-up transaction. Tested in a scratch copy: missing, unknown, expired and wrong-email codes are rejected; a failed sign-up doesn't burn the invite; 5 simultaneous sign-ups on one code → exactly 1 user.
+  - Gotcha: the Drizzle adapter's `transaction` option defaults to `false`, which silently turns Better Auth's transaction into a no-op. Set `transaction: true`.
+  - Gotcha: Better Auth's adapter only accepts models it knows (`Model "invite" not found in schema`). A tiny inline plugin (`invitesModel`) declares the `invites` fields; Drizzle still owns the real schema.
+  - Gotcha: `create.after` hooks run after the commit, so they can't veto anything. Used only to fill `used_by`.
+  - Note: Better Auth's typed APIs reject unknown body fields, so `inviteCode` can't be passed through `authClient.signUp.email()` or `auth.api.signUpEmail()` without a type error. This is decided in 10d.
+  - [x] 10d. Form foundation: react-hook-form + resolvers, shadcn card/field/input/label, Biome override for `components/ui`, shared auth schemas, auth client
+  - Note: react-hook-form 7.91.0, @hookform/resolvers 7.0.5. With no version given, pnpm's release-age guard picked the newest versions older than a day, so no exclusions were needed. `apps/web` needs no direct `zod` dependency; schemas and types come from `@devsbucket/shared/auth`.
+  - Gotcha: run `pnpm lint:fix` after every `shadcn add`. shadcn writes its own style (no semicolons, unsorted imports), which fails `pnpm lint` until Biome reformats it. The `components/ui/**` override turns off Biome's _linter_ there (shadcn's `field.tsx` breaks three rules) but keeps formatting.
+  - [x] 10e. Invite-first sign-up: invite code in an httpOnly cookie (hook reads it), invite step + account form
+  - Note: a server action that sets a cookie re-renders the current page by itself, so the page switches from the invite form to the account form with no `router.refresh()`. The page reads `cookies()`, so with Cache Components it sits inside `<Suspense>` (build shows `/sign-up` as ◐ Partial Prerender). `findOpenInvite` lives in `packages/db/src/invites.ts`; web has no direct `drizzle-orm` dependency.
+  - [x] 10f. Sign-in page, `proxy.ts` sends signed-in users away from `/sign-in` and `/sign-up`, show/hide toggle on password fields
+  - Note: Next.js 16 renamed middleware to Proxy (`apps/web/proxy.ts`, named export `proxy`). It checks the real session with `auth.api.getSession`, limited by `matcher` to the two auth pages. A cookie-only check (`getSessionCookie`) was rejected here: a stale or revoked session cookie would bounce the user from `/sign-in` forever.
+  - Gotcha: don't centre things inside a shadcn `Button` with `-translate-y-1/2`. The button's press effect (`active:translate-y-px`) uses the same Tailwind 4 variable (`--tw-translate-y`) and replaces it, so the button jumps on click. `PasswordInput` uses `top-0.5` instead (32px input, 28px button).
+  - Decision: the invite code travels in an httpOnly cookie (`devsbucket.invite`, 1 hour), set by a server action after the code is checked. Same mechanism will carry it through the GitHub round trip in step 11. Header/body were rejected: Better Auth's typed client won't accept an extra body field, and OAuth has no body.
+  - Note: pnpm 12 won't install versions less than a day old (`minimumReleaseAge`). better-auth 1.7.21 was a few hours old, so pnpm added exact-version entries to `minimumReleaseAgeExclude` in `pnpm-workspace.yaml`. They're harmless and can be removed once that version is old enough.
+  - Note: the `@esbuild-kit/*` deprecation warning comes from drizzle-kit (also a dependency of better-auth). Nothing to fix.
+  - Gotcha (zsh): quote `workspace:*` specs, e.g. `pnpm add "@devsbucket/db@workspace:*"`. Unquoted, zsh treats `*` as a wildcard and fails with "no matches found".
+  - Gotcha: create-next-app's `apps/web/.gitignore` ignores `.env*` with no exception, which also hid `.env.example`; added `!.env.example`.
 - [ ] 11. **GitHub login:** OAuth app for localhost (the user creates it and enters the secrets), login button
 - [ ] 12. **Profile page:** username and avatar (GitHub avatar for now; uploading an avatar waits for storage in phase 2)
 - [ ] 13. **Tests:** Vitest with a first unit test, Playwright sign-in smoke test

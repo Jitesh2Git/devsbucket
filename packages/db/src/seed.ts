@@ -10,7 +10,7 @@ const seed = async () => {
   const [open] = await db
     .select()
     .from(invites)
-    .where(and(isNull(invites.usedBy), gt(invites.expiresAt, new Date())))
+    .where(and(isNull(invites.usedAt), gt(invites.expiresAt, new Date())))
     .limit(1);
 
   if (open) {

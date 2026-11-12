@@ -82,4 +82,9 @@ Database (`packages/db`, needs `packages/db/.env` copied from `.env.example` wit
 - `pnpm db:seed`: create an open invite if none exists (safe to re-run).
 - `pnpm db:studio`: browse the tables in the browser.
 
+Web app (`apps/web`, needs `apps/web/.env.local` copied from `.env.example`: the same `DATABASE_URL` as `packages/db/.env`, `BETTER_AUTH_SECRET` from `openssl rand -base64 32`, and `BETTER_AUTH_URL=http://localhost:3000`):
+
+- Sign-up is invite-only: get a code with `pnpm db:seed` (it prints an open invite, or creates one), then open `/sign-up`.
+- `pnpm --filter web exec shadcn add <component>`: add a shadcn component, then run `pnpm lint:fix` (shadcn's own style fails `pnpm lint` until Biome reformats it).
+
 Still to add as they're set up: how to run a single test.

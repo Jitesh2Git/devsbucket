@@ -1,0 +1,90 @@
+import { db } from "@devsbucket/db/client";
+import * as schema from "@devsbucket/db/schema/index";
+import { type BetterAuthPlugin, betterAuth, getCurrentAdapter } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError } from "better-auth/api";
+import { nextCookies } from "better-auth/next-js";
+import { INVITE_COOKIE } from "@/lib/invite-cookie";
+
+type Invite = typeof schema.invites.$inferSelect;
+
+const invalidInvite = () =>
+  new APIError("BAD_REQUEST", { message: "This invite code is invalid, used or expired." });
+
+// Tells Better Auth's adapter about our `invites` table (Drizzle owns the
+// real schema and migrations), so the sign-up hook can use it in the same
+// transaction as the user insert.
+const invitesModel = {
+  id: "invites",
+  schema: {
+    invite: {
+      fields: {
+        code: { type: "string", required: true, unique: true },
+        email: { type: "string", required: false },
+        createdBy: { type: "string", required: false },
+        usedBy: { type: "string", required: false },
+        usedAt: { type: "date", required: false },
+        expiresAt: { type: "date", required: true },
+        createdAt: { type: "date", required: true },
+      },
+    },
+  },
+} satisfies BetterAuthPlugin;
+
+export const auth = betterAuth({
+  database: drizzleAdapter(db, { provider: "pg", usePlural: true, schema, transaction: true }),
+  advanced: {
+    database: { generateId: "uuid" },
+  },
+  emailAndPassword: { enabled: true },
+  user: {
+    additionalFields: {
+      username: { type: "string", required: false, input: false },
+      storageUsed: { type: "number", required: false, input: false },
+      storageQuota: { type: "number", required: false, input: false },
+      isAdmin: { type: "boolean", required: false, input: false },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        before: async (user, ctx) => {
+          const code = ctx?.getCookie(INVITE_COOKIE);
+          if (!ctx || !code) {
+            throw new APIError("BAD_REQUEST", {
+              message: "An invite code is required to sign up.",
+            });
+          }
+          const adapter = await getCurrentAdapter(ctx.context.adapter);
+          const invite = await adapter.update<Invite>({
+            model: "invite",
+            where: [
+              { field: "code", value: code },
+              { field: "usedAt", value: null },
+              { field: "expiresAt", operator: "gt", value: new Date() },
+            ],
+            update: { usedAt: new Date() },
+          });
+          if (!invite) throw invalidInvite();
+          if (invite.email && invite.email.toLowerCase() !== user.email.toLowerCase()) {
+            throw invalidInvite();
+          }
+        },
+        after: async (user, ctx) => {
+          const code = ctx?.getCookie(INVITE_COOKIE);
+          if (!ctx || !code) return;
+          await ctx.context.adapter.update({
+            model: "invite",
+            where: [
+              { field: "code", value: code },
+              { field: "usedBy", value: null },
+            ],
+            update: { usedBy: user.id },
+          });
+          ctx.setCookie(INVITE_COOKIE, "", { path: "/", maxAge: 0 });
+        },
+      },
+    },
+  },
+  plugins: [invitesModel, nextCookies()],
+});
