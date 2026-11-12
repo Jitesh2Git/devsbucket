@@ -4,6 +4,7 @@ import { type BetterAuthPlugin, betterAuth, getCurrentAdapter } from "better-aut
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
+import { INVITE_COOKIE } from "@/lib/invite-cookie";
 
 type Invite = typeof schema.invites.$inferSelect;
 
@@ -48,8 +49,8 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user, ctx) => {
-          const code = ctx?.body?.inviteCode;
-          if (!ctx || typeof code !== "string" || code.trim() === "") {
+          const code = ctx?.getCookie(INVITE_COOKIE);
+          if (!ctx || !code) {
             throw new APIError("BAD_REQUEST", {
               message: "An invite code is required to sign up.",
             });
@@ -58,7 +59,7 @@ export const auth = betterAuth({
           const invite = await adapter.update<Invite>({
             model: "invite",
             where: [
-              { field: "code", value: code.trim() },
+              { field: "code", value: code },
               { field: "usedAt", value: null },
               { field: "expiresAt", operator: "gt", value: new Date() },
             ],
@@ -70,16 +71,17 @@ export const auth = betterAuth({
           }
         },
         after: async (user, ctx) => {
-          const code = ctx?.body?.inviteCode;
-          if (!ctx || typeof code !== "string") return;
+          const code = ctx?.getCookie(INVITE_COOKIE);
+          if (!ctx || !code) return;
           await ctx.context.adapter.update({
             model: "invite",
             where: [
-              { field: "code", value: code.trim() },
+              { field: "code", value: code },
               { field: "usedBy", value: null },
             ],
             update: { usedBy: user.id },
           });
+          ctx.setCookie(INVITE_COOKIE, "", { path: "/", maxAge: 0 });
         },
       },
     },
