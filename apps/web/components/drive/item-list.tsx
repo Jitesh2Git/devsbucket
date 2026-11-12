@@ -3,11 +3,13 @@
 import type { ListItemsPage } from "@devsbucket/db/items";
 import { formatBytes } from "@devsbucket/shared/bytes";
 import type { Cursor } from "@devsbucket/shared/item";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { File, Folder, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import { useLayoutEffect, useState } from "react";
+import { toast } from "sonner";
 import { loadItems } from "@/app/drive/actions";
+import { restoreItem, trashItem } from "@/app/drive/trash-actions";
 import FilePreview, { type PreviewFile } from "@/components/drive/file-preview";
 import ItemMenu from "@/components/drive/item-menu";
 import MoveDialog from "@/components/drive/move-dialog";
@@ -31,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { itemsQueryKey } from "@/lib/query-keys";
+import { restoreMessage } from "@/lib/restore-message";
 
 type ItemListProps = {
   parentId: string | null;
@@ -54,6 +57,39 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
   });
 
   const rows = query.data.pages.flatMap((page) => page.items);
+
+  const queryClient = useQueryClient();
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: itemsQueryKey(parentId) }),
+      queryClient.invalidateQueries({ queryKey: ["folders"] }),
+    ]);
+
+  // No confirm: trash is undoable, from the toast or from the Trash page.
+  const moveToTrash = async (item: ItemRef) => {
+    const result = await trashItem({ itemId: item.id });
+    if (result.error !== null) {
+      toast.error(result.error);
+      return;
+    }
+    await refresh();
+    toast.success(`"${item.name}" moved to trash`, {
+      // Long enough to reach for Undo (sonner's default is 4 seconds).
+      duration: 10_000,
+      action: {
+        label: "Undo",
+        onClick: async () => {
+          const restored = await restoreItem({ itemId: item.id });
+          if (restored.error !== null) {
+            toast.error(restored.error);
+            return;
+          }
+          await refresh();
+          toast.success(restoreMessage(restored));
+        },
+      },
+    });
+  };
 
   const [previewing, setPreviewing] = useState<PreviewFile | null>(null);
   const [renaming, setRenaming] = useState<ItemRef | null>(null);
@@ -131,6 +167,7 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
                   onPreview={() => setPreviewing(item)}
                   onRename={() => setRenaming(item)}
                   onMove={() => setMoving(item)}
+                  onTrash={() => moveToTrash(item)}
                 />
               </TableCell>
             </TableRow>

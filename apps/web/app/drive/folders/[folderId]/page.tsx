@@ -3,13 +3,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import FolderView from "@/components/drive/folder-view";
-import { resolveFolder } from "@/lib/folders";
+import TrashedFolder from "@/components/drive/trashed-folder";
+import { findTrashedFolder, resolveFolder } from "@/lib/folders";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = { title: "My Drive" };
 
-// A missing folder, someone else's, or one in the trash all get the same 404:
-// the page never says that a folder exists (diagram 7).
+// A missing folder or someone else's gets the same 404: the page never says
+// that a folder exists (diagram 7). The user's own trashed folder says so.
 const FolderContent = async ({ params }: { params: Promise<{ folderId: string }> }) => {
   const [{ folderId }, { user }] = await Promise.all([params, requireSession()]);
   if (!itemIdSchema.safeParse(folderId).success) {
@@ -17,7 +18,16 @@ const FolderContent = async ({ params }: { params: Promise<{ folderId: string }>
   }
   const folder = await resolveFolder(user, folderId, "view");
   if (!folder) {
-    notFound();
+    const trashed = await findTrashedFolder(user, folderId);
+    if (!trashed) {
+      notFound();
+    }
+    return (
+      <TrashedFolder
+        folder={{ id: trashed.id, name: trashed.name }}
+        isTrashRoot={trashed.trashRoot}
+      />
+    );
   }
   return <FolderView folderId={folderId} ownerId={folder.ownerId} />;
 };

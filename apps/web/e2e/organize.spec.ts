@@ -17,7 +17,7 @@ test("rename and move: keep the extension, name clash, move into a folder, not i
   };
   const openMenu = async (name: string, item: "Rename" | "Move") => {
     await page.getByRole("button", { name: `Actions for ${name}`, exact: true }).click();
-    await page.getByRole("menuitem", { name: item }).click();
+    await page.getByRole("menuitem", { name: item, exact: true }).click();
   };
 
   await test.step("set up two folders and a file", async () => {

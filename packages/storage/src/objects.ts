@@ -1,5 +1,6 @@
 import {
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -88,4 +89,23 @@ export const getRange = async (key: string, bytes: number) => {
     throw new Error("Storage returned no body");
   }
   return object.Body.transformToByteArray();
+};
+
+// Deletes many objects, 1000 per request (the S3 maximum). Free on R2, so
+// not counted. Returns the keys storage couldn't delete.
+export const deleteObjects = async (keys: string[]) => {
+  const failed: string[] = [];
+  for (let start = 0; start < keys.length; start += 1000) {
+    const batch = keys.slice(start, start + 1000);
+    const result = await s3.send(
+      new DeleteObjectsCommand({
+        Bucket: bucket,
+        Delete: { Objects: batch.map((Key) => ({ Key })), Quiet: true },
+      }),
+    );
+    for (const error of result.Errors ?? []) {
+      if (error.Key) failed.push(error.Key);
+    }
+  }
+  return failed;
 };

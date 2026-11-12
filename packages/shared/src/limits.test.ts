@@ -7,6 +7,7 @@ import {
   PART_SIZE,
   partSizes,
   quotaMessage,
+  trashDaysLeft,
   uploadLimitError,
 } from "./limits.ts";
 
@@ -86,5 +87,22 @@ describe("partSizes", () => {
   it("never needs more than 10 parts", () => {
     expect(partSizes(MAX_FILE_SIZE)).toHaveLength(10);
     expect(partSizes(MAX_FILE_SIZE).every((size) => size === PART_SIZE)).toBe(true);
+  });
+});
+
+describe("trashDaysLeft", () => {
+  const trashedAt = new Date("2026-11-01T12:00:00Z");
+  const daysLater = (days: number) => new Date(trashedAt.getTime() + days * 24 * 60 * 60 * 1000);
+
+  it("counts down from 30 whole days", () => {
+    expect(trashDaysLeft(trashedAt, trashedAt)).toBe(30);
+    expect(trashDaysLeft(trashedAt, daysLater(0.5))).toBe(30);
+    expect(trashDaysLeft(trashedAt, daysLater(1))).toBe(29);
+    expect(trashDaysLeft(trashedAt, daysLater(29.5))).toBe(1);
+  });
+
+  it("never goes below 0", () => {
+    expect(trashDaysLeft(trashedAt, daysLater(30))).toBe(0);
+    expect(trashDaysLeft(trashedAt, daysLater(45))).toBe(0);
   });
 });

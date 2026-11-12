@@ -1,7 +1,7 @@
 "use client";
 
 import type { ListedItem } from "@devsbucket/db/items";
-import { Download, Eye, FolderInput, MoreHorizontal, Pencil } from "lucide-react";
+import { Download, Eye, FolderInput, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useRef } from "react";
 import { downloadUrl } from "@/components/drive/file-preview";
 import { Button } from "@/components/ui/button";
@@ -18,10 +18,11 @@ type ItemMenuProps = {
   onPreview: () => void;
   onRename: () => void;
   onMove: () => void;
+  onTrash: () => void;
 };
 
-// The ⋯ menu on each row. Trash joins it in step 10.
-const ItemMenu = ({ item, onPreview, onRename, onMove }: ItemMenuProps) => {
+// The ⋯ menu on each row.
+const ItemMenu = ({ item, onPreview, onRename, onMove, onTrash }: ItemMenuProps) => {
   // Dialogs open once the menu has fully closed. Opened sooner, the closing
   // menu and the dialog fight over focus, and the dialog's focus trap ends
   // up selecting the whole name field in Rename.
@@ -70,6 +71,11 @@ const ItemMenu = ({ item, onPreview, onRename, onMove }: ItemMenuProps) => {
         <DropdownMenuItem onSelect={openDialog(onMove)}>
           <FolderInput />
           Move
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem variant="destructive" onSelect={onTrash}>
+          <Trash2 />
+          Move to trash
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

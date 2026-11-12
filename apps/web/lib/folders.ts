@@ -21,3 +21,13 @@ export const resolveFolder = async (
   }
   return item;
 };
+
+// A folder `user` may see that is in the trash, or null. Its old link then
+// says so (with Restore) instead of a 404.
+export const findTrashedFolder = async (user: { id: string }, folderId: string) => {
+  const item = await getItem(folderId);
+  if (item?.type !== "folder" || item.trashedAt === null || !can(user, "view", item)) {
+    return null;
+  }
+  return item;
+};

@@ -125,7 +125,7 @@ export const createFolder = async (values: {
 // Every name in a folder that starts like `name` without its extension: all
 // that nextAvailableName needs to pick "notes (1).md", without reading a
 // whole folder. Trashed items don't count; pending uploads do.
-const takenNames = async (
+export const takenNames = async (
   tx: Executor,
   { ownerId, parentId, name }: { ownerId: string; parentId: string | null; name: string },
 ) => {
