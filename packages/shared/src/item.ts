@@ -124,3 +124,19 @@ export const completeUploadSchema = z.object({
     .max(10_000)
     .optional(),
 });
+
+export const renameItemSchema = z.object({ itemId: itemIdSchema, name: itemNameSchema });
+
+export const moveItemSchema = z.object({
+  itemId: itemIdSchema,
+  // The folder to move into; null = the top level of My Drive.
+  parentId: itemIdSchema.nullable(),
+});
+
+// The folders inside one folder, for the Move dialog's folder picker.
+export const listFoldersSchema = z.object({ parentId: itemIdSchema.nullable() });
+
+// The part of a file name to select when renaming: everything before the
+// extension ("notes" in "notes.md"), so typing keeps ".md". Folders: all of it.
+export const renameSelection = (name: string, isFolder: boolean) =>
+  isFolder ? name.length : splitExtension(name)[0].length;

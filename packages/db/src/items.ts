@@ -2,6 +2,7 @@ import { type Cursor, nextAvailableName, splitExtension } from "@devsbucket/shar
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { db, type Executor } from "./client.ts";
 import { isUniqueViolation } from "./errors.ts";
+import { users } from "./schema/auth.ts";
 import { items } from "./schema/items.ts";
 import { releaseStorage, reserveStorage } from "./usage.ts";
 
@@ -238,4 +239,101 @@ export const setUploadId = async (id: string, uploadId: string) => {
     .update(items)
     .set({ uploadId })
     .where(and(eq(items.id, id), eq(items.status, "pending")));
+};
+
+// The folders directly inside a folder (or the top level), by name, for the
+// Move dialog's folder picker. Capped: a picker with thousands of folders
+// at one level isn't usable anyway.
+export const listFolders = async ({
+  ownerId,
+  parentId,
+}: {
+  ownerId: string;
+  parentId: string | null;
+}) => {
+  return db
+    .select({ id: items.id, name: items.name })
+    .from(items)
+    .where(
+      and(
+        parentId === null
+          ? and(eq(items.ownerId, ownerId), isNull(items.parentId))
+          : eq(items.parentId, parentId),
+        eq(items.type, "folder"),
+        isNull(items.trashedAt),
+      ),
+    )
+    .orderBy(sortName, items.id)
+    .limit(500);
+};
+
+// Renames an item; the unique index refuses a name already in its folder.
+export const renameItem = async (id: string, name: string) => {
+  try {
+    const [renamed] = await db
+      .update(items)
+      .set({ name })
+      .where(and(eq(items.id, id), isNull(items.trashedAt)))
+      .returning({ id: items.id, name: items.name, parentId: items.parentId });
+    return renamed
+      ? ({ ok: true, item: renamed } as const)
+      : ({ ok: false, reason: "gone" } as const);
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      return { ok: false, reason: "name-taken" } as const;
+    }
+    throw error;
+  }
+};
+
+// Is `folderId` the folder `ancestorId` itself, or somewhere inside it?
+// Walks up from folderId, like the breadcrumbs.
+const isInside = async (tx: Executor, folderId: string, ancestorId: string) => {
+  const result = await tx.execute<{ found: boolean }>(sql`
+    with recursive chain as (
+      select id, parent_id, 0 as depth from ${items} where id = ${folderId}
+      union all
+      select i.id, i.parent_id, c.depth + 1
+      from ${items} i join chain c on i.id = c.parent_id
+      where c.depth < 100
+    )
+    select exists (select 1 from chain where id = ${ancestorId}) as found
+  `);
+  return result.rows[0]?.found ?? false;
+};
+
+// Moves an item into another folder of the same tree (or its top level).
+// A folder can't go into itself or anything inside it: that would cut the
+// subtree off from My Drive in a loop. Moves in one tree take turns (the
+// owner's row is locked), so two opposite moves at once can't make a loop.
+export const moveItem = async ({
+  id,
+  ownerId,
+  parentId,
+}: {
+  id: string;
+  ownerId: string;
+  parentId: string | null;
+}) => {
+  try {
+    return await db.transaction(async (tx) => {
+      await tx.execute(sql`select 1 from ${users} where id = ${ownerId} for update`);
+      if (parentId !== null && (await isInside(tx, parentId, id))) {
+        return { ok: false, reason: "into-itself" } as const;
+      }
+      const [moved] = await tx
+        .update(items)
+        .set({ parentId })
+        .where(and(eq(items.id, id), eq(items.ownerId, ownerId), isNull(items.trashedAt)))
+        .returning({ id: items.id, name: items.name, parentId: items.parentId });
+      return moved
+        ? ({ ok: true, item: moved } as const)
+        : ({ ok: false, reason: "gone" } as const);
+    });
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      return { ok: false, reason: "name-taken" } as const;
+    }
+    throw error;
+  }
 };

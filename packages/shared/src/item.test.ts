@@ -5,7 +5,9 @@ import {
   listItemsSchema,
   MAX_NAME_LENGTH,
   mimeTypeSchema,
+  moveItemSchema,
   nextAvailableName,
+  renameSelection,
   requestUploadSchema,
 } from "./item.ts";
 
@@ -135,5 +137,26 @@ describe("requestUploadSchema", () => {
 
   it("applies the name rules", () => {
     expect(requestUploadSchema.safeParse({ ...valid, name: ".." }).success).toBe(false);
+  });
+});
+
+describe("renameSelection", () => {
+  it("selects a file's name without its extension", () => {
+    expect(renameSelection("notes.md", false)).toBe(5);
+    expect(renameSelection("archive.tar.gz", false)).toBe(11);
+    expect(renameSelection(".env", false)).toBe(4);
+  });
+
+  it("selects all of a folder's name", () => {
+    expect(renameSelection("v1.2", true)).toBe(4);
+  });
+});
+
+describe("moveItemSchema", () => {
+  it("accepts the top level or a folder id", () => {
+    const itemId = "01a1d076-4aaf-70a7-9be6-c5ee03f17797";
+    expect(moveItemSchema.safeParse({ itemId, parentId: null }).success).toBe(true);
+    expect(moveItemSchema.safeParse({ itemId, parentId: itemId }).success).toBe(true);
+    expect(moveItemSchema.safeParse({ itemId, parentId: "My Drive" }).success).toBe(false);
   });
 });
