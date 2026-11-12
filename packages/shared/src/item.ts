@@ -114,3 +114,13 @@ export const requestUploadSchema = z.object({
 });
 
 export const uploadIdSchema = z.object({ itemId: itemIdSchema });
+
+// After the browser's PUTs. A multipart upload also sends each part's ETag,
+// in order (storage checks them when it joins the parts).
+export const completeUploadSchema = z.object({
+  itemId: itemIdSchema,
+  parts: z
+    .array(z.object({ partNumber: z.int().min(1).max(10_000), etag: z.string().min(1).max(200) }))
+    .max(10_000)
+    .optional(),
+});

@@ -1,5 +1,6 @@
 "use client";
 
+import type { Part } from "@devsbucket/shared/limits";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import {
@@ -14,7 +15,7 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { cancelUpload, completeUpload, requestUpload } from "@/app/drive/upload-actions";
-import { putFile } from "@/lib/put-file";
+import { putFile, putParts } from "@/lib/put-file";
 import { itemsQueryKey } from "@/lib/query-keys";
 
 export type UploadStatus = "queued" | "uploading" | "done" | "error" | "cancelled";
@@ -96,15 +97,16 @@ const UploadsProvider = ({ children }: { children: ReactNode }) => {
       }
       const savedAs = request.renamed ? request.name : null;
       update(id, { savedAs });
+      const onProgress = (progress: number) => update(id, { progress });
+      let parts: Part[] | undefined;
       try {
         signal.throwIfAborted();
-        await putFile({
-          url: request.url,
-          file,
-          contentType: request.contentType,
-          onProgress: (progress) => update(id, { progress }),
-          signal,
-        });
+        if (request.upload.kind === "multipart") {
+          parts = await putParts({ parts: request.upload.parts, file, onProgress, signal });
+        } else {
+          const { url, contentType } = request.upload;
+          await putFile({ url, file, contentType, onProgress, signal });
+        }
       } catch {
         await cancelUpload({ itemId: request.itemId });
         if (signal.aborted) {
@@ -115,7 +117,7 @@ const UploadsProvider = ({ children }: { children: ReactNode }) => {
         }
         return;
       }
-      const complete = await completeUpload({ itemId: request.itemId });
+      const complete = await completeUpload({ itemId: request.itemId, parts });
       if (complete.error !== null) {
         update(id, { status: "error", error: complete.error });
         batch.current.failed += 1;

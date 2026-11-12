@@ -4,6 +4,8 @@ import {
   FREE_OPS,
   MAX_FILE_SIZE,
   opsLevel,
+  PART_SIZE,
+  partSizes,
   quotaMessage,
   uploadLimitError,
 } from "./limits.ts";
@@ -71,5 +73,18 @@ describe("uploadLimitError", () => {
 describe("quotaMessage", () => {
   it("shows used and quota in readable units", () => {
     expect(quotaMessage(512 * 1024 ** 2, 1024 ** 3)).toBe("Not enough space: 512 MB of 1 GB used.");
+  });
+});
+
+describe("partSizes", () => {
+  it("cuts a file into 10 MB parts and a smaller last part", () => {
+    const MiB = 1024 ** 2;
+    expect(partSizes(25 * MiB)).toEqual([10 * MiB, 10 * MiB, 5 * MiB]);
+    expect(partSizes(50 * MiB + 1)).toEqual([10 * MiB, 10 * MiB, 10 * MiB, 10 * MiB, 10 * MiB, 1]);
+  });
+
+  it("never needs more than 10 parts", () => {
+    expect(partSizes(MAX_FILE_SIZE)).toHaveLength(10);
+    expect(partSizes(MAX_FILE_SIZE).every((size) => size === PART_SIZE)).toBe(true);
   });
 });
