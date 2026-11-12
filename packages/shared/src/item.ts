@@ -62,7 +62,7 @@ export const nameTakenMessage = (name: string) =>
 // Splits "notes.md" into ["notes", ".md"]. Only the last extension counts
 // ("archive.tar.gz" -> ["archive.tar", ".gz"]), and a leading dot isn't one
 // (".env" -> [".env", ""]).
-const splitExtension = (name: string): [string, string] => {
+export const splitExtension = (name: string): [string, string] => {
   const dot = name.lastIndexOf(".");
   if (dot <= 0) {
     return [name, ""];
@@ -93,3 +93,24 @@ export const nextAvailableName = (
     }
   }
 };
+
+// What the browser says about a file it wants to upload. The type is only a
+// label for later (previews choose from their own allowlist): anything that
+// isn't a plain "type/subtype" becomes application/octet-stream.
+const MIME_TYPE = /^[a-z0-9][a-z0-9!#$&^_.+-]*\/[a-z0-9][a-z0-9!#$&^_.+-]*$/;
+export const DEFAULT_MIME_TYPE = "application/octet-stream";
+
+export const mimeTypeSchema = z
+  .string()
+  .transform((type) => type.trim().toLowerCase())
+  .transform((type) => (type.length <= 255 && MIME_TYPE.test(type) ? type : DEFAULT_MIME_TYPE));
+
+export const requestUploadSchema = z.object({
+  parentId: itemIdSchema.nullable(),
+  name: itemNameSchema,
+  // The size limit itself is checked with the other limits (shared/limits).
+  size: z.int().nonnegative(),
+  mimeType: mimeTypeSchema,
+});
+
+export const uploadIdSchema = z.object({ itemId: itemIdSchema });

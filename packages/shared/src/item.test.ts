@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { itemNameSchema, listItemsSchema, MAX_NAME_LENGTH, nextAvailableName } from "./item.ts";
+import {
+  DEFAULT_MIME_TYPE,
+  itemNameSchema,
+  listItemsSchema,
+  MAX_NAME_LENGTH,
+  mimeTypeSchema,
+  nextAvailableName,
+  requestUploadSchema,
+} from "./item.ts";
 
 describe("itemNameSchema", () => {
   it("trims", () => {
@@ -93,5 +101,39 @@ describe("listItemsSchema", () => {
     ["a cursor missing fields", { parentId: null, cursor: { id } }],
   ])("rejects %s", (_label, input) => {
     expect(listItemsSchema.safeParse(input).success).toBe(false);
+  });
+});
+
+describe("mimeTypeSchema", () => {
+  it("keeps a plain type, lowercased", () => {
+    expect(mimeTypeSchema.parse("text/plain")).toBe("text/plain");
+    expect(mimeTypeSchema.parse("Image/PNG")).toBe("image/png");
+    expect(mimeTypeSchema.parse("application/vnd.ms-excel")).toBe("application/vnd.ms-excel");
+  });
+
+  it("falls back to application/octet-stream for anything else", () => {
+    expect(mimeTypeSchema.parse("")).toBe(DEFAULT_MIME_TYPE);
+    expect(mimeTypeSchema.parse("text/plain; charset=utf-8")).toBe(DEFAULT_MIME_TYPE);
+    expect(mimeTypeSchema.parse("text/html\r\nX-Evil: 1")).toBe(DEFAULT_MIME_TYPE);
+    expect(mimeTypeSchema.parse("nonsense")).toBe(DEFAULT_MIME_TYPE);
+  });
+});
+
+describe("requestUploadSchema", () => {
+  const valid = { parentId: null, name: "notes.md", size: 12, mimeType: "text/markdown" };
+
+  it("accepts a file, including an empty one", () => {
+    expect(requestUploadSchema.safeParse(valid).success).toBe(true);
+    expect(requestUploadSchema.safeParse({ ...valid, size: 0 }).success).toBe(true);
+  });
+
+  it("refuses sizes that aren't a byte count", () => {
+    expect(requestUploadSchema.safeParse({ ...valid, size: -1 }).success).toBe(false);
+    expect(requestUploadSchema.safeParse({ ...valid, size: 1.5 }).success).toBe(false);
+    expect(requestUploadSchema.safeParse({ ...valid, size: "12" }).success).toBe(false);
+  });
+
+  it("applies the name rules", () => {
+    expect(requestUploadSchema.safeParse({ ...valid, name: ".." }).success).toBe(false);
   });
 });

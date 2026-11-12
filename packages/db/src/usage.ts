@@ -1,6 +1,6 @@
 import type { OpsCount } from "@devsbucket/shared/limits";
 import { and, eq, sql } from "drizzle-orm";
-import { db } from "./client.ts";
+import { db, type Executor } from "./client.ts";
 import { users } from "./schema/auth.ts";
 import { usageCounters } from "./schema/usage.ts";
 
@@ -41,8 +41,8 @@ export const getAppStorageUsed = async () => {
 // Takes `bytes` from the user's quota before an upload starts. The check and
 // the update are one statement, so two uploads at once can't both squeeze
 // into the last free megabytes.
-export const reserveStorage = async (userId: string, bytes: number) => {
-  const [reserved] = await db
+export const reserveStorage = async (userId: string, bytes: number, tx: Executor = db) => {
+  const [reserved] = await tx
     .update(users)
     .set({ storageUsed: sql`${users.storageUsed} + ${bytes}` })
     .where(and(eq(users.id, userId), sql`${users.storageUsed} + ${bytes} <= ${users.storageQuota}`))
@@ -50,7 +50,7 @@ export const reserveStorage = async (userId: string, bytes: number) => {
   if (reserved) {
     return { ok: true } as const;
   }
-  const [user] = await db
+  const [user] = await tx
     .select({ storageUsed: users.storageUsed, storageQuota: users.storageQuota })
     .from(users)
     .where(eq(users.id, userId));
@@ -58,8 +58,8 @@ export const reserveStorage = async (userId: string, bytes: number) => {
 };
 
 // Gives bytes back (cancelled upload, deleted file). Never below zero.
-export const releaseStorage = async (userId: string, bytes: number) => {
-  await db
+export const releaseStorage = async (userId: string, bytes: number, tx: Executor = db) => {
+  await tx
     .update(users)
     .set({ storageUsed: sql`greatest(${users.storageUsed} - ${bytes}, 0)` })
     .where(eq(users.id, userId));

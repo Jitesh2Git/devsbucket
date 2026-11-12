@@ -1,17 +1,12 @@
 import { expect, test } from "@playwright/test";
+import { signUpWithOwnInvite } from "./sign-up";
 import { connectTestDb } from "./test-db";
 
 test("folders: create, name clash, open, breadcrumbs, load more, 404", async ({ page }) => {
   const stamp = Date.now();
-  const email = `e2e-drive-${stamp}@example.test`;
   const db = await connectTestDb();
 
-  // This test brings its own invite (auth.spec.ts uses the shared one), and
-  // someone else's folder to try to open.
-  const invite = `E2E-DRIVE-${stamp}`;
-  await db.query("insert into invites (code, expires_at) values ($1, now() + interval '1 day')", [
-    invite,
-  ]);
+  // Someone else's folder, to try to open.
   const other = await db.query<{ id: string }>(
     "insert into users (name, email) values ('Other', $1) returning id",
     [`e2e-other-${stamp}@example.test`],
@@ -21,16 +16,7 @@ test("folders: create, name clash, open, breadcrumbs, load more, 404", async ({ 
     [other.rows[0]?.id],
   );
 
-  await test.step("sign up", async () => {
-    await page.goto("/sign-up");
-    await page.getByLabel("Invite code").fill(invite);
-    await page.getByRole("button", { name: "Continue" }).click();
-    await page.getByLabel("Name").fill("E2E Drive");
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password", { exact: true }).fill("e2e-password-1");
-    await page.getByRole("button", { name: "Create account" }).click();
-    await expect(page).toHaveURL("/drive");
-  });
+  const email = await test.step("sign up", () => signUpWithOwnInvite(page, db, "drive"));
 
   const newFolder = async (name: string) => {
     await page.getByRole("button", { name: "New folder" }).click();
