@@ -8,7 +8,7 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!**/public", "!packages/db/drizzle"]
+    "includes": ["**", "!**/public", "!packages/db/drizzle", "!.claude"]
   },
   "formatter": {
     "enabled": true,

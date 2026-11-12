@@ -29,6 +29,8 @@ The user is building this **by hand to learn**. Unless the user explicitly says 
 
 When the user says "you do it", do that step fully, then go back to learning mode.
 
+Project skills for this loop (`.claude/skills/`, excluded from Biome so it can't reformat their frontmatter): `step-scratch` (build and test the next step in a throwaway copy with its own Postgres, before explaining it) and `step-verify` (verify the user's work, run `.claude/skills/step-verify/check.sh [--e2e]`, tick PROGRESS.md, give the commit, PR title and full PR description).
+
 ## Machine (as of 2026-11-12)
 
 - Installed: Node 24.21 LTS, pnpm 12.18.0 (via corepack, pinned by `packageManager` in the root `package.json`), Docker 29.9.3. Docker Desktop must be running for Compose.
