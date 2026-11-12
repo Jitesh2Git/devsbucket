@@ -2,3 +2,5 @@
 // whole schema as a single object.
 export * from "./auth.ts";
 export * from "./invites.ts";
+export * from "./items.ts";
+export * from "./usage.ts";

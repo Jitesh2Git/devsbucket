@@ -105,7 +105,8 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
 ### Follow-ups from Phase 1
 
 - [ ] Remove the 8 `minimumReleaseAgeExclude` entries for Better Auth 1.7.21 from `pnpm-workspace.yaml` (from 10a). They're unnecessary once the release is a day old (after 2026-11-12 17:58 UTC); check that `pnpm install` still passes.
-- [ ] Ruleset `main`: allow only the **Merge** method (untick Squash and Rebase), so GitHub enforces the merge-commit convention.
+  - Note: still too early on 2026-11-12 (`pnpm install` refused under the release-age policy before 17:58 UTC). Moved to step 2's branch.
+- [x] Ruleset `main`: allow only the **Merge** method (untick Squash and Rebase), so GitHub enforces the merge-commit convention.
 - [ ] Admin command for password resets and removing accounts (LOCKED.md; also the fix for someone taking another person's email first, decision 0005).
 
 ## Phase 2: Drive basics (next)
@@ -116,7 +117,10 @@ Full plan: `docs/plans/phase-2.md` (design, data model, limits, upload flow, ste
 
 Only the owner can see or touch their items in this phase. Sharing, the role grid, activity and realtime events stay in Phase 3, but every check already goes through `packages/authz` so Phase 3 extends it instead of retrofitting.
 
-- [ ] 1. **Items schema:** `items` table (folder / file / note, owner, parent, created by, name, MIME type, size, storage key, pending / ready, trash fields), indexes, migration. Also the Phase 1 follow-ups (release-age exclusions, ruleset merge method)
+- [x] 1. **Items schema:** `items` table (folder / file / note, owner, parent, created by, name, MIME type, size, storage key, pending / ready, trash fields), indexes, migration. Also the Phase 1 follow-ups (release-age exclusions, ruleset merge method)
+  - Note: `packages/db/src/schema/items.ts` and `usage.ts`, migration `0001_items`. Unique names use a partial expression index `(owner_id, coalesce(parent_id, owner_id), lower(name)) where trashed_at is null`; the generated SQL was checked. `type`/`status` are text with check constraints (Drizzle's `text({ enum })` only types TypeScript). The database also checks name length (1–255) and `parent_id <> id`; the full name rules come in step 4 (Zod). `db:reset-test` now truncates `usage_counters` too. Applied to dev and test DB.
+  - Gotcha: with `casing: "snake_case"`, Drizzle's automatic constraint names stay camelCase (`items_storageKey_unique`), so multi-word `.unique()` columns get an explicit name.
+  - Note: ruleset follow-up done (Merge only). The release-age exclusions move to step 2 (too early on 2026-11-12).
 - [ ] 2. **packages/authz v0:** `can(user, action, item)` with owner-only rules, unit tests. Phase 3 adds roles and grants
 - [ ] 3. **Drive shell:** `/drive` layout (sidebar: My Drive, Trash, storage meter), signed-in only, TanStack Query provider, empty state
 - [ ] 4. **Folders and browsing:** create folder, list a folder (folders first, then by name) with cursor pagination, breadcrumbs
