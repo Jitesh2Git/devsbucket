@@ -4,11 +4,19 @@ import type { ListItemsPage } from "@devsbucket/db/items";
 import { formatBytes } from "@devsbucket/shared/bytes";
 import type { Cursor } from "@devsbucket/shared/item";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { File, Folder, FolderOpen } from "lucide-react";
+import { Download, Eye, File, Folder, FolderOpen, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
+import { useLayoutEffect, useState } from "react";
 import { loadItems } from "@/app/drive/actions";
+import FilePreview, { downloadUrl, type PreviewFile } from "@/components/drive/file-preview";
 import LocalDate from "@/components/local-date";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Empty,
   EmptyDescription,
@@ -50,6 +58,11 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
 
   const rows = query.data.pages.flatMap((page) => page.items);
 
+  const [previewing, setPreviewing] = useState<PreviewFile | null>(null);
+  // Leaving the page only hides it (Activity): close the preview, so a
+  // video doesn't keep playing out of sight.
+  useLayoutEffect(() => () => setPreviewing(null), []);
+
   if (rows.length === 0) {
     return (
       <Empty className="border border-dashed">
@@ -72,6 +85,9 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
             <TableHead>Name</TableHead>
             <TableHead className="w-28 text-right">Size</TableHead>
             <TableHead className="w-36">Modified</TableHead>
+            <TableHead className="w-12">
+              <span className="sr-only">Actions</span>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -87,10 +103,14 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
                     <span className="truncate">{item.name}</span>
                   </Link>
                 ) : (
-                  <span className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewing(item)}
+                    className="flex w-full items-center gap-2 text-left hover:underline"
+                  >
                     <File className="size-4 shrink-0 text-muted-foreground" />
                     <span className="truncate">{item.name}</span>
-                  </span>
+                  </button>
                 )}
               </TableCell>
               <TableCell className="text-right text-muted-foreground">
@@ -98,6 +118,33 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
               </TableCell>
               <TableCell className="text-muted-foreground">
                 <LocalDate value={item.updatedAt} />
+              </TableCell>
+              <TableCell>
+                {item.type === "file" && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label={`Actions for ${item.name}`}
+                      >
+                        <MoreHorizontal />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onSelect={() => setPreviewing(item)}>
+                        <Eye />
+                        Preview
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a href={downloadUrl(item.id)}>
+                          <Download />
+                          Download
+                        </a>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </TableCell>
             </TableRow>
           ))}
@@ -118,6 +165,7 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
           Couldn't load more. Try again.
         </p>
       )}
+      <FilePreview file={previewing} onClose={() => setPreviewing(null)} />
     </div>
   );
 };

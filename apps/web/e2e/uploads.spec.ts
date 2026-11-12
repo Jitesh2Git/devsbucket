@@ -37,7 +37,7 @@ test("uploads: upload, name clash, into a folder, quota full, cancel, multipart"
   await test.step("upload a file", async () => {
     await upload(textFile("hello.txt", "hello world\n"));
     await expect(panel.getByText("Uploads finished")).toBeVisible();
-    await expect(page.getByRole("cell", { name: "hello.txt" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "hello.txt", exact: true })).toBeVisible();
     await expect(page.getByRole("cell", { name: "12 B" })).toBeVisible();
     // The storage meter is refreshed after the batch.
     await expect(page.getByText("12 B of 1 GB used")).toBeVisible();
@@ -48,7 +48,7 @@ test("uploads: upload, name clash, into a folder, quota full, cancel, multipart"
     await expect(
       panel.getByText("Saved as Hello (1).txt: Hello.txt already exists here"),
     ).toBeVisible();
-    await expect(page.getByRole("cell", { name: "Hello (1).txt" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "Hello (1).txt", exact: true })).toBeVisible();
   });
 
   await test.step("upload into a folder", async () => {
@@ -58,10 +58,10 @@ test("uploads: upload, name clash, into a folder, quota full, cancel, multipart"
     await page.getByRole("link", { name: "Docs" }).click();
     await expect(page.getByRole("heading", { name: "Docs" })).toBeVisible();
     await upload(textFile("inside.txt", "in a folder\n"));
-    await expect(page.getByRole("cell", { name: "inside.txt" })).toBeVisible();
+    await expect(page.getByRole("cell", { name: "inside.txt", exact: true })).toBeVisible();
     await page.getByRole("link", { name: "My Drive" }).first().click();
     await expect(page.getByRole("cell", { name: "hello.txt", exact: true })).toBeVisible();
-    await expect(page.getByRole("cell", { name: "inside.txt" })).toBeHidden();
+    await expect(page.getByRole("cell", { name: "inside.txt", exact: true })).toBeHidden();
   });
 
   await test.step("a full quota refuses the upload", async () => {
@@ -69,7 +69,7 @@ test("uploads: upload, name clash, into a folder, quota full, cancel, multipart"
     await db.query("update users set storage_quota = storage_used + 5 where email = $1", [email]);
     await upload(textFile("too-much.txt", "more than five bytes\n"));
     await expect(panel.getByText(/^Not enough space: /)).toBeVisible();
-    await expect(page.getByRole("cell", { name: "too-much.txt" })).toBeHidden();
+    await expect(page.getByRole("cell", { name: "too-much.txt", exact: true })).toBeHidden();
     expect(await usage()).toEqual(before);
     await db.query("update users set storage_quota = 1073741824 where email = $1", [email]);
   });
@@ -95,7 +95,9 @@ test("uploads: upload, name clash, into a folder, quota full, cancel, multipart"
 
   await test.step("a file over 50 MB goes up in parts", async () => {
     await upload(bigFile);
-    await expect(page.getByRole("cell", { name: "big.bin" })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("cell", { name: "big.bin", exact: true })).toBeVisible({
+      timeout: 30_000,
+    });
     await expect(page.getByRole("cell", { name: "55 MB" })).toBeVisible();
     const { rows } = await db.query<{ size: string; upload_id: string | null }>(
       "select size, upload_id from items where name = 'big.bin' and status = 'ready'",

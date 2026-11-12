@@ -37,6 +37,7 @@ export const listItems = async ({
       id: items.id,
       type: items.type,
       name: items.name,
+      mimeType: items.mimeType,
       size: items.size,
       updatedAt: items.updatedAt,
       notFolder,

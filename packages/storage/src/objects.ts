@@ -1,4 +1,9 @@
-import { DeleteObjectCommand, HeadObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { countOps } from "@devsbucket/db/usage";
 import { bucket, s3 } from "./client.ts";
@@ -46,4 +51,41 @@ export const headObject = async (key: string) => {
 // not an error.
 export const deleteObject = async (key: string) => {
   await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+};
+
+// A short-lived URL the browser follows straight to storage. The headers
+// storage answers with are ours, part of the signature: the Content-Type
+// (previews serve only an allowlist) and Content-Disposition (inline or
+// download, with the real file name).
+export const presignGet = async (input: {
+  key: string;
+  contentDisposition: string;
+  contentType?: string;
+  expiresIn: number;
+}) => {
+  const url = await getSignedUrl(
+    s3,
+    new GetObjectCommand({
+      Bucket: bucket,
+      Key: input.key,
+      ResponseContentDisposition: input.contentDisposition,
+      ResponseContentType: input.contentType,
+    }),
+    { expiresIn: input.expiresIn },
+  );
+  // Counted when issued, like PUTs.
+  await countOps({ classB: 1 });
+  return url;
+};
+
+// The first `bytes` of an object (text previews read 1 MB, not the file).
+export const getRange = async (key: string, bytes: number) => {
+  await countOps({ classB: 1 });
+  const object = await s3.send(
+    new GetObjectCommand({ Bucket: bucket, Key: key, Range: `bytes=0-${bytes - 1}` }),
+  );
+  if (!object.Body) {
+    throw new Error("Storage returned no body");
+  }
+  return object.Body.transformToByteArray();
 };
