@@ -94,6 +94,8 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Gotcha: `apps/web` isn't an ES module package, so `import.meta` fails in Playwright's setup files; the DB reset runs as a pnpm script instead.
   - Note: DBeaver shows only the connection's own database by default; tick **Show all databases** (Edit Connection → Main) to see `devsbucket_test`.
 - [ ] 14. **CI:** GitHub Actions runs Biome, typecheck, Vitest and Playwright (with a Postgres service), and it goes green
+  - [ ] 14a. Branch `ci/github-actions`, `.github/workflows/ci.yml`, first green run on the PR
+  - [ ] 14b. Branch protection on `main`: PR required, the CI check must pass
 - [ ] 15. **Phase review:** update CLAUDE.md commands, tag `v0.1.0`
 
 ## Later phases (summary)
