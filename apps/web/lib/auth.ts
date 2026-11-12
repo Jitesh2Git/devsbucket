@@ -57,14 +57,20 @@ export const auth = betterAuth({
       disableImplicitSignUp: true,
     },
   },
+  // GitHub is attached to an account in exactly two ways: signing up with
+  // GitHub (new account), or "Connect" on the profile while signed in.
+  // See docs/decisions/0005-account-linking.md.
   account: {
     accountLinking: {
-      // "Connect GitHub" on the profile page: the user is signed in and asks
-      // for it, so the GitHub email may differ from theirs. (Linking by email
-      // from the sign-in page stays off: see the step 11 notes.)
+      // Never attach GitHub to an existing account just because the emails
+      // match ("Continue with GitHub" on sign-in). Otherwise Disconnect
+      // wouldn't stick: the next GitHub sign-in would reconnect it.
+      disableImplicitLinking: true,
+      // "Connect" links to whoever is signed in, so the GitHub email may
+      // differ from the account's.
       allowDifferentEmails: true,
-      // Copy name and avatar from GitHub when linking. Email never changes.
-      updateUserInfoOnLink: true,
+      // updateUserInfoOnLink stays off: connecting must not rename the
+      // account or replace its picture.
     },
   },
   user: {

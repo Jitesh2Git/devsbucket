@@ -1,6 +1,8 @@
 import { headers } from "next/headers";
+import ChangePasswordDialog from "@/components/profile/change-password-dialog";
 import ConnectGitHubButton from "@/components/profile/connect-github-button";
 import DisconnectGitHubButton from "@/components/profile/disconnect-github-button";
+import SetPasswordDialog from "@/components/profile/set-password-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
 
@@ -19,9 +21,7 @@ const SignInMethods = async () => {
       <CardContent className="flex flex-col divide-y">
         <div className="flex items-center justify-between gap-4 py-3 first:pt-0">
           <span className="text-sm font-medium">Email and password</span>
-          <span className="text-sm text-muted-foreground">
-            {hasPassword ? "Set up" : "Not set up"}
-          </span>
+          {hasPassword ? <ChangePasswordDialog /> : <SetPasswordDialog />}
         </div>
         <div className="flex items-center justify-between gap-4 py-3 last:pb-0">
           <span className="text-sm font-medium">GitHub</span>

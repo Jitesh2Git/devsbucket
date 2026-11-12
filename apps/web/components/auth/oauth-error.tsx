@@ -11,7 +11,7 @@ const MESSAGES: Record<string, string> = {
   signup_disabled:
     "No DevsBucket account is linked to this GitHub account. Have an invite? Create an account instead.",
   account_not_linked:
-    "An account with this email already exists. Sign in with your email and password.",
+    "An account with this email already exists. Sign in with your email and password, then connect GitHub from your profile.",
   access_denied: "GitHub sign-in was cancelled.",
   account_already_linked_to_different_user:
     "This GitHub account is already connected to a different DevsBucket account.",
