@@ -15,6 +15,7 @@
     "db:reset-test": "node src/reset-test-db.ts"
   },
   "dependencies": {
+    "@devsbucket/shared": "workspace:*",
     "drizzle-orm": "^0.45.4",
     "pg": "^8.23.1"
   },
