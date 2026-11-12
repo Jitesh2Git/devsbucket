@@ -85,9 +85,14 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Note: `auth.api.setPassword` is server-only (no public URL), so it's called from a server action; it refuses with `PASSWORD_ALREADY_SET` if a password exists. `changePassword` checks the current password (`INVALID_PASSWORD`) and with `revokeOtherSessions` deletes every other session and gives this device a new one. Both use Better Auth's "sensitive session" check, which only re-reads the session from the database (no recent-sign-in rule; that one is only on unlink).
   - Decision 0005 (account linking): GitHub is attached only by GitHub sign-up or **Connect** on the profile. `disableImplicitLinking: true`, because by default "Continue with GitHub" re-linked a verified account after Disconnect. `updateUserInfoOnLink` turned back off (connecting renamed accounts, so two accounts looked identical). Known gap: without email verification, someone with an invite can take another person's email first. That can't take over anything, but it blocks the owner. Mitigated by email-locked invites and the admin command.
   - Gotcha: `shadcn add dialog` asks to overwrite `components/ui/button.tsx` (a dependency). Answer **N**: the only difference is an `import type` line.
-- [ ] 13. **Tests:** Vitest with a first unit test, Playwright sign-in smoke test
+- [x] 13. **Tests:** Vitest with a first unit test, Playwright sign-in smoke test
   - [x] 13a. Branch `test/vitest-playwright`, Vitest in `packages/shared`, unit tests for the Zod schemas, `pnpm test` through turbo
-  - [ ] 13b. Playwright in `apps/web`: sign-up with an invite, sign out, sign in (smoke test)
+  - Note: Vitest 5.1, no config file (it finds `*.test.ts`); tests sit next to the code and import `describe`/`it`/`expect` explicitly. `pnpm test` is unit tests only, cached by turbo. Removed a stray `"rules": { "preset": "recommended" }` (a Biome setting) from the root `package.json`.
+  - [x] 13b. Playwright in `apps/web`: sign-up with an invite, sign out, sign in (smoke test)
+  - Note: Playwright 1.65 with its own Chromium (`pnpm --filter web exec playwright install chromium`). `pnpm test:e2e` resets a separate `devsbucket_test` database (`pnpm --filter @devsbucket/db db:reset-test`: create if missing, migrate, truncate, add invite `E2E-INVITE`; refuses any name not ending in `_test`) and starts its own server on port 3100 pointed at it. CI mode (`CI=1`): `next build && next start`, settings from the environment instead of `.env.local`.
+  - Gotcha: Next.js 16 allows one `next dev` per build folder (lock file `.next/dev/lock`), so the test server couldn't start while `pnpm dev` was running. `next.config.ts` now reads `distDir` from `NEXT_DIST_DIR`, and Playwright sets it to `.next-e2e`.
+  - Gotcha: `apps/web` isn't an ES module package, so `import.meta` fails in Playwright's setup files; the DB reset runs as a pnpm script instead.
+  - Note: DBeaver shows only the connection's own database by default; tick **Show all databases** (Edit Connection → Main) to see `devsbucket_test`.
 - [ ] 14. **CI:** GitHub Actions runs Biome, typecheck, Vitest and Playwright (with a Postgres service), and it goes green
 - [ ] 15. **Phase review:** update CLAUDE.md commands, tag `v0.1.0`
 
