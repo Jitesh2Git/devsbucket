@@ -9,7 +9,9 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "storage:setup": "node --env-file-if-exists=.env src/setup.ts",
-    "storage:check": "node --env-file-if-exists=.env src/check.ts"
+    "storage:check": "node --env-file-if-exists=.env src/check.ts",
+    "storage:setup-test": "node --env-file-if-exists=.env src/setup.ts --test",
+    "storage:reset-test": "node --env-file-if-exists=.env src/reset-test-bucket.ts"
   },
   "devDependencies": {
     "@devsbucket/typescript-config": "workspace:*",
