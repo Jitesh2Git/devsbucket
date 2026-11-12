@@ -174,9 +174,11 @@ Each is one branch and PR. Sizes are rough.
 | 11  | Worker              | `feat/worker`                                 | `apps/worker`, pg-boss, the three jobs, turbo dev wiring                                                                                                                   | Abandoned upload cleaned; trash older than 30 days emptied (time faked in a test)        |
 | 12  | Tests + review      | `test/drive-e2e`, then `chore/phase-2-review` | unit + e2e flow, Garage in CI, CLAUDE.md, tag `v0.2.0`                                                                                                                     | CI green; tag on the merge commit                                                        |
 
-## Open questions to settle in the step where they come up
+## Open questions (answered)
 
-- **Step 4:** infinite scroll vs a "Load more" button (start with the button; easier to test).
-- **Step 5:** check Garage's `PutBucketCors` behaviour and whether presigned PUTs enforce the signed `Content-Length`; if not, `completeUpload`'s size check is the guard (it is anyway).
-- **Step 8:** whether to stream text previews through the server or have the browser fetch a presigned range.
-- **Step 12:** test bucket vs key prefix for e2e files.
+- **Step 4:** a "Load more" button (infinite scroll can come later; the button is easier to test).
+- **Step 5:** Garage 2.5 supports `PutBucketCors`, and a presigned PUT with a different `Content-Length` or `Content-Type` gets 403. `completeUpload`'s size check stays as the final guard.
+- **Step 8:** text previews are read through the server (`loadTextPreview`: a 1 MB range, a NUL-byte check, one decode), not by the browser with a presigned range.
+- **Step 12:** a separate test bucket, `<S3_BUCKET>-test` (`pnpm storage:setup-test`), emptied before every e2e run, rather than a key prefix in the dev bucket.
+
+Built as planned, with one change of order: Garage joined CI in step 6, when the web app first imported `@devsbucket/storage`. Progress and notes: `docs/PROGRESS.md`.
