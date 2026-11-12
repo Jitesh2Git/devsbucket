@@ -65,7 +65,8 @@ Run from the repo root. Turborepo runs each task in every package that has that 
 - `pnpm typecheck`: `tsc --noEmit` in every package (web runs `next typegen` first).
 - `pnpm lint`: Biome lint + format check + import sorting over the whole repo, without changing files (what CI runs).
 - `pnpm lint:fix`: same, and applies safe fixes and formatting. `pnpm format`: formatting only.
-- `pnpm test`: wired into turbo, empty until Vitest (step 13).
+- `pnpm test`: unit tests (Vitest, `*.test.ts` next to the code) in every package that has them, through turbo (cached). Nothing needs to be running.
+- `pnpm test:e2e`: Playwright end-to-end tests (`apps/web/e2e/`). Needs Docker up and Playwright's Chromium (`pnpm --filter web exec playwright install chromium`). Resets the separate `devsbucket_test` database and starts its own server on port 3100 (build folder `.next-e2e`), so it runs next to `pnpm dev` and never touches dev data.
 - `pnpm --filter web <script>`: run a script in one package only.
 
 Local services (Docker Desktop must be running; config in `docker/compose.dev.yml`, secrets in `docker/.env`, copied from `docker/.env.example`):
@@ -81,10 +82,15 @@ Database (`packages/db`, needs `packages/db/.env` copied from `.env.example` wit
 - `pnpm db:migrate`: apply pending migrations.
 - `pnpm db:seed`: create an open invite if none exists (safe to re-run).
 - `pnpm db:studio`: browse the tables in the browser.
+- DBeaver (Community, installed with Homebrew): saved connection `DevsBucket (local)` (type Development) to `127.0.0.1:5432` with the credentials from `docker/.env`. Prod (phase 6) will go through an SSH tunnel, as a red Production connection, read-only by default, with a read-only role and no saved password (needs a decision note, since LOCKED.md keeps prod secrets on the server). Direct edits skip the app's rules (invites, ownership, quotas): view freely, change via admin commands.
 
 Web app (`apps/web`, needs `apps/web/.env.local` copied from `.env.example`: the same `DATABASE_URL` as `packages/db/.env`, `BETTER_AUTH_SECRET` from `openssl rand -base64 32`, `BETTER_AUTH_URL=http://localhost:3000`, and `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` from the local GitHub OAuth app, whose callback is `http://localhost:3000/api/auth/callback/github`; restart `pnpm dev` after changing it):
 
 - Sign-up is invite-only: get a code with `pnpm db:seed` (it prints an open invite, or creates one), then open `/sign-up`.
 - `pnpm --filter web exec shadcn add <component>`: add a shadcn component, then run `pnpm lint:fix` (shadcn's own style fails `pnpm lint` until Biome reformats it).
 
-Still to add as they're set up: how to run a single test.
+Single tests:
+
+- One unit test file: `pnpm --filter @devsbucket/shared exec vitest run src/user.test.ts` (add `-t "name"` for one test; drop `run` to watch).
+- One e2e test: `pnpm --filter web test:e2e e2e/auth.spec.ts` (add `-g "name"` to filter by title, `--headed` to watch the browser, `--ui` for Playwright's UI).
+- `pnpm --filter @devsbucket/db db:reset-test` resets the test database by hand (needs `DATABASE_URL` ending in `_test` and `E2E_INVITE_CODE`).
