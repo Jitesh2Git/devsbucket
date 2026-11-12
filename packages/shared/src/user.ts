@@ -12,3 +12,7 @@ export const usernameSchema = z
   );
 
 export type Username = z.infer<typeof usernameSchema>;
+
+export const setUsernameSchema = z.object({ username: usernameSchema });
+
+export type SetUsernameInput = z.infer<typeof setUsernameSchema>;

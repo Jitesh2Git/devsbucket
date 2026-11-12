@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 
 const InviteForm = () => {
   const form = useForm<InviteCodeInput>({
@@ -31,32 +32,35 @@ const InviteForm = () => {
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <FieldGroup>
-            <Controller
-              name="code"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="invite-code">Invite code</FieldLabel>
-                  <Input
-                    {...field}
-                    id="invite-code"
-                    autoComplete="off"
-                    aria-invalid={fieldState.invalid}
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-            <Field>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                Continue
-              </Button>
-              <FieldDescription className="text-center">
-                Already have an account? <Link href="/sign-in">Sign in</Link>
-              </FieldDescription>
-            </Field>
-          </FieldGroup>
+          <fieldset disabled={form.formState.isSubmitting} className="min-w-0">
+            <FieldGroup>
+              <Controller
+                name="code"
+                control={form.control}
+                render={({ field, fieldState }) => (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor="invite-code">Invite code</FieldLabel>
+                    <Input
+                      {...field}
+                      id="invite-code"
+                      autoComplete="off"
+                      aria-invalid={fieldState.invalid}
+                    />
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                )}
+              />
+              <Field>
+                <Button type="submit">
+                  {form.formState.isSubmitting && <Spinner />}
+                  Continue
+                </Button>
+                <FieldDescription className="text-center">
+                  Already have an account? <Link href="/sign-in">Sign in</Link>
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
+          </fieldset>
         </form>
       </CardContent>
     </Card>

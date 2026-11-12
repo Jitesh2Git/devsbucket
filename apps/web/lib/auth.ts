@@ -57,6 +57,22 @@ export const auth = betterAuth({
       disableImplicitSignUp: true,
     },
   },
+  // GitHub is attached to an account in exactly two ways: signing up with
+  // GitHub (new account), or "Connect" on the profile while signed in.
+  // See docs/decisions/0005-account-linking.md.
+  account: {
+    accountLinking: {
+      // Never attach GitHub to an existing account just because the emails
+      // match ("Continue with GitHub" on sign-in). Otherwise Disconnect
+      // wouldn't stick: the next GitHub sign-in would reconnect it.
+      disableImplicitLinking: true,
+      // "Connect" links to whoever is signed in, so the GitHub email may
+      // differ from the account's.
+      allowDifferentEmails: true,
+      // updateUserInfoOnLink stays off: connecting must not rename the
+      // account or replace its picture.
+    },
+  },
   user: {
     additionalFields: {
       username: { type: "string", required: false, input: false },
@@ -97,7 +113,18 @@ export const auth = betterAuth({
             ],
             update: { usedBy: user.id },
           });
-          ctx.setCookie(INVITE_COOKIE, "", { path: "/", maxAge: 0 });
+        },
+      },
+    },
+    session: {
+      create: {
+        // Any sign-in ends the invite flow, even one that didn't use the code
+        // (e.g. "Continue with GitHub" on /sign-up for an existing account).
+        // Otherwise the code would stay in this browser for the next person.
+        after: async (_session, ctx) => {
+          if (ctx?.getCookie(INVITE_COOKIE)) {
+            ctx.setCookie(INVITE_COOKIE, "", { path: "/", maxAge: 0 });
+          }
         },
       },
     },
