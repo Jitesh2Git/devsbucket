@@ -26,8 +26,5 @@
     "@biomejs/biome": "2.6.6",
     "turbo": "^2.11.10",
     "typescript": "^5.9.3"
-  },
-  "rules": {
-    "preset": "recommended"
   }
 }

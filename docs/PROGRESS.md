@@ -86,6 +86,8 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Decision 0005 (account linking): GitHub is attached only by GitHub sign-up or **Connect** on the profile. `disableImplicitLinking: true`, because by default "Continue with GitHub" re-linked a verified account after Disconnect. `updateUserInfoOnLink` turned back off (connecting renamed accounts, so two accounts looked identical). Known gap: without email verification, someone with an invite can take another person's email first. That can't take over anything, but it blocks the owner. Mitigated by email-locked invites and the admin command.
   - Gotcha: `shadcn add dialog` asks to overwrite `components/ui/button.tsx` (a dependency). Answer **N**: the only difference is an `import type` line.
 - [ ] 13. **Tests:** Vitest with a first unit test, Playwright sign-in smoke test
+  - [x] 13a. Branch `test/vitest-playwright`, Vitest in `packages/shared`, unit tests for the Zod schemas, `pnpm test` through turbo
+  - [ ] 13b. Playwright in `apps/web`: sign-up with an invite, sign out, sign in (smoke test)
 - [ ] 14. **CI:** GitHub Actions runs Biome, typecheck, Vitest and Playwright (with a Postgres service), and it goes green
 - [ ] 15. **Phase review:** update CLAUDE.md commands, tag `v0.1.0`
 
