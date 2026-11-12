@@ -1,0 +1,25 @@
+{
+  "name": "@devsbucket/storage",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "storage:setup": "node --env-file=.env src/setup.ts",
+    "storage:check": "node --env-file=.env src/check.ts"
+  },
+  "devDependencies": {
+    "@devsbucket/typescript-config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1166.0",
+    "@aws-sdk/s3-request-presigner": "^3.1166.0",
+    "@devsbucket/db": "workspace:*",
+    "@devsbucket/shared": "workspace:*"
+  }
+}
