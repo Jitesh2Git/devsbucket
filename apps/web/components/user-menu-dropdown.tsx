@@ -1,7 +1,7 @@
 "use client";
 
-import { LogOut } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LogOut, UserRound } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import UserAvatar from "@/components/user-avatar";
 import { authClient } from "@/lib/auth-client";
 
 type UserMenuDropdownProps = {
@@ -18,15 +19,6 @@ type UserMenuDropdownProps = {
   email: string;
   image: string | null;
 };
-
-// "Jitesh Mali" -> "JM", "demo" -> "D"
-const initials = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
 
 const UserMenuDropdown = ({ name, email, image }: UserMenuDropdownProps) => {
   const signOut = async () => {
@@ -41,10 +33,7 @@ const UserMenuDropdown = ({ name, email, image }: UserMenuDropdownProps) => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account menu">
-          <Avatar className="size-8">
-            {image && <AvatarImage src={image} alt="" />}
-            <AvatarFallback>{initials(name)}</AvatarFallback>
-          </Avatar>
+          <UserAvatar name={name} image={image} className="size-8" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
@@ -53,6 +42,12 @@ const UserMenuDropdown = ({ name, email, image }: UserMenuDropdownProps) => {
           <div className="truncate text-xs text-muted-foreground">{email}</div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/profile">
+            <UserRound />
+            Profile
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={signOut}>
           <LogOut />
           Sign out
