@@ -110,7 +110,7 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
 - [x] Ruleset `main`: allow only the **Merge** method (untick Squash and Rebase), so GitHub enforces the merge-commit convention.
 - [ ] Admin command for password resets and removing accounts (LOCKED.md; also the fix for someone taking another person's email first, decision 0005).
 
-## Phase 2: Drive basics (next)
+## Phase 2: Drive basics (done, `v0.2.0`)
 
 Full plan: `docs/plans/phase-2.md` (design, data model, limits, upload flow, step table). Decisions: 0006 (`packages/storage`), 0007 (unique names, 30-day trash).
 
@@ -186,13 +186,29 @@ Only the owner can see or touch their items in this phase. Sharing, the role gri
   - Note: shared cleanup moved to `packages/storage/src/cleanup.ts` (`discardUpload`, `deleteStoredFiles`, `isComplete`): the web app's upload and trash actions and the worker use the same code. Delete forever now queues failed storage deletes instead of only logging them. New queries: `listAbandonedUploads`, `listExpiredTrash` (ages measured by Postgres's `now()`).
   - Note: tested in scratch with aged rows: a 2-hour pending upload and a 31-day trashed folder (with a file) were removed with their objects and quota; a 30-minute upload and a 29-day trashed file stayed; a refused delete went to `retry`. Not automated yet: the jobs need a database and storage, which the unit-test stage doesn't prepare; revisit in step 12.
   - Gotcha: the worker folder was first created as `apps/web/worker`; pnpm only sees `apps/*` and `packages/*`, so `--filter worker` matched nothing. `Map.groupBy` is ES2024 and the shared tsconfig targets ES2023.
-- [ ] 12. **Tests and phase review:** unit tests (authz, name rules), e2e (folder, upload, rename, trash, restore), Garage in CI, CLAUDE.md, tag `v0.2.0`
+- [x] 12. **Tests and phase review:** unit tests (authz, name rules), e2e (folder, upload, rename, trash, restore), Garage in CI, CLAUDE.md, tag `v0.2.0`
   - Note: part 1 (`test/drive-e2e`): plan question answered, a separate test bucket rather than a key prefix. `pnpm storage:setup-test` creates `<S3_BUCKET>-test` through the S3 API (Garage's default key may create buckets; `BucketAlreadyOwnedByYou` is ignored, so it's safe to re-run) and sets its CORS; `storage:reset-test` (`packages/storage/src/reset-test-bucket.ts`) empties it, refusing any bucket not ending in `-test`. The e2e global setup resets the test bucket next to the test DB; `e2e/env.ts` `testEnv()` gives the web server (and the worker test) `DATABASE_URL` + `S3_BUCKET` for the test data. CI runs `storage:setup && storage:setup-test`. The dev bucket no longer gets e2e files (checked: unchanged across two runs).
   - Note: `flow.spec.ts`: one file's life (folders, upload, preview, rename, move, trash, restore, delete forever, 0 B). `worker.spec.ts`: runs `pnpm --filter worker job …` against the test data after aging rows with SQL (abandoned upload cleaned; 31-day trash deleted with its object, checked through a presigned download URL captured beforehand; 29-day trash kept); proven to fail when the cleanup age changes. Environment variables passed in win over `apps/worker/.env` (`--env-file-if-exists` doesn't override them). 8 e2e tests, green in dev and CI mode.
+  - Note: part 2 (`chore/phase-2-review`): compared with LOCKED.md and `docs/plans/phase-2.md`. No locked decision changed, so no new decision note. Differences from the plan: Garage joined CI in step 6 (not 12) because the web app needed `@devsbucket/storage` there; the plan's open questions are answered in the plan doc; the turbo bump and the release-age cleanup went in a separate `chore/deps` PR. LOCKED.md's storage and R2 notifications (80/95%, 70%, "trash emptying in 3 days") wait for notifications in Phase 3; the 70% operations warning is a log line until then. Annotated tag `v0.2.0` on the merge commit.
+  - Note: Phase 2 in numbers: 12 steps in PRs #14–#28 (including #17 `chore/step-skills`, #25 `chore/deps` and #28 this review), 100 unit tests (90 in shared, 10 in authz), 8 e2e specs.
+
+### Follow-ups from Phase 2
+
+- [ ] Admin command for password resets and removing accounts (carried over from Phase 1).
+- [ ] Phase 3: notifications from LOCKED.md that Phase 2 only prepared: storage at 80%/95% and full, R2 operations at 70% and 90% (today a server log line in `checkUploadLimits`), "trash emptying in 3 days" (the worker knows the dates).
+- [ ] Phase 3: how items shared with you appear (a "Shared with me" list where the name rule doesn't apply; shortcuts or not). Raised in step 4.
+- [ ] Phase 3: with Editors, finishing or cancelling a pending upload should be limited to its uploader (`createdBy`); today `findPendingUpload` only checks `can(user, "upload", item)`, which is the owner in Phase 2.
+- [ ] Phase 6: run the worker as its own container; set R2's CORS with `pnpm storage:setup` (never `storage:setup-test` in prod); re-check R2's free tier.
+- [ ] Lists that are capped rather than paginated: the Trash view (200 rows) and the Move dialog's folder picker (500 folders per level). Fine for now; paginate if a real drive gets near them.
+- [ ] Dropping folders onto the drive is refused with a toast; uploading a folder tree is for later.
+- [ ] The dev bucket still holds small files from e2e runs before step 12 (objects with no row). A one-off script could list keys without an `items` row and delete them.
+- [ ] Not automated: the move loop check (into itself or its own folder) and two opposite moves at once; both were tested against a scratch database only, since the UI can't reach them.
+- [ ] Small UI glitch: while the Trash's delete-forever dialog fades out, its title briefly reads `Delete "undefined" forever?` (the item is cleared before the animation ends).
+- [ ] Ideas: file-type icons from the old project (check their licence; 512 px PNGs to shrink or SVGs) and a colour theme beyond shadcn's neutral one (CSS variables in `globals.css`).
 
 ## Later phases (summary)
 
-3. **Sharing:** authz package and role test grid, permissions, share links, access requests, activity, notifications, realtime events
+3. **Sharing (next):** authz package and role test grid, permissions, share links, access requests, activity, notifications, realtime events
 4. **Live editing:** Monaco + Yjs + Hocuspocus, cursors, versions, diff view, Markdown preview
 5. **Notes and extras:** Tiptap notes, Cmd+K search, starred and recent, activity panel, ZIP download
 6. **Prod:** Oracle VM, Caddy, DuckDNS, R2, backups, deploy pipeline
