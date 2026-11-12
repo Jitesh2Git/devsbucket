@@ -115,6 +115,9 @@ export const requestUploadSchema = z.object({
 
 export const uploadIdSchema = z.object({ itemId: itemIdSchema });
 
+// An action on one item by id (trash, restore, delete forever).
+export const itemRefSchema = z.object({ itemId: itemIdSchema });
+
 // After the browser's PUTs. A multipart upload also sends each part's ETag,
 // in order (storage checks them when it joins the parts).
 export const completeUploadSchema = z.object({

@@ -1,31 +1,23 @@
-import { Trash2 } from "lucide-react";
+import { listTrash } from "@devsbucket/db/trash";
+import { trashDaysLeft } from "@devsbucket/shared/limits";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import TrashList from "@/components/drive/trash-list";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Trash" };
 
-// Step 10 replaces the empty state with the trashed items.
 const TrashContent = async () => {
-  await requireSession();
-
+  const { user } = await requireSession();
+  const items = await listTrash(user.id);
+  const now = new Date();
   return (
-    <Empty className="border border-dashed">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <Trash2 />
-        </EmptyMedia>
-        <EmptyTitle>Trash is empty</EmptyTitle>
-        <EmptyDescription>Items in the trash are deleted forever after 30 days.</EmptyDescription>
-      </EmptyHeader>
-    </Empty>
+    <TrashList
+      items={items.map((item) => ({
+        ...item,
+        daysLeft: item.trashedAt ? trashDaysLeft(item.trashedAt, now) : 0,
+      }))}
+    />
   );
 };
 

@@ -65,3 +65,14 @@ export const partSizes = (size: number) => {
 
 // What the browser reports back for each uploaded part.
 export type Part = { partNumber: number; etag: string };
+
+// Trash: items are deleted forever this many days after being trashed
+// (decision 0007; the worker does it, step 11).
+export const TRASH_DAYS = 30;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Whole days until a trashed item is deleted forever: 30 right after
+// trashing, 1 on its last day, never below 0.
+export const trashDaysLeft = (trashedAt: Date, now: Date) =>
+  Math.max(0, Math.ceil((trashedAt.getTime() + TRASH_DAYS * DAY_MS - now.getTime()) / DAY_MS));
