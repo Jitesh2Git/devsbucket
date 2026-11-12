@@ -58,7 +58,7 @@ const SignInForm = () => {
     }
     // Stay busy until the next page has loaded.
     submitted.current = true;
-    router.push("/");
+    router.push("/drive");
     router.refresh();
   };
 

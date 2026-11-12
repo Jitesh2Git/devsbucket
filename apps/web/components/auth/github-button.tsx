@@ -31,7 +31,7 @@ const GitHubButton = ({ mode, pending, onPendingChange }: GitHubButtonProps) => 
     // On success we stay pending until the browser has left the page.
     const { error } = await authClient.signIn.social({
       provider: "github",
-      callbackURL: "/",
+      callbackURL: "/drive",
       errorCallbackURL: mode === "sign-up" ? "/sign-up" : "/sign-in",
       requestSignUp: mode === "sign-up",
     });
