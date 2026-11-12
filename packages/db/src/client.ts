@@ -19,3 +19,7 @@ if (process.env.NODE_ENV !== "production") {
 export const db = drizzle({ client: pool, schema, casing: "snake_case" });
 
 export type Database = typeof db;
+
+// The database or a transaction: functions that take one can run on their
+// own or as part of a bigger transaction.
+export type Executor = Database | Parameters<Parameters<Database["transaction"]>[0]>[0];

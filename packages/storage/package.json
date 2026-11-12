@@ -8,8 +8,8 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "storage:setup": "node --env-file=.env src/setup.ts",
-    "storage:check": "node --env-file=.env src/check.ts"
+    "storage:setup": "node --env-file-if-exists=.env src/setup.ts",
+    "storage:check": "node --env-file-if-exists=.env src/check.ts"
   },
   "devDependencies": {
     "@devsbucket/typescript-config": "workspace:*",

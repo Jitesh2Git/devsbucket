@@ -13,6 +13,7 @@
     "@devsbucket/authz": "workspace:*",
     "@devsbucket/db": "workspace:*",
     "@devsbucket/shared": "workspace:*",
+    "@devsbucket/storage": "workspace:*",
     "@hookform/resolvers": "^7.0.5",
     "@tanstack/react-query": "^5.107.1",
     "better-auth": "1.7.21",

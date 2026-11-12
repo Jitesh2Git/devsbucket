@@ -59,7 +59,7 @@ Project skills for this loop (`.claude/skills/`, excluded from Biome so it can't
 - **Environments:** exactly two, local (Docker Compose on the Mac) and prod (Oracle VM). They never share data or secrets.
 - **Permissions:** every server action and realtime handler goes through `packages/authz`. Never trust ids from the client without checking the role.
 - **Tests:** unit tests (Vitest) sit next to the code as `*.test.ts` and import `describe`/`it`/`expect` explicitly. End-to-end tests (Playwright) live in `apps/web/e2e/`, find elements by role and label (never CSS classes), and only ever use the `devsbucket_test` database.
-- **CI:** `.github/workflows/ci.yml` runs lint, typecheck, unit and e2e tests (with a Postgres service) on every PR and push to `main`. Values in it are CI-only for a throwaway database; real secrets (prod, phase 6) go in GitHub's encrypted Secrets, never in the file.
+- **CI:** `.github/workflows/ci.yml` runs lint, typecheck, unit and e2e tests (with a Postgres service, and Garage started with `docker run` plus `pnpm storage:setup` for CORS) on every PR and push to `main`. Values in it are CI-only for a throwaway database; real secrets (prod, phase 6) go in GitHub's encrypted Secrets, never in the file.
 - **Bugs and ideas:** tracked as GitHub Issues. Progress is tracked in `docs/PROGRESS.md`.
 
 ## Commands
