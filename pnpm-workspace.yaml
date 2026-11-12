@@ -8,11 +8,10 @@ allowBuilds:
   unrs-resolver: false
 
 minimumReleaseAgeExclude:
-  - "@better-auth/core@1.7.21"
-  - "@better-auth/drizzle-adapter@1.7.21"
-  - "@better-auth/kysely-adapter@1.7.21"
-  - "@better-auth/memory-adapter@1.7.21"
-  - "@better-auth/mongo-adapter@1.7.21"
-  - "@better-auth/prisma-adapter@1.7.21"
-  - "@better-auth/telemetry@1.7.21"
-  - better-auth@1.7.21
+  - "@turbo/darwin-64@2.11.11"
+  - "@turbo/darwin-arm64@2.11.11"
+  - "@turbo/linux-64@2.11.11"
+  - "@turbo/linux-arm64@2.11.11"
+  - "@turbo/windows-64@2.11.11"
+  - "@turbo/windows-arm64@2.11.11"
+  - turbo@2.11.11
