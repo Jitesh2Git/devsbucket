@@ -35,7 +35,7 @@ const client = new pg.Client({ connectionString: databaseUrl });
 await client.connect();
 const db = drizzle({ client, casing: "snake_case" });
 await migrate(db, { migrationsFolder: new URL("../drizzle", import.meta.url).pathname });
-await client.query("truncate users, invites restart identity cascade");
+await client.query("truncate users, invites, usage_counters restart identity cascade");
 await db.insert(invites).values({
   code: inviteCode,
   expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
