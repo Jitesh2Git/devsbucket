@@ -71,6 +71,12 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Gotcha: `new Date()` while rendering a Server Component under Cache Components → "unstable value" dev error (red "1 issue" badge on `/sign-up` since 10e). `findOpenInvite` now uses SQL `now()`.
   - Note: lucide-react 1.x has no brand icons; the GitHub mark is inline SVG from Octicons (MIT) with `aria-hidden`.
 - [ ] 12. **Profile page:** username and avatar (GitHub avatar for now; uploading an avatar waits for storage in phase 2)
+  - [x] 12a. Branch `feat/profile`, header user menu (avatar or initials, name, email, sign out) or a "Sign in" link
+  - Note: the header's `UserMenu` reads the session server-side inside `<Suspense>`, so every page is now ◐ Partial Prerender (static shell, user menu streamed per request). Only `name`, `email` and `image` are passed to the client dropdown.
+  - [x] 12a+. Busy state on the auth forms: while any submit or the GitHub redirect is in flight, every control is disabled and the clicked button shows a spinner
+  - Gotcha (Next.js 16 + Cache Components): pages you navigate away from aren't unmounted. They're hidden with React `<Activity>` and keep their state and DOM (up to 3 routes). After signing in, the sign-in form stayed in the page, disabled, with the password still in its input, and sign-out's `router.push("/sign-in")` showed it again exactly like that. Fixes, both from the Next.js "Preserving UI state" guide: sign-out does a full page load (`window.location.href`) so no client state outlives the session; the sign-in/up forms reset themselves in a `useLayoutEffect` cleanup (runs when Activity hides them) after a successful submit.
+  - [ ] 12b. `/profile` page (signed-in only), set a username
+  - [ ] 12c. Connect GitHub to an existing account (`linkSocial`), list connected sign-in methods
 - [ ] 13. **Tests:** Vitest with a first unit test, Playwright sign-in smoke test
 - [ ] 14. **CI:** GitHub Actions runs Biome, typecheck, Vitest and Playwright (with a Postgres service), and it goes green
 - [ ] 15. **Phase review:** update CLAUDE.md commands, tag `v0.1.0`
