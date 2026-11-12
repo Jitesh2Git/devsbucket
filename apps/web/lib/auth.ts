@@ -57,6 +57,16 @@ export const auth = betterAuth({
       disableImplicitSignUp: true,
     },
   },
+  account: {
+    accountLinking: {
+      // "Connect GitHub" on the profile page: the user is signed in and asks
+      // for it, so the GitHub email may differ from theirs. (Linking by email
+      // from the sign-in page stays off: see the step 11 notes.)
+      allowDifferentEmails: true,
+      // Copy name and avatar from GitHub when linking. Email never changes.
+      updateUserInfoOnLink: true,
+    },
+  },
   user: {
     additionalFields: {
       username: { type: "string", required: false, input: false },
@@ -97,7 +107,18 @@ export const auth = betterAuth({
             ],
             update: { usedBy: user.id },
           });
-          ctx.setCookie(INVITE_COOKIE, "", { path: "/", maxAge: 0 });
+        },
+      },
+    },
+    session: {
+      create: {
+        // Any sign-in ends the invite flow, even one that didn't use the code
+        // (e.g. "Continue with GitHub" on /sign-up for an existing account).
+        // Otherwise the code would stay in this browser for the next person.
+        after: async (_session, ctx) => {
+          if (ctx?.getCookie(INVITE_COOKIE)) {
+            ctx.setCookie(INVITE_COOKIE, "", { path: "/", maxAge: 0 });
+          }
         },
       },
     },

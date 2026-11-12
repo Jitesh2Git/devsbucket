@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import OAuthError from "@/components/auth/oauth-error";
+import SignInMethods from "@/components/profile/sign-in-methods";
 import UsernameForm from "@/components/profile/username-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import UserAvatar from "@/components/user-avatar";
@@ -37,6 +39,7 @@ const ProfileContent = async () => {
           <UsernameForm username={username ?? null} />
         </CardContent>
       </Card>
+      <SignInMethods />
     </div>
   );
 };
@@ -44,6 +47,10 @@ const ProfileContent = async () => {
 const ProfilePage = () => {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-12">
+      {/* Shows ?error= after a failed "Connect GitHub" round trip. */}
+      <Suspense>
+        <OAuthError />
+      </Suspense>
       <Suspense>
         <ProfileContent />
       </Suspense>
