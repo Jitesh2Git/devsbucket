@@ -249,11 +249,23 @@ importers:
         specifier: ^5
         version: 5.9.3
 
+  packages/authz:
+    devDependencies:
+      '@devsbucket/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^5.1.0
+        version: 5.1.0(@types/node@24.19.2)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15))
+
   packages/db:
     dependencies:
       drizzle-orm:
         specifier: ^0.45.4
-        version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)
+        version: 0.45.4(@types/pg@8.23.1)(kysely@0.29.8)(pg@8.23.1)
       pg:
         specifier: ^8.23.1
         version: 8.23.1
@@ -5852,11 +5864,6 @@ snapshots:
     optionalDependencies:
       '@types/pg': 8.23.1
       kysely: 0.29.8
-      pg: 8.23.1
-
-  drizzle-orm@0.45.4(@types/pg@8.23.1)(pg@8.23.1):
-    optionalDependencies:
-      '@types/pg': 8.23.1
       pg: 8.23.1
 
   electron-to-chromium@1.5.479: {}
