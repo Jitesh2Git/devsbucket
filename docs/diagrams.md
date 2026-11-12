@@ -144,6 +144,8 @@ Value sets used below:
 
 - `Item.type`: folder, file, note
 - `Item.status`: pending, ready
+- `Item.trashedAt` is set on a trashed item and everything inside it; `trashRoot` marks the one the user trashed (decision 0007). Total stored bytes is `sum(User.storageUsed)`, not a counter.
+- `Item.editorsCanShare` and `Item.viewersCanDownload` arrive with sharing in Phase 3.
 - `role`: editor, viewer
 - `AccessRequest.status`: pending, approved, denied
 
@@ -192,12 +194,14 @@ classDiagram
     +size
     +storageKey
     +status
+    +uploadId
     +editorsCanShare
     +viewersCanDownload
     +createdAt
     +updatedAt
-    +deletedAt
-    +deletedBy
+    +trashedAt
+    +trashedBy
+    +trashRoot
   }
   class ItemPermission {
     +id
@@ -277,7 +281,6 @@ classDiagram
   }
   class UsageCounter {
     +month
-    +storageBytes
     +classAOps
     +classBOps
   }
