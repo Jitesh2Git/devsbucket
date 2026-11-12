@@ -104,8 +104,9 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
 
 ### Follow-ups from Phase 1
 
-- [ ] Remove the 8 `minimumReleaseAgeExclude` entries for Better Auth 1.7.21 from `pnpm-workspace.yaml` (from 10a). They're unnecessary once the release is a day old (after 2026-11-12 17:58 UTC); check that `pnpm install` still passes.
+- [x] Remove the 8 `minimumReleaseAgeExclude` entries for Better Auth 1.7.21 from `pnpm-workspace.yaml` (from 10a). They're unnecessary once the release is a day old (after 2026-11-12 17:58 UTC); check that `pnpm install` still passes.
   - Note: still too early on 2026-11-12 (`pnpm install` refused under the release-age policy before 17:58 UTC). Moved to the next open branch on 2026-11-13.
+  - Note: done on `chore/deps` (2026-11-12, after step 10): the block is gone, `pnpm install` changed nothing in the lockfile and the supply-chain check passed. Same branch: turbo 2.11.10 → 2.11.11 (a patch; plain bump, no codemod).
 - [x] Ruleset `main`: allow only the **Merge** method (untick Squash and Rebase), so GitHub enforces the merge-commit convention.
 - [ ] Admin command for password resets and removing accounts (LOCKED.md; also the fix for someone taking another person's email first, decision 0005).
 
