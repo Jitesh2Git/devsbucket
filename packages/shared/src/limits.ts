@@ -50,3 +50,18 @@ export const uploadLimitError = (input: {
   }
   return null;
 };
+
+// Multipart uploads: 10 MB parts, so a 100 MB file is at most 10 of them.
+export const PART_SIZE = 10 * MiB;
+
+// The size of each part, in order: full parts, then the rest.
+export const partSizes = (size: number) => {
+  const sizes: number[] = [];
+  for (let offset = 0; offset < size; offset += PART_SIZE) {
+    sizes.push(Math.min(PART_SIZE, size - offset));
+  }
+  return sizes;
+};
+
+// What the browser reports back for each uploaded part.
+export type Part = { partNumber: number; etag: string };

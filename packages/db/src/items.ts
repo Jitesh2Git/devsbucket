@@ -229,3 +229,12 @@ export const deletePendingFile = async (id: string) => {
     return file ?? null;
   });
 };
+
+// Remembers a pending file's multipart upload, so a cancel, a failed upload
+// or the cleanup job (step 11) can abort it.
+export const setUploadId = async (id: string, uploadId: string) => {
+  await db
+    .update(items)
+    .set({ uploadId })
+    .where(and(eq(items.id, id), eq(items.status, "pending")));
+};
