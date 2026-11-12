@@ -337,3 +337,25 @@ export const moveItem = async ({
     throw error;
   }
 };
+
+// Uploads still pending after `olderThanMinutes` (a closed tab, a crash):
+// the cleanup job discards them. The age is measured by Postgres's clock.
+export const listAbandonedUploads = async ({
+  olderThanMinutes,
+  limit,
+}: {
+  olderThanMinutes: number;
+  limit: number;
+}) => {
+  return db
+    .select({ id: items.id, uploadId: items.uploadId })
+    .from(items)
+    .where(
+      and(
+        eq(items.status, "pending"),
+        sql`${items.createdAt} < now() - make_interval(mins => ${olderThanMinutes})`,
+      ),
+    )
+    .orderBy(items.createdAt)
+    .limit(limit);
+};

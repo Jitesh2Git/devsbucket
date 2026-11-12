@@ -186,3 +186,19 @@ export const listTrashRootIds = async (ownerId: string) => {
     .where(and(eq(items.ownerId, ownerId), eq(items.trashRoot, true)));
   return rows.map((row) => row.id);
 };
+
+// Trash rows (of every owner) trashed more than `days` ago, oldest first:
+// the worker deletes them forever. The age is measured by Postgres's clock.
+export const listExpiredTrash = async ({ days, limit }: { days: number; limit: number }) => {
+  return db
+    .select({ id: items.id, ownerId: items.ownerId })
+    .from(items)
+    .where(
+      and(
+        eq(items.trashRoot, true),
+        sql`${items.trashedAt} < now() - make_interval(days => ${days})`,
+      ),
+    )
+    .orderBy(items.trashedAt)
+    .limit(limit);
+};

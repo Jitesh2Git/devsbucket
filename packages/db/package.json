@@ -17,7 +17,8 @@
   "dependencies": {
     "@devsbucket/shared": "workspace:*",
     "drizzle-orm": "^0.45.4",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "pg-boss": "^12.38.2"
   },
   "devDependencies": {
     "@devsbucket/typescript-config": "workspace:*",
