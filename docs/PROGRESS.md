@@ -2,7 +2,7 @@
 
 Tick a step only after Claude has verified it. Add a note under a step for anything surprising (a bug, a workaround, a version quirk).
 
-## Phase 1: Foundation (current)
+## Phase 1: Foundation (done, `v0.1.0`)
 
 **Done when:** `docker compose up` + `pnpm dev` gives a working sign-up (with an invite), login (email or GitHub) and profile page, and CI passes.
 
@@ -93,12 +93,20 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Gotcha: Next.js 16 allows one `next dev` per build folder (lock file `.next/dev/lock`), so the test server couldn't start while `pnpm dev` was running. `next.config.ts` now reads `distDir` from `NEXT_DIST_DIR`, and Playwright sets it to `.next-e2e`.
   - Gotcha: `apps/web` isn't an ES module package, so `import.meta` fails in Playwright's setup files; the DB reset runs as a pnpm script instead.
   - Note: DBeaver shows only the connection's own database by default; tick **Show all databases** (Edit Connection → Main) to see `devsbucket_test`.
-- [ ] 14. **CI:** GitHub Actions runs Biome, typecheck, Vitest and Playwright (with a Postgres service), and it goes green
+- [x] 14. **CI:** GitHub Actions runs Biome, typecheck, Vitest and Playwright (with a Postgres service), and it goes green
   - [x] 14a. Branch `ci/github-actions`, `.github/workflows/ci.yml`, first green run on the PR
   - Note: first run green in 1 min 22 s (Chromium install 18 s, e2e 20 s). `pnpm/setup@v3` (the pnpm team's replacement for `pnpm/action-setup` + `actions/setup-node`) reads pnpm from `packageManager` and Node from `.nvmrc`, caches the store and installs with a frozen lockfile. Postgres is a `postgres:18.6-alpine` service; the DB credentials and auth secret in the workflow are CI-only values for a throwaway database, not secrets. Read-only token, and newer pushes cancel older runs.
   - Gotcha: VS Code's GitHub Actions extension flagged `actions/upload-artifact@v7` as "repository or version not found" although the tag exists (it can't look tags up properly when not signed in to GitHub in VS Code). GitHub's run is the source of truth.
-  - [ ] 14b. Branch protection on `main`: PR required, the CI check must pass
-- [ ] 15. **Phase review:** update CLAUDE.md commands, tag `v0.1.0`
+  - [x] 14b. Branch protection on `main`: PR required, the CI check must pass
+  - Note: a repository **ruleset** named `main` (Settings → Rules → Rulesets; the current replacement for classic branch protection, free on public repos): restrict deletions, block force pushes, require a PR (0 approvals, since GitHub doesn't let you approve your own PR), require the check "Lint, typecheck and tests" (not "up to date"), empty bypass list. Allowed merge methods should be **Merge** only (see follow-ups).
+- [x] 15. **Phase review:** update CLAUDE.md commands, tag `v0.1.0`
+  - Note: branch `chore/phase-1-review` updates CLAUDE.md (machine, branch protection, tests and CI conventions) and this file. After it's merged, the annotated tag `v0.1.0` goes on its merge commit on `main`.
+
+### Follow-ups from Phase 1
+
+- [ ] Remove the 8 `minimumReleaseAgeExclude` entries for Better Auth 1.7.21 from `pnpm-workspace.yaml` (from 10a). They're unnecessary once the release is a day old (after 2026-11-12 17:58 UTC); check that `pnpm install` still passes.
+- [ ] Ruleset `main`: allow only the **Merge** method (untick Squash and Rebase), so GitHub enforces the merge-commit convention.
+- [ ] Admin command for password resets and removing accounts (LOCKED.md; also the fix for someone taking another person's email first, decision 0005).
 
 ## Later phases (summary)
 
