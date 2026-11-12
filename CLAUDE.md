@@ -91,7 +91,12 @@ Database (`packages/db`, needs `packages/db/.env` copied from `.env.example` wit
 - `pnpm db:studio`: browse the tables in the browser.
 - DBeaver (Community, installed with Homebrew): saved connection `DevsBucket (local)` (type Development) to `127.0.0.1:5432` with the credentials from `docker/.env`. Prod (phase 6) will go through an SSH tunnel, as a red Production connection, read-only by default, with a read-only role and no saved password (needs a decision note, since LOCKED.md keeps prod secrets on the server). Direct edits skip the app's rules (invites, ownership, quotas): view freely, change via admin commands.
 
-Web app (`apps/web`, needs `apps/web/.env.local` copied from `.env.example`: the same `DATABASE_URL` as `packages/db/.env`, `BETTER_AUTH_SECRET` from `openssl rand -base64 32`, `BETTER_AUTH_URL=http://localhost:3000`, and `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` from the local GitHub OAuth app, whose callback is `http://localhost:3000/api/auth/callback/github`; restart `pnpm dev` after changing it):
+Storage (`packages/storage`, needs `packages/storage/.env` copied from `.env.example`: the `S3_*` values from `docker/.env` and the `DATABASE_URL` from `packages/db/.env`):
+
+- `pnpm storage:setup`: set the bucket's CORS so the browser can upload straight to Garage (run once per new Garage volume; safe to re-run).
+- `pnpm storage:check`: presign, upload, check and delete a throwaway object, including the CORS preflight. Counts real operations in `usage_counters`.
+
+Web app (`apps/web`, needs `apps/web/.env.local` copied from `.env.example`: the same `DATABASE_URL` as `packages/db/.env`, `BETTER_AUTH_SECRET` from `openssl rand -base64 32`, `BETTER_AUTH_URL=http://localhost:3000`, `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` from the local GitHub OAuth app, whose callback is `http://localhost:3000/api/auth/callback/github`, and the `S3_*` values from `docker/.env`; restart `pnpm dev` after changing it):
 
 - Sign-up is invite-only: get a code with `pnpm db:seed` (it prints an open invite, or creates one), then open `/sign-up`.
 - `pnpm --filter web exec shadcn add <component>`: add a shadcn component, then run `pnpm lint:fix` (shadcn's own style fails `pnpm lint` until Biome reformats it).
