@@ -35,6 +35,8 @@ export default defineConfig({
       DATABASE_URL: testDatabaseUrl(),
       BETTER_AUTH_URL: baseURL,
       NEXT_DIST_DIR: ".next-e2e",
+      // Every test signs up its own user; see lib/auth.ts.
+      AUTH_RATE_LIMIT: "off",
     },
   },
 });

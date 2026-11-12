@@ -73,7 +73,7 @@ Run from the repo root. Turborepo runs each task in every package that has that 
 - `pnpm lint`: Biome lint + format check + import sorting over the whole repo, without changing files (what CI runs).
 - `pnpm lint:fix`: same, and applies safe fixes and formatting. `pnpm format`: formatting only.
 - `pnpm test`: unit tests (Vitest, `*.test.ts` next to the code) in every package that has them, through turbo (cached). Nothing needs to be running.
-- `pnpm test:e2e`: Playwright end-to-end tests (`apps/web/e2e/`). Needs Docker up and Playwright's Chromium (`pnpm --filter web exec playwright install chromium`). Resets the separate `devsbucket_test` database and starts its own server on port 3100 (build folder `.next-e2e`), so it runs next to `pnpm dev` and never touches dev data.
+- `pnpm test:e2e`: Playwright end-to-end tests (`apps/web/e2e/`). Needs Docker up and Playwright's Chromium (`pnpm --filter web exec playwright install chromium`). Resets the separate `devsbucket_test` database and starts its own server on port 3100 (build folder `.next-e2e`), so it runs next to `pnpm dev` and never touches dev data. Locally that server is `next dev`; CI uses a production build (`next build && next start`), where Better Auth's rate limits apply, so the e2e server sets `AUTH_RATE_LIMIT=off` (`playwright.config.ts`, read in `lib/auth.ts`; never set it anywhere else). To run e2e exactly like CI: `cd apps/web && (set -a; . ./.env.local; set +a; CI=1 pnpm exec playwright test)`.
 - `pnpm --filter web <script>`: run a script in one package only.
 
 Local services (Docker Desktop must be running; config in `docker/compose.dev.yml`, secrets in `docker/.env`, copied from `docker/.env.example`):
