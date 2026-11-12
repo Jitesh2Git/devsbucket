@@ -2,6 +2,7 @@
 
 import { can } from "@devsbucket/authz/can";
 import { getItem } from "@devsbucket/db/items";
+import { queueStorageCleanup, type StorageCleanup } from "@devsbucket/db/jobs";
 import {
   deleteForever as deleteRows,
   getTrashRoot,
@@ -10,8 +11,7 @@ import {
   trashItem as trashRows,
 } from "@devsbucket/db/trash";
 import { itemRefSchema } from "@devsbucket/shared/item";
-import { abortMultipart } from "@devsbucket/storage/multipart";
-import { deleteObjects } from "@devsbucket/storage/objects";
+import { deleteStoredFiles, isComplete } from "@devsbucket/storage/cleanup";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 
@@ -59,23 +59,12 @@ export const restoreItem = async (input: unknown) => {
   return { error: null, ...result } as const;
 };
 
-// The rows are gone and the quota is back; now storage. A failure here
-// can't undo that, so it's logged; the cleanup job (step 11) will retry.
-const deleteFromStorage = async ({
-  storageKeys,
-  uploads,
-}: {
-  storageKeys: string[];
-  uploads: { key: string; uploadId: string }[];
-}) => {
-  try {
-    await Promise.all(uploads.map((upload) => abortMultipart(upload)));
-    const failed = await deleteObjects(storageKeys);
-    if (failed.length > 0) {
-      console.error("Couldn't delete from storage:", failed);
-    }
-  } catch (error) {
-    console.error("Couldn't delete from storage:", storageKeys, error);
+// The rows are gone and the quota is back; now storage. Whatever storage
+// can't delete right now goes to the worker, which retries (step 11).
+const deleteFromStorage = async (cleanup: StorageCleanup) => {
+  const failed = await deleteStoredFiles(cleanup);
+  if (!isComplete(failed)) {
+    await queueStorageCleanup(failed);
   }
 };
 

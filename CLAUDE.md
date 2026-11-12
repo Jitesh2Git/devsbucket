@@ -67,7 +67,7 @@ Project skills for this loop (`.claude/skills/`, excluded from Biome so it can't
 Run from the repo root. Turborepo runs each task in every package that has that script, and caches the results.
 
 - `pnpm install`: install all workspace dependencies (never use npm).
-- `pnpm dev`: start every app's dev server (web on http://localhost:3000).
+- `pnpm dev`: start every app's dev server: web on http://localhost:3000 and the worker (needs `apps/worker/.env`).
 - `pnpm build`: production build of every package.
 - `pnpm typecheck`: `tsc --noEmit` in every package (web runs `next typegen` first).
 - `pnpm lint`: Biome lint + format check + import sorting over the whole repo, without changing files (what CI runs).
@@ -95,6 +95,11 @@ Storage (`packages/storage`, needs `packages/storage/.env` copied from `.env.exa
 
 - `pnpm storage:setup`: set the bucket's CORS so the browser can upload straight to Garage (run once per new Garage volume; safe to re-run).
 - `pnpm storage:check`: presign, upload, check and delete a throwaway object, including the CORS preflight. Counts real operations in `usage_counters`.
+
+Worker (`apps/worker`, pg-boss; needs `apps/worker/.env` copied from `.env.example`, with the same `DATABASE_URL` and `S3_*` values as `apps/web/.env.local`). Node runs its TypeScript directly (no build). pg-boss keeps its tables in its own `pgboss` schema, which drizzle-kit doesn't manage. Queue names and the connection live in `packages/db/src/jobs.ts`; shared cleanup in `packages/storage/src/cleanup.ts`.
+
+- `pnpm --filter worker dev`: the worker alone (`pnpm dev` starts it with the web app). Schedules: abandoned uploads every 15 minutes, trash older than 30 days daily at 03:00 UTC; failed storage deletes are retried with backoff.
+- `pnpm --filter worker job cleanup-uploads` / `job empty-trash`: run one job now. To try them, age rows with SQL first (`update items set trashed_at = now() - interval '31 days' where …`).
 
 Web app (`apps/web`, needs `apps/web/.env.local` copied from `.env.example`: the same `DATABASE_URL` as `packages/db/.env`, `BETTER_AUTH_SECRET` from `openssl rand -base64 32`, `BETTER_AUTH_URL=http://localhost:3000`, `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` from the local GitHub OAuth app, whose callback is `http://localhost:3000/api/auth/callback/github`, and the `S3_*` values from `docker/.env`; restart `pnpm dev` after changing it):
 

@@ -1,24 +1,13 @@
 "use server";
 
 import { can } from "@devsbucket/authz/can";
-import {
-  createPendingFile,
-  deletePendingFile,
-  getItem,
-  type Item,
-  markFileReady,
-  setUploadId,
-} from "@devsbucket/db/items";
+import { createPendingFile, getItem, markFileReady, setUploadId } from "@devsbucket/db/items";
 import { completeUploadSchema, requestUploadSchema, uploadIdSchema } from "@devsbucket/shared/item";
 import { MULTIPART_THRESHOLD, partSizes, quotaMessage } from "@devsbucket/shared/limits";
+import { discardUpload } from "@devsbucket/storage/cleanup";
 import { checkUploadLimits } from "@devsbucket/storage/limits";
-import {
-  abortMultipart,
-  completeMultipart,
-  createMultipart,
-  presignParts,
-} from "@devsbucket/storage/multipart";
-import { deleteObject, headObject, itemKey, presignPut } from "@devsbucket/storage/objects";
+import { completeMultipart, createMultipart, presignParts } from "@devsbucket/storage/multipart";
+import { headObject, itemKey, presignPut } from "@devsbucket/storage/objects";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { resolveFolder } from "@/lib/folders";
@@ -39,17 +28,6 @@ const findPendingUpload = async (user: { id: string }, itemId: string) => {
     return null;
   }
   return item;
-};
-
-// Removes every trace of an upload that won't finish: the row (which gives
-// the quota back), the parts of a multipart upload, and the object.
-const discardUpload = async (file: Pick<Item, "id" | "uploadId">) => {
-  await deletePendingFile(file.id);
-  const key = itemKey(file.id);
-  if (file.uploadId) {
-    await abortMultipart({ key, uploadId: file.uploadId });
-  }
-  await deleteObject(key);
 };
 
 export const requestUpload = async (input: unknown) => {
