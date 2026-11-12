@@ -48,6 +48,13 @@ export const auth = betterAuth({
     database: { generateId: "uuid" },
   },
   emailAndPassword: { enabled: true },
+  // Better Auth limits sign-in and sign-up to 3 tries per 10 seconds in
+  // production (off in development). The end-to-end tests run a production
+  // build and sign up a fresh user per test, so their server turns it off
+  // with AUTH_RATE_LIMIT=off (playwright.config.ts). Never set it anywhere else.
+  rateLimit: {
+    enabled: process.env.NODE_ENV === "production" && process.env.AUTH_RATE_LIMIT !== "off",
+  },
   socialProviders: {
     github: {
       clientId: process.env.GITHUB_CLIENT_ID as string,
