@@ -94,6 +94,10 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Gotcha: `apps/web` isn't an ES module package, so `import.meta` fails in Playwright's setup files; the DB reset runs as a pnpm script instead.
   - Note: DBeaver shows only the connection's own database by default; tick **Show all databases** (Edit Connection → Main) to see `devsbucket_test`.
 - [ ] 14. **CI:** GitHub Actions runs Biome, typecheck, Vitest and Playwright (with a Postgres service), and it goes green
+  - [x] 14a. Branch `ci/github-actions`, `.github/workflows/ci.yml`, first green run on the PR
+  - Note: first run green in 1 min 22 s (Chromium install 18 s, e2e 20 s). `pnpm/setup@v3` (the pnpm team's replacement for `pnpm/action-setup` + `actions/setup-node`) reads pnpm from `packageManager` and Node from `.nvmrc`, caches the store and installs with a frozen lockfile. Postgres is a `postgres:18.6-alpine` service; the DB credentials and auth secret in the workflow are CI-only values for a throwaway database, not secrets. Read-only token, and newer pushes cancel older runs.
+  - Gotcha: VS Code's GitHub Actions extension flagged `actions/upload-artifact@v7` as "repository or version not found" although the tag exists (it can't look tags up properly when not signed in to GitHub in VS Code). GitHub's run is the source of truth.
+  - [ ] 14b. Branch protection on `main`: PR required, the CI check must pass
 - [ ] 15. **Phase review:** update CLAUDE.md commands, tag `v0.1.0`
 
 ## Later phases (summary)

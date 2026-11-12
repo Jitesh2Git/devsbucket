@@ -1,0 +1,84 @@
+# Runs on every pull request and on every push to main. Branch protection on
+# main requires the "checks" job to pass before a PR can be merged.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A newer push to the same branch cancels the run that's still going.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# Read-only token: this workflow only checks code, it never writes.
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Lint, typecheck and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # A throwaway Postgres for the end-to-end tests (same image as local).
+    services:
+      postgres:
+        image: postgres:18.6-alpine
+        env:
+          POSTGRES_USER: devsbucket
+          POSTGRES_PASSWORD: devsbucket
+          POSTGRES_DB: devsbucket
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U devsbucket -d devsbucket"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    # CI-only values for a database that's deleted when the job ends. They
+    # are not secrets: nothing real uses them. GitHub login isn't exercised.
+    env:
+      DATABASE_URL: postgres://devsbucket:devsbucket@localhost:5432/devsbucket
+      BETTER_AUTH_SECRET: ci-only-secret-for-a-throwaway-database-0001
+      BETTER_AUTH_URL: http://localhost:3000
+      GITHUB_CLIENT_ID: ci-unused
+      GITHUB_CLIENT_SECRET: ci-unused
+      TURBO_TELEMETRY_DISABLED: 1
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Installs pnpm (version from packageManager in package.json) and Node
+      # (version from .nvmrc), then runs `pnpm install --frozen-lockfile`.
+      - uses: pnpm/setup@v3
+        with:
+          cache: true
+          require-lockfile: true
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Install Playwright's Chromium
+        run: pnpm --filter web exec playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        run: pnpm test:e2e
+
+      # On failure, keep Playwright's traces (step-by-step recordings) for a
+      # week: download them from the run page and open with show-trace.
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-traces
+          path: apps/web/test-results/
+          retention-days: 7
