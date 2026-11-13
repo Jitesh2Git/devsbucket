@@ -108,7 +108,7 @@ Tick a step only after Claude has verified it. Add a note under a step for anyth
   - Note: still too early on 2026-11-12 (`pnpm install` refused under the release-age policy before 17:58 UTC). Moved to the next open branch on 2026-11-13.
   - Note: done on `chore/deps` (2026-11-12, after step 10): the block is gone, `pnpm install` changed nothing in the lockfile and the supply-chain check passed. Same branch: turbo 2.11.10 → 2.11.11 (a patch; plain bump, no codemod).
 - [x] Ruleset `main`: allow only the **Merge** method (untick Squash and Rebase), so GitHub enforces the merge-commit convention.
-- [ ] Admin command for password resets and removing accounts (LOCKED.md; also the fix for someone taking another person's email first, decision 0005).
+- [x] Admin command for password resets and removing accounts (LOCKED.md; also the fix for someone taking another person's email first, decision 0005). Done in Phase 3 step 1.
 
 ## Phase 2: Drive basics (done, `v0.2.0`)
 
@@ -194,7 +194,7 @@ Only the owner can see or touch their items in this phase. Sharing, the role gri
 
 ### Follow-ups from Phase 2
 
-- [ ] Admin command for password resets and removing accounts (carried over from Phase 1). Planned as Phase 3 step 1.
+- [x] Admin command for password resets and removing accounts (carried over from Phase 1). Done in Phase 3 step 1.
 - [ ] Phase 3: notifications from LOCKED.md that Phase 2 only prepared: storage at 80%/95% and full, R2 operations at 70% and 90% (today a server log line in `checkUploadLimits`), "trash emptying in 3 days" (the worker knows the dates). Planned as Phase 3 step 13.
 - [x] Phase 3: how items shared with you appear (a "Shared with me" list where the name rule doesn't apply; shortcuts or not). Raised in step 4.
   - Note: decided while planning Phase 3 (decision 0008): a flat Shared with me list, no shortcuts. Built in Phase 3 step 6.
@@ -215,7 +215,12 @@ Full plan: `docs/plans/phase-3.md` (design, data model, `item_access()`, realtim
 
 - [x] 0. **Plan:** `docs/plans/phase-3.md`, decisions 0008–0010, LOCKED.md and diagrams 6–7 updated
   - Note: choices agreed on 2026-11-13: share links for signed-in users only; a flat Shared with me list, no shortcuts; ownership transfer is offered and accepted, any item, the tree moves to the recipient's top level; the admin command is step 1.
-- [ ] 1. **Admin command:** `pnpm admin` (reset-password, set-admin, set-quota, create-invite, remove-user)
+- [x] 1. **Admin command:** `pnpm admin` (reset-password, set-admin, set-quota, create-invite, remove-user)
+  - Note: lives in `apps/worker` (`src/admin.ts`, `admin` script; root `pnpm admin` = `pnpm --filter worker admin`). The worker already has `DATABASE_URL` and `S3_*` in its `.env` and depends on db and storage; `packages/db` couldn't (storage depends on db), and a separate `apps/admin` would need its own `.env` and deploy. In prod (Phase 6) it runs inside the worker container. Locally it acts on the **dev** data.
+  - Note: passwords are hashed with `hashPassword` from `better-auth/crypto` (scrypt, no secret needed), pinned to `better-auth@1.7.21`, the web app's exact version, so the hash format always matches. A password is the `accounts` row with `providerId: "credential"` and `accountId` = user id; `reset-password` creates it for GitHub-only users. Sessions are deleted in the same transaction (no cookie cache, so the next request is signed out).
+  - Note: `packages/db`: `findUserByEmail` (lowercase, like Better Auth), `setPasswordHash`, `setAdmin`, `setQuota`, `deleteUser` (locks the user, collects storage keys and multipart uploads, deletes the user row; items, sessions and accounts cascade) in `users.ts`; `createInvite` in `invites.ts` (the seed reuses it). `parseBytes` in `@devsbucket/shared/bytes` (reverse of `formatBytes`, powers of 1024) with unit tests.
+  - Note: `remove-user` asks you to type the email (`--yes` skips it), then deletes storage through `deleteStoredFiles`; what fails goes to the `delete-storage-objects` retry queue (checked in scratch with storage down). `set-quota` below current usage is allowed and warns. E2E: `admin.spec.ts`.
+  - Gotcha: `parseArgs` throws on unknown flags, so it has to run inside the `try` to print the usage instead of a stack trace. A failing `pnpm admin` adds an `ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL` block; `pnpm --silent admin …` hides it.
 - [ ] 2. **Grants + `item_access()`:** `item_permissions`, item settings columns, the SQL function, `getAccess`, database tests in CI
 - [ ] 3. **authz v1:** role-based `can()` and grid, every caller switched, uploader-only complete/cancel, "You need access" page
 - [ ] 4. **Activity log:** `activities`, `logActivity` in every action, `notify-activity` job sent in the transaction

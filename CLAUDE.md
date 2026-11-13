@@ -101,6 +101,7 @@ Worker (`apps/worker`, pg-boss; needs `apps/worker/.env` copied from `.env.examp
 
 - `pnpm --filter worker dev`: the worker alone (`pnpm dev` starts it with the web app). Schedules: abandoned uploads every 15 minutes, trash older than 30 days daily at 03:00 UTC; failed storage deletes are retried with backoff.
 - `pnpm --filter worker job cleanup-uploads` / `job empty-trash`: run one job now. To try them, age rows with SQL first (`update items set trashed_at = now() - interval '31 days' where …`).
+- `pnpm admin <command>` (`apps/worker/src/admin.ts`, uses the worker's `.env`, so locally the dev data): `reset-password <email>` (prints a new random password, signs them out everywhere), `set-admin <email> [--off]`, `set-quota <email> <size>` (`5GB`, `500MB`), `create-invite [--email <email>]`, `remove-user <email> [--yes]` (deletes the account and its files forever; asks you to type the email). `pnpm --silent admin …` hides pnpm's error block on failure.
 
 Web app (`apps/web`, needs `apps/web/.env.local` copied from `.env.example`: the same `DATABASE_URL` as `packages/db/.env`, `BETTER_AUTH_SECRET` from `openssl rand -base64 32`, `BETTER_AUTH_URL=http://localhost:3000`, `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` from the local GitHub OAuth app, whose callback is `http://localhost:3000/api/auth/callback/github`, and the `S3_*` values from `docker/.env`; restart `pnpm dev` after changing it):
 
