@@ -22,6 +22,20 @@
       "when": 1794483729890,
       "tag": "0002_folders_first",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794565065108,
+      "tag": "0003_permissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794565081466,
+      "tag": "0004_item_access",
+      "breakpoints": true
     }
   ]
 }

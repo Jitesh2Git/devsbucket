@@ -87,6 +87,12 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
+      # Tests that need Postgres (packages/db, *.db.test.ts). They create and
+      # migrate devsbucket_test next to the database above, and roll back
+      # their own rows.
+      - name: Database tests
+        run: pnpm test:db
+
       # The dev bucket and the e2e tests' own "<bucket>-test" bucket.
       - name: Set up the buckets (CORS, test bucket)
         run: pnpm storage:setup && pnpm storage:setup-test
