@@ -145,7 +145,9 @@ Value sets used below:
 - `Item.type`: folder, file, note
 - `Item.status`: pending, ready
 - `Item.trashedAt` is set on a trashed item and everything inside it; `trashRoot` marks the one the user trashed (decision 0007). Total stored bytes is `sum(User.storageUsed)`, not a counter.
-- `Item.editorsCanShare` and `Item.viewersCanDownload` arrive with sharing in Phase 3.
+- `Item.editorsCanShare` and `Item.viewersCanDownload` arrive with sharing in Phase 3; off on a folder means off for everything inside (decision 0008).
+- `ShareLink`: one active link per item; `ShareLinkVisit` records who opened it, and gives them the link's role while it's active (decision 0008).
+- `OwnershipTransfer.status`: pending, accepted, declined, cancelled (decision 0009). `AlertState` remembers raised system alerts so they don't repeat (decision 0010).
 - `role`: editor, viewer
 - `AccessRequest.status`: pending, approved, denied
 
@@ -217,15 +219,36 @@ classDiagram
     +token
     +role
     +expiresAt
-    +disabled
+    +disabledAt
     +createdBy
+  }
+  class ShareLinkVisit {
+    +linkId
+    +userId
+    +firstOpenedAt
+  }
+  class OwnershipTransfer {
+    +id
+    +itemId
+    +fromUserId
+    +toUserId
+    +status
+    +createdAt
+    +decidedAt
+  }
+  class AlertState {
+    +key
+    +raisedAt
   }
   class AccessRequest {
     +id
     +itemId
     +requesterId
     +role
+    +message
     +status
+    +decidedBy
+    +decidedAt
     +createdAt
   }
   class ItemVersion {
@@ -292,6 +315,9 @@ classDiagram
   Item "1" --> "*" ItemPermission
   User "1" --> "*" ItemPermission : granted
   Item "1" --> "*" ShareLink
+  ShareLink "1" --> "*" ShareLinkVisit
+  User "1" --> "*" ShareLinkVisit : opened
+  Item "1" --> "*" OwnershipTransfer
   Item "1" --> "*" AccessRequest
   User "1" --> "*" AccessRequest : requests
   Item "1" --> "*" ItemVersion
@@ -308,22 +334,23 @@ classDiagram
 
 ## 7. Permission check (used by web and realtime)
 
+One SQL function, `item_access()`, does the loading and resolving (decisions 0002, 0008); `can()` decides the last step.
+
 ```mermaid
 flowchart TD
   req["Request: action on item"] --> s{"Valid session?"}
   s -->|"no"| d401["Deny: 401"]
   s -->|"yes"| load["Load item + parent chain with a recursive query"]
-  load --> own{"User owns the tree?"}
+  load --> exists{"Item exists?"}
+  exists -->|"no"| d404["Deny: 404"]
+  exists -->|"yes"| own{"User owns the tree?"}
   own -->|"yes"| rOwner["Role = Owner"]
-  own -->|"no"| grants["Collect user's grants on item and every parent"]
-  grants --> any{"Any grant?"}
-  any -->|"yes"| rBest["Role = highest grant: Editor beats Viewer"]
-  any -->|"no"| link{"Valid share link token?"}
-  link -->|"yes"| rLink["Role = link role"]
-  link -->|"no"| d404["Deny: 404, hide that it exists"]
+  own -->|"no"| grants["Collect grants, and share links the user opened that are still active, on item and every parent"]
+  grants --> any{"Any?"}
+  any -->|"yes"| rBest["Role = highest: Editor beats Viewer"]
+  any -->|"no"| need["'You need access' page: request access, name hidden"]
   rOwner --> allow{"Role allows the action and item settings?"}
   rBest --> allow
-  rLink --> allow
   allow -->|"yes"| ok["Allow + write activity log"]
   allow -->|"no"| d403["Deny: 403"]
 ```

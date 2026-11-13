@@ -194,10 +194,11 @@ Only the owner can see or touch their items in this phase. Sharing, the role gri
 
 ### Follow-ups from Phase 2
 
-- [ ] Admin command for password resets and removing accounts (carried over from Phase 1).
-- [ ] Phase 3: notifications from LOCKED.md that Phase 2 only prepared: storage at 80%/95% and full, R2 operations at 70% and 90% (today a server log line in `checkUploadLimits`), "trash emptying in 3 days" (the worker knows the dates).
-- [ ] Phase 3: how items shared with you appear (a "Shared with me" list where the name rule doesn't apply; shortcuts or not). Raised in step 4.
-- [ ] Phase 3: with Editors, finishing or cancelling a pending upload should be limited to its uploader (`createdBy`); today `findPendingUpload` only checks `can(user, "upload", item)`, which is the owner in Phase 2.
+- [ ] Admin command for password resets and removing accounts (carried over from Phase 1). Planned as Phase 3 step 1.
+- [ ] Phase 3: notifications from LOCKED.md that Phase 2 only prepared: storage at 80%/95% and full, R2 operations at 70% and 90% (today a server log line in `checkUploadLimits`), "trash emptying in 3 days" (the worker knows the dates). Planned as Phase 3 step 13.
+- [x] Phase 3: how items shared with you appear (a "Shared with me" list where the name rule doesn't apply; shortcuts or not). Raised in step 4.
+  - Note: decided while planning Phase 3 (decision 0008): a flat Shared with me list, no shortcuts. Built in Phase 3 step 6.
+- [ ] Phase 3: with Editors, finishing or cancelling a pending upload should be limited to its uploader (`createdBy`); today `findPendingUpload` only checks `can(user, "upload", item)`, which is the owner in Phase 2. Planned as Phase 3 step 3 (decision 0008).
 - [ ] Phase 6: run the worker as its own container; set R2's CORS with `pnpm storage:setup` (never `storage:setup-test` in prod); re-check R2's free tier.
 - [ ] Lists that are capped rather than paginated: the Trash view (200 rows) and the Move dialog's folder picker (500 folders per level). Fine for now; paginate if a real drive gets near them.
 - [ ] Dropping folders onto the drive is refused with a toast; uploading a folder tree is for later.
@@ -206,9 +207,31 @@ Only the owner can see or touch their items in this phase. Sharing, the role gri
 - [ ] Small UI glitch: while the Trash's delete-forever dialog fades out, its title briefly reads `Delete "undefined" forever?` (the item is cleared before the animation ends).
 - [ ] Ideas: file-type icons from the old project (check their licence; 512 px PNGs to shrink or SVGs) and a colour theme beyond shadcn's neutral one (CSS variables in `globals.css`).
 
+## Phase 3: Sharing (next)
+
+Full plan: `docs/plans/phase-3.md` (design, data model, `item_access()`, realtime, notifications, step table). Decisions: 0008 (sharing model), 0009 (ownership transfer), 0010 (activity, live events, notifications).
+
+**Done when:** two users in two browsers can share a folder, browse it from Shared with me with the right role, open a share link, request and grant access, transfer ownership, and see notifications and folder changes appear without reloading. The role grid and `item_access()` have tests, e2e covers two-user flows, and CI is green.
+
+- [x] 0. **Plan:** `docs/plans/phase-3.md`, decisions 0008–0010, LOCKED.md and diagrams 6–7 updated
+  - Note: choices agreed on 2026-11-13: share links for signed-in users only; a flat Shared with me list, no shortcuts; ownership transfer is offered and accepted, any item, the tree moves to the recipient's top level; the admin command is step 1.
+- [ ] 1. **Admin command:** `pnpm admin` (reset-password, set-admin, set-quota, create-invite, remove-user)
+- [ ] 2. **Grants + `item_access()`:** `item_permissions`, item settings columns, the SQL function, `getAccess`, database tests in CI
+- [ ] 3. **authz v1:** role-based `can()` and grid, every caller switched, uploader-only complete/cancel, "You need access" page
+- [ ] 4. **Activity log:** `activities`, `logActivity` in every action, `notify-activity` job sent in the transaction
+- [ ] 5. **Share with people:** share dialog, change/remove access, Owner's settings switches
+- [ ] 6. **Shared with me:** list, breadcrumbs, role-aware menus, Editor uploads on the owner's quota, Editor's Trash
+- [ ] 7. **Share links:** `share_links`, visits, `/s/[token]`
+- [ ] 8. **Access requests:** request page, approve/deny
+- [ ] 9. **Ownership transfer:** offer, accept/decline/cancel, quota move
+- [ ] 10. **Realtime server:** `apps/realtime`, session check, LISTEN/NOTIFY, live folders
+- [ ] 11. **Notifications:** worker fan-out with batching, bell, page, live count, 90-day cleanup
+- [ ] 12. **Preferences and mutes:** profile switches, mute an item
+- [ ] 13. **System notifications:** storage, R2 (admins), trash in 3 days, invite used
+- [ ] 14. **Tests and phase review:** two-user e2e, CLAUDE.md, tag `v0.3.0`
+
 ## Later phases (summary)
 
-3. **Sharing (next):** authz package and role test grid, permissions, share links, access requests, activity, notifications, realtime events
 4. **Live editing:** Monaco + Yjs + Hocuspocus, cursors, versions, diff view, Markdown preview
 5. **Notes and extras:** Tiptap notes, Cmd+K search, starred and recent, activity panel, ZIP download
 6. **Prod:** Oracle VM, Caddy, DuckDNS, R2, backups, deploy pipeline
