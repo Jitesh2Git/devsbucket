@@ -1,11 +1,9 @@
 "use server";
 
-import { can } from "@devsbucket/authz/can";
-import { getItem } from "@devsbucket/db/items";
+import { can, MY_DRIVE } from "@devsbucket/authz/can";
 import { queueStorageCleanup, type StorageCleanup } from "@devsbucket/db/jobs";
 import {
   deleteForever as deleteRows,
-  getTrashRoot,
   listTrashRootIds,
   restoreItem as restoreRows,
   trashItem as trashRows,
@@ -14,6 +12,7 @@ import { itemRefSchema } from "@devsbucket/shared/item";
 import { deleteStoredFiles, isComplete } from "@devsbucket/storage/cleanup";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { deniedMessage, resolveItem } from "@/lib/items";
 
 const SIGNED_OUT = "You're signed out. Sign in again.";
 const ITEM_GONE = "This item no longer exists.";
@@ -28,16 +27,37 @@ const parseItemId = (input: unknown) => {
   return parsed.success ? parsed.data.itemId : null;
 };
 
+// A Trash view row (an item the user trashed directly) they may act on.
+const findTrashRoot = async (
+  user: { id: string },
+  itemId: string | null,
+  action: "restore" | "delete_forever",
+) => {
+  const found = itemId ? await resolveItem(user, itemId, action, { trashed: true }) : null;
+  if (!found) {
+    return { denied: "missing" } as const;
+  }
+  if (found.denied === null && !found.item.trashRoot) {
+    return { denied: "missing" } as const;
+  }
+  return found;
+};
+
 export const trashItem = async (input: unknown) => {
   const session = await getSession();
   if (!session) {
     return { error: SIGNED_OUT } as const;
   }
   const itemId = parseItemId(input);
-  const item = itemId ? await getItem(itemId) : null;
-  if (item?.status !== "ready" || item.trashedAt !== null || !can(session.user, "trash", item)) {
-    return { error: ITEM_GONE } as const;
+  // Editors can trash too (inside the owner's tree); only the Owner deletes
+  // forever.
+  const found = itemId
+    ? await resolveItem(session.user, itemId, "trash", { trashed: false })
+    : ({ denied: "missing" } as const);
+  if (found.denied) {
+    return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
   }
+  const { item } = found;
   await trashRows({ id: item.id, ownerId: item.ownerId, trashedBy: session.user.id });
   return { error: null, name: item.name } as const;
 };
@@ -47,11 +67,11 @@ export const restoreItem = async (input: unknown) => {
   if (!session) {
     return { error: SIGNED_OUT } as const;
   }
-  const itemId = parseItemId(input);
-  const root = itemId ? await getTrashRoot(itemId) : null;
-  if (!root || !can(session.user, "restore", root)) {
-    return { error: ITEM_GONE } as const;
+  const found = await findTrashRoot(session.user, parseItemId(input), "restore");
+  if (found.denied) {
+    return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
   }
+  const root = found.item;
   const result = await restoreRows({ id: root.id, ownerId: root.ownerId });
   if (!result) {
     return { error: ITEM_GONE } as const;
@@ -73,12 +93,12 @@ export const deleteForever = async (input: unknown) => {
   if (!session) {
     return { error: SIGNED_OUT } as const;
   }
-  const itemId = parseItemId(input);
-  const root = itemId ? await getTrashRoot(itemId) : null;
-  // Owner only (decision 0007): in Phase 3 an Editor can trash, not this.
-  if (!root || !can(session.user, "delete_forever", root)) {
-    return { error: ITEM_GONE } as const;
+  // Owner only (decisions 0007, 0008): an Editor can trash, not this.
+  const found = await findTrashRoot(session.user, parseItemId(input), "delete_forever");
+  if (found.denied) {
+    return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
   }
+  const root = found.item;
   const result = await deleteRows({ ids: [root.id], ownerId: root.ownerId });
   await deleteFromStorage(result);
   return { error: null } as const;
@@ -90,12 +110,11 @@ export const emptyTrash = async () => {
     return { error: SIGNED_OUT } as const;
   }
   // The user's own drive: its trash is theirs to empty.
-  const myDrive = { ownerId: session.user.id };
-  if (!can(session.user, "delete_forever", myDrive)) {
+  if (!can(MY_DRIVE, "delete_forever")) {
     return { error: "You can't empty this trash." } as const;
   }
-  const ids = await listTrashRootIds(myDrive.ownerId);
-  const result = await deleteRows({ ids, ownerId: myDrive.ownerId });
+  const ids = await listTrashRootIds(session.user.id);
+  const result = await deleteRows({ ids, ownerId: session.user.id });
   await deleteFromStorage(result);
   return { error: null, deleted: result.deleted } as const;
 };

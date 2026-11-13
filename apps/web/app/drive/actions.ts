@@ -4,7 +4,7 @@ import { createFolder as insertFolder, listItems } from "@devsbucket/db/items";
 import { createFolderSchema, listItemsSchema, nameTakenMessage } from "@devsbucket/shared/item";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { resolveFolder } from "@/lib/folders";
+import { deniedMessage, resolveFolder } from "@/lib/items";
 
 const SIGNED_OUT = "You're signed out. Sign in again.";
 const FOLDER_GONE = "This folder no longer exists.";
@@ -24,10 +24,10 @@ export const loadItems = async (input: unknown) => {
   }
   const { parentId, cursor } = parsed.data;
   const folder = await resolveFolder(session.user, parentId, "view");
-  if (!folder) {
-    return { error: FOLDER_GONE } as const;
+  if (folder.denied) {
+    return { error: deniedMessage(folder.denied, FOLDER_GONE) } as const;
   }
-  const page = await listItems({ ownerId: folder.ownerId, parentId, cursor });
+  const page = await listItems({ ownerId: folder.item.ownerId, parentId, cursor });
   return { error: null, page } as const;
 };
 
@@ -42,13 +42,13 @@ export const createFolder = async (input: unknown) => {
   }
   const { parentId, name } = parsed.data;
   const parent = await resolveFolder(session.user, parentId, "create_folder");
-  if (!parent) {
-    return { error: FOLDER_GONE } as const;
+  if (parent.denied) {
+    return { error: deniedMessage(parent.denied, FOLDER_GONE) } as const;
   }
   // The new folder belongs to the tree's owner, who pays for its contents
-  // (decision 0002); in Phase 2 that's always the signed-in user.
+  // (decision 0002), even when an Editor creates it.
   const result = await insertFolder({
-    ownerId: parent.ownerId,
+    ownerId: parent.item.ownerId,
     parentId,
     createdBy: session.user.id,
     name,

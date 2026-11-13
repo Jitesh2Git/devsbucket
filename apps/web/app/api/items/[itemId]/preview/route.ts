@@ -1,7 +1,7 @@
 import { contentDisposition, inlineContentType } from "@devsbucket/shared/preview";
 import { itemKey, presignGet } from "@devsbucket/storage/objects";
 import { auth } from "@/lib/auth";
-import { resolveFile } from "@/lib/files";
+import { resolveFile } from "@/lib/items";
 
 // GET /api/items/<id>/preview: a redirect to storage that shows the file in
 // the browser, for images, video, audio and PDFs only. We pick the
@@ -15,7 +15,8 @@ export const GET = async (
     params,
     auth.api.getSession({ headers: request.headers }),
   ]);
-  const file = session ? await resolveFile(session.user, itemId, "view") : null;
+  const found = session ? await resolveFile(session.user, itemId, "view") : null;
+  const file = found?.item;
   const contentType = file ? inlineContentType(file.name) : null;
   if (!file || !contentType) {
     return new Response("Not found", { status: 404 });

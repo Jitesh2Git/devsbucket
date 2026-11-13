@@ -5,7 +5,7 @@ import { looksLikeText, TEXT_PREVIEW_BYTES } from "@devsbucket/shared/preview";
 import { getRange, itemKey } from "@devsbucket/storage/objects";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { resolveFile } from "@/lib/files";
+import { deniedMessage, resolveFile } from "@/lib/items";
 
 // The first megabyte of a text file, read on the server, for the preview
 // dialog. Read here rather than in the browser so the bytes can be checked
@@ -16,10 +16,13 @@ export const loadTextPreview = async (input: unknown) => {
     return { error: "You're signed out. Sign in again." } as const;
   }
   const parsed = uploadIdSchema.safeParse(input);
-  const file = parsed.success ? await resolveFile(session.user, parsed.data.itemId, "view") : null;
-  if (!file) {
-    return { error: "This file no longer exists." } as const;
+  const found = parsed.success
+    ? await resolveFile(session.user, parsed.data.itemId, "view")
+    : ({ denied: "missing" } as const);
+  if (found.denied) {
+    return { error: deniedMessage(found.denied, "This file no longer exists.") } as const;
   }
+  const file = found.item;
   const size = file.size ?? 0;
   const bytes = size > 0 ? await getRange(itemKey(file.id), TEXT_PREVIEW_BYTES) : new Uint8Array();
   if (!looksLikeText(bytes)) {

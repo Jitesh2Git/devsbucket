@@ -1,32 +1,30 @@
-import { itemIdSchema } from "@devsbucket/shared/item";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import FolderView from "@/components/drive/folder-view";
+import NeedAccess from "@/components/drive/need-access";
 import TrashedFolder from "@/components/drive/trashed-folder";
-import { findTrashedFolder, resolveFolder } from "@/lib/folders";
+import { resolveItem } from "@/lib/items";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = { title: "My Drive" };
 
-// A missing folder or someone else's gets the same 404: the page never says
-// that a folder exists (diagram 7). The user's own trashed folder says so.
+// A missing folder: 404. One that exists but isn't shared with you: "You
+// need access" (decision 0008). One in the trash, if you have a role on it:
+// says so, with Restore.
 const FolderContent = async ({ params }: { params: Promise<{ folderId: string }> }) => {
   const [{ folderId }, { user }] = await Promise.all([params, requireSession()]);
-  if (!itemIdSchema.safeParse(folderId).success) {
+  const found = await resolveItem(user, folderId, "view", { type: "folder" });
+  if (found.denied === "no-access") {
+    return <NeedAccess />;
+  }
+  if (found.denied) {
     notFound();
   }
-  const folder = await resolveFolder(user, folderId, "view");
-  if (!folder) {
-    const trashed = await findTrashedFolder(user, folderId);
-    if (!trashed) {
-      notFound();
-    }
+  const { item: folder } = found;
+  if (folder.trashedAt !== null) {
     return (
-      <TrashedFolder
-        folder={{ id: trashed.id, name: trashed.name }}
-        isTrashRoot={trashed.trashRoot}
-      />
+      <TrashedFolder folder={{ id: folder.id, name: folder.name }} isTrashRoot={folder.trashRoot} />
     );
   }
   return <FolderView folderId={folderId} ownerId={folder.ownerId} />;
