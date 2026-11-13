@@ -48,6 +48,15 @@ export const setPasswordHash = async (userId: string, hash: string) => {
   });
 };
 
+// Signs the user out everywhere: every device's next request has no session.
+export const deleteSessions = async (userId: string) => {
+  const deleted = await db
+    .delete(sessions)
+    .where(eq(sessions.userId, userId))
+    .returning({ id: sessions.id });
+  return deleted.length;
+};
+
 export const setAdmin = async (userId: string, isAdmin: boolean) => {
   await db.update(users).set({ isAdmin }).where(eq(users.id, userId));
 };

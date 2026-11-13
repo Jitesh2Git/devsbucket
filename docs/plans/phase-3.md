@@ -1,6 +1,6 @@
 # Phase 3 plan: Sharing
 
-Planned 2026-11-13, at the end of Phase 2 (`v0.2.0`). Checklist and progress: `docs/PROGRESS.md`. Decisions made for this phase: `docs/decisions/0008-sharing-model.md`, `0009-ownership-transfer.md`, `0010-activity-events-notifications.md`.
+Planned 2026-11-13, at the end of Phase 2 (`v0.2.0`). Checklist and progress: `docs/PROGRESS.md`. Decisions made for this phase: `docs/decisions/0008-sharing-model.md`, `0009-ownership-transfer.md`, `0010-activity-events-notifications.md`, `0011-admin-page.md` (added during step 1).
 
 ## Goal
 
@@ -109,7 +109,11 @@ item_access(p_user uuid, p_item uuid)
 
 ### Admin command
 
-`pnpm admin <command>` (LOCKED.md: no email, so passwords are reset by an admin): `reset-password <email>` (prints a one-time random password and revokes sessions), `set-admin <email> [--off]`, `set-quota <email> <size>`, `create-invite [--email]`, `remove-user <email>` (deletes their trees forever through the existing cleanup path so storage and quota stay right, then the account; asks for confirmation). Where it lives (it needs Better Auth's password hashing and `packages/storage`) is decided in step 1's research.
+`pnpm admin <command>` (LOCKED.md: no email, so passwords are reset by an admin): `reset-password <email>` (prints a one-time random password and revokes sessions), `set-admin <email> [--off]`, `set-quota <email> <size>`, `create-invite [--email]`, `remove-user <email>` (deletes their trees forever through the existing cleanup path so storage and quota stay right, then the account; asks for confirmation). It lives in `apps/worker` (step 1).
+
+### Admin page (step 1b, decision 0011)
+
+`/admin` for users with `is_admin`, signed in normally: Usage, Invites (create, list, revoke) and Users (reset password, set quota, make/remove admin, sign out everywhere, remove user), checked by `canAdmin()` in `packages/authz` on the page and in every server action. Shares its code with `pnpm admin`.
 
 ### Tests
 
@@ -124,6 +128,7 @@ Each is one branch and PR. Each step logs activity and sends events for what it 
 | #   | Step                     | Branch                                          | Main pieces                                                                                                                         | Verify                                                                                                        |
 | --- | ------------------------ | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | 1   | Admin command            | `feat/admin-cli`                                | `pnpm admin` with reset-password, set-admin, set-quota, create-invite, remove-user                                                  | Reset → old password fails, new one works, sessions gone; remove-user leaves no rows, objects or quota behind |
+| 1b  | Admin page               | `feat/admin-page`                               | `/admin`, `canAdmin()`, Usage, Invites, Users, Admin link in the account menu                                                       | Member gets 404; every user action works; can't lock yourself out; removed user's header updates              |
 | 2   | Grants + `item_access()` | `feat/permissions-schema`                       | `item_permissions`, item settings columns, custom migration with the function, `getAccess`, `test:db` in CI                         | Migration SQL read; owner / grant / inherited / highest wins / setting off above / missing item tests         |
 | 3   | authz v1                 | `feat/authz-roles`                              | role-based `can()` + grid, every caller switched, uploader-only complete/cancel, editor moves and trash, "You need access" and 403  | Grid passes; a grant made by SQL lets a Viewer open but not rename; removing a check fails a test             |
 | 4   | Activity log             | `feat/activity`                                 | `activities`, `logActivity` in every existing action, `notify-activity` sent in the transaction (worker handler is a no-op for now) | One row per action with the right actor; a failing action leaves no row                                       |

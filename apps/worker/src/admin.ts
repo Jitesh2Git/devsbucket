@@ -10,16 +10,9 @@ import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
 import { pool } from "@devsbucket/db/client";
 import { createInvite } from "@devsbucket/db/invites";
-import { queueStorageCleanup } from "@devsbucket/db/jobs";
-import {
-  deleteUser,
-  findUserByEmail,
-  setAdmin,
-  setPasswordHash,
-  setQuota,
-} from "@devsbucket/db/users";
+import { findUserByEmail, setAdmin, setPasswordHash, setQuota } from "@devsbucket/db/users";
 import { formatBytes, parseBytes } from "@devsbucket/shared/bytes";
-import { deleteStoredFiles, isComplete } from "@devsbucket/storage/cleanup";
+import { removeUser } from "@devsbucket/storage/cleanup";
 import { generateRandomString, hashPassword } from "better-auth/crypto";
 
 const USAGE = `Usage: pnpm admin <command>
@@ -122,15 +115,9 @@ const commands: Record<string, (input: Input) => Promise<void>> = {
         return;
       }
     }
-    const cleanup = await deleteUser(user.id);
-    // Same path as delete forever: what storage can't delete now goes to
-    // the worker's retry queue.
-    const failed = await deleteStoredFiles(cleanup);
-    if (!isComplete(failed)) {
-      await queueStorageCleanup(failed);
-    }
+    const { files, queued } = await removeUser(user.id);
     console.log(
-      `Removed ${user.email} and ${cleanup.storageKeys.length} file(s)${isComplete(failed) ? "" : ` (${failed.storageKeys.length} queued for retry)`}.`,
+      `Removed ${user.email} and ${files} file(s)${queued > 0 ? ` (${queued} queued for retry)` : ""}.`,
     );
   },
 };

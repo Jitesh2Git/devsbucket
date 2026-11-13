@@ -1,3 +1,4 @@
+import { canAdmin } from "@devsbucket/authz/admin";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,14 @@ const UserMenu = async () => {
   }
 
   const { name, email, image } = session.user;
-  return <UserMenuDropdown name={name} email={email} image={image ?? null} />;
+  return (
+    <UserMenuDropdown
+      name={name}
+      email={email}
+      image={image ?? null}
+      isAdmin={canAdmin(session.user, "view")}
+    />
+  );
 };
 
 export default UserMenu;
