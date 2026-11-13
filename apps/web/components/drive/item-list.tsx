@@ -11,8 +11,8 @@ import { toast } from "sonner";
 import { loadItems } from "@/app/drive/actions";
 import { restoreItem, trashItem } from "@/app/drive/trash-actions";
 import FilePreview, { type PreviewFile } from "@/components/drive/file-preview";
-import ItemMenu from "@/components/drive/item-menu";
-import MoveDialog from "@/components/drive/move-dialog";
+import ItemMenu, { type ItemActions } from "@/components/drive/item-menu";
+import MoveDialog, { type Crumb } from "@/components/drive/move-dialog";
 import RenameDialog, { type ItemRef } from "@/components/drive/rename-dialog";
 import ShareDialog, { type ShareTarget } from "@/components/drive/share-dialog";
 import LocalDate from "@/components/local-date";
@@ -40,9 +40,14 @@ type ItemListProps = {
   parentId: string | null;
   // Rendered on the server, so the first 50 rows arrive with the page.
   firstPage: ListItemsPage;
+  // What the user's role allows on the rows, and whether they can add here.
+  actions: ItemActions;
+  canAdd: boolean;
+  // In someone else's tree: the top-most folder the Move dialog can reach.
+  moveRoot: Crumb | null;
 };
 
-const ItemList = ({ parentId, firstPage }: ItemListProps) => {
+const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListProps) => {
   const query = useInfiniteQuery({
     queryKey: itemsQueryKey(parentId),
     queryFn: async ({ pageParam }) => {
@@ -116,7 +121,9 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
             <FolderOpen />
           </EmptyMedia>
           <EmptyTitle>{parentId ? "This folder is empty" : "Your drive is empty"}</EmptyTitle>
-          <EmptyDescription>Create a folder or upload files to get started.</EmptyDescription>
+          <EmptyDescription>
+            {canAdd ? "Create a folder or upload files to get started." : "Nothing here yet."}
+          </EmptyDescription>
         </EmptyHeader>
       </Empty>
     );
@@ -167,6 +174,7 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
               <TableCell>
                 <ItemMenu
                   item={item}
+                  actions={actions}
                   onPreview={() => setPreviewing(item)}
                   onRename={() => setRenaming(item)}
                   onMove={() => setMoving(item)}
@@ -195,7 +203,12 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
       )}
       <FilePreview file={previewing} onClose={() => setPreviewing(null)} />
       <RenameDialog item={renaming} parentId={parentId} onClose={() => setRenaming(null)} />
-      <MoveDialog item={moving} parentId={parentId} onClose={() => setMoving(null)} />
+      <MoveDialog
+        item={moving}
+        parentId={parentId}
+        root={moveRoot}
+        onClose={() => setMoving(null)}
+      />
       <ShareDialog item={sharing} onClose={() => setSharing(null)} />
     </div>
   );

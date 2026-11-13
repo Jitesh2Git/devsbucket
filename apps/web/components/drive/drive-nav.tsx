@@ -1,6 +1,6 @@
 "use client";
 
-import { HardDrive, Trash2 } from "lucide-react";
+import { HardDrive, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
@@ -8,10 +8,13 @@ import { Button } from "@/components/ui/button";
 
 const LINKS = [
   { href: "/drive", label: "My Drive", icon: HardDrive },
+  { href: "/drive/shared", label: "Shared with me", icon: Users },
   { href: "/drive/trash", label: "Trash", icon: Trash2 },
 ] as const;
 
-// My Drive is active on /drive and inside its folders; Trash on /drive/trash.
+// My Drive is active on /drive and inside folders (shared ones too: the URL
+// doesn't say whose folder it is; the breadcrumbs do); the others on their
+// own pages.
 const isActive = (href: string, pathname: string | null) =>
   pathname !== null &&
   (href === "/drive"

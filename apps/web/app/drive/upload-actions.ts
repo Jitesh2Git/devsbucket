@@ -3,8 +3,14 @@
 import { can } from "@devsbucket/authz/can";
 import { getAccess } from "@devsbucket/db/access";
 import { createPendingFile, getItem, markFileReady, setUploadId } from "@devsbucket/db/items";
+import { getUserName } from "@devsbucket/db/users";
 import { completeUploadSchema, requestUploadSchema, uploadIdSchema } from "@devsbucket/shared/item";
-import { MULTIPART_THRESHOLD, partSizes, quotaMessage } from "@devsbucket/shared/limits";
+import {
+  MULTIPART_THRESHOLD,
+  ownerQuotaMessage,
+  partSizes,
+  quotaMessage,
+} from "@devsbucket/shared/limits";
 import { discardUpload } from "@devsbucket/storage/cleanup";
 import { checkUploadLimits } from "@devsbucket/storage/limits";
 import { completeMultipart, createMultipart, presignParts } from "@devsbucket/storage/multipart";
@@ -63,7 +69,13 @@ export const requestUpload = async (input: unknown) => {
     storageKeyFor: itemKey,
   });
   if (!result.ok) {
-    return { error: quotaMessage(result.used, result.quota) } as const;
+    const ownerId = parent.item.ownerId;
+    return {
+      error:
+        ownerId === session.user.id
+          ? quotaMessage(result.used, result.quota)
+          : ownerQuotaMessage((await getUserName(ownerId)) ?? "the owner"),
+    } as const;
   }
   const { file } = result;
   const key = itemKey(file.id);

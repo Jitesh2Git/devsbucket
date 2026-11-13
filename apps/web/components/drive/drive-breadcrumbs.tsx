@@ -9,16 +9,24 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 
+const ROOTS = {
+  "my-drive": { label: "My Drive", href: "/drive" },
+  shared: { label: "Shared with me", href: "/drive/shared" },
+} as const;
+
 type DriveBreadcrumbsProps = {
-  // From the top of My Drive down to the current folder; empty at the top.
+  // Your own tree starts at My Drive; someone else's at Shared with me.
+  root: keyof typeof ROOTS;
+  // From the top down to the current folder; empty at the top of My Drive.
   folders: { id: string; name: string }[];
 };
 
-// "My Drive › src › app": every level is a link except the current one,
-// which is the page's heading.
-const DriveBreadcrumbs = ({ folders }: DriveBreadcrumbsProps) => {
+// "My Drive › src › app" or "Shared with me › Team › web": every level is a
+// link except the current one, which is the page's heading.
+const DriveBreadcrumbs = ({ root, folders }: DriveBreadcrumbsProps) => {
   const current = folders.at(-1);
   const ancestors = folders.slice(0, -1);
+  const top = ROOTS[root];
 
   return (
     <Breadcrumb className="min-w-0">
@@ -26,11 +34,11 @@ const DriveBreadcrumbs = ({ folders }: DriveBreadcrumbsProps) => {
         <BreadcrumbItem>
           {current ? (
             <BreadcrumbLink asChild>
-              <Link href="/drive">My Drive</Link>
+              <Link href={top.href}>{top.label}</Link>
             </BreadcrumbLink>
           ) : (
             <BreadcrumbPage>
-              <h1 className="font-semibold tracking-tight">My Drive</h1>
+              <h1 className="font-semibold tracking-tight">{top.label}</h1>
             </BreadcrumbPage>
           )}
         </BreadcrumbItem>

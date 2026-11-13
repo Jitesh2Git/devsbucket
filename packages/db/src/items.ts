@@ -5,6 +5,7 @@ import { db, type Executor } from "./client.ts";
 import { isUniqueViolation } from "./errors.ts";
 import { users } from "./schema/auth.ts";
 import { items } from "./schema/items.ts";
+import { itemPermissions } from "./schema/permissions.ts";
 import { releaseStorage, reserveStorage } from "./usage.ts";
 
 export type Item = typeof items.$inferSelect;
@@ -81,21 +82,33 @@ export const listItems = async ({
 export type ListItemsPage = Awaited<ReturnType<typeof listItems>>;
 export type ListedItem = ListItemsPage["items"][number];
 
-// The folders from the top of My Drive down to `folderId` (itself included),
-// in one recursive query up the parent chain.
-export const getBreadcrumbs = async (folderId: string) => {
-  const result = await db.execute<{ id: string; name: string }>(sql`
+// The folders above `folderId` (itself included) that `userId` can see, in
+// one recursive query up the parent chain. In their own tree: from the top
+// of My Drive. In someone else's: from the top-most folder shared with
+// them (the one Shared with me lists), never the owner's folders above it.
+export const getBreadcrumbs = async (folderId: string, userId: string, tx: Executor = db) => {
+  const result = await tx.execute<{ id: string; name: string; own: boolean; granted: boolean }>(sql`
     with recursive chain as (
-      select id, parent_id, name, 0 as depth from ${items} where id = ${folderId}
+      select id, parent_id, owner_id, name, 0 as depth from ${items} where id = ${folderId}
       union all
-      select i.id, i.parent_id, i.name, c.depth + 1
+      select i.id, i.parent_id, i.owner_id, i.name, c.depth + 1
       from ${items} i join chain c on i.id = c.parent_id
       -- A guard: moves never create cycles, but a loop must never hang a page.
       where c.depth < 100
     )
-    select id, name from chain order by depth desc
+    select c.id, c.name, c.owner_id = ${userId} as own,
+      exists (
+        select 1 from ${itemPermissions} p where p.item_id = c.id and p.user_id = ${userId}
+      ) as granted
+    from chain c order by c.depth desc
   `);
-  return result.rows;
+  const chain = result.rows;
+  const folders = (rows: typeof chain) => rows.map(({ id, name }) => ({ id, name }));
+  if (chain[0]?.own) {
+    return { root: "my-drive", folders: folders(chain) } as const;
+  }
+  const top = chain.findIndex((folder) => folder.granted);
+  return { root: "shared", folders: folders(chain.slice(Math.max(top, 0))) } as const;
 };
 
 // Creates a folder, or says the name is taken in that folder (the unique

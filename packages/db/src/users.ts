@@ -25,6 +25,13 @@ export const findUserByEmail = async (email: string) => {
   return user ?? null;
 };
 
+// Just someone's display name (for messages like "Not enough space in
+// Ada's drive"), or null if there's no such user.
+export const getUserName = async (userId: string) => {
+  const [user] = await db.select({ name: users.name }).from(users).where(eq(users.id, userId));
+  return user?.name ?? null;
+};
+
 // Replaces the user's password with an already hashed one and signs them
 // out everywhere. A GitHub-only account gets its first password (the
 // "credential" account Better Auth's email sign-up would have made).

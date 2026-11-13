@@ -28,6 +28,10 @@ export const opsLevel = (ops: OpsCount): "ok" | "warn" | "block" => {
 export const quotaMessage = (used: number, quota: number) =>
   `Not enough space: ${formatBytes(used)} of ${formatBytes(quota)} used.`;
 
+// Uploading into someone else's folder uses their quota (decision 0002).
+// Their usage is theirs to know, so only their name.
+export const ownerQuotaMessage = (ownerName: string) => `Not enough space in ${ownerName}'s drive.`;
+
 // The app-wide checks before an upload, as the message the user sees, or
 // null when it may go ahead. The user's own quota is checked separately,
 // atomically in SQL (`reserveStorage`).
