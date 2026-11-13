@@ -7,12 +7,14 @@
     "dev": "node --watch --env-file-if-exists=.env src/index.ts",
     "start": "node --env-file-if-exists=.env src/index.ts",
     "job": "node --env-file-if-exists=.env src/run-job.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "admin": "node --env-file-if-exists=.env src/admin.ts"
   },
   "dependencies": {
     "@devsbucket/db": "workspace:*",
     "@devsbucket/shared": "workspace:*",
-    "@devsbucket/storage": "workspace:*"
+    "@devsbucket/storage": "workspace:*",
+    "better-auth": "1.7.21"
   },
   "devDependencies": {
     "@devsbucket/typescript-config": "workspace:*",

@@ -16,3 +16,22 @@ export const formatBytes = (bytes: number): string => {
   const rounded = value < 10 ? Math.round(value * 10) / 10 : Math.round(value);
   return `${rounded} ${UNITS[unit]}`;
 };
+
+const FACTORS: Record<string, number> = {
+  B: 1,
+  KB: 1024,
+  MB: 1024 ** 2,
+  GB: 1024 ** 3,
+  TB: 1024 ** 4,
+};
+
+// The reverse of formatBytes, for typed-in sizes (`pnpm admin set-quota`):
+// "1073741824", "500MB", "1.5 GB", "2gb". Same powers of 1024.
+export const parseBytes = (input: string): number => {
+  const match = /^(\d+(?:\.\d+)?)\s*([a-z]*)$/i.exec(input.trim());
+  const factor = FACTORS[(match?.[2] || "B").toUpperCase()];
+  if (!match || factor === undefined) {
+    throw new RangeError(`Not a size: "${input}" (try 500MB, 2GB or a number of bytes)`);
+  }
+  return Math.round(Number(match[1]) * factor);
+};

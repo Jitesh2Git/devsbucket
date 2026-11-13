@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatBytes } from "./bytes.ts";
+import { formatBytes, parseBytes } from "./bytes.ts";
 
 describe("formatBytes", () => {
   it.each([
@@ -19,5 +19,28 @@ describe("formatBytes", () => {
 
   it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])("rejects %d", (bytes) => {
     expect(() => formatBytes(bytes)).toThrow(RangeError);
+  });
+});
+
+describe("parseBytes", () => {
+  it.each([
+    ["0", 0],
+    ["1073741824", 1024 ** 3],
+    ["512B", 512],
+    ["1.5KB", 1536],
+    ["500MB", 500 * 1024 ** 2],
+    ["2 GB", 2 * 1024 ** 3],
+    ["2gb", 2 * 1024 ** 3],
+    [" 1TB ", 1024 ** 4],
+  ])("parses %s as %d", (input, expected) => {
+    expect(parseBytes(input)).toBe(expected);
+  });
+
+  it.each(["", "GB", "-1GB", "1 PB", "1,5GB", "1e9", "lots"])("rejects %s", (input) => {
+    expect(() => parseBytes(input)).toThrow(RangeError);
+  });
+
+  it("round-trips with formatBytes", () => {
+    expect(formatBytes(parseBytes("10 MB"))).toBe("10 MB");
   });
 });

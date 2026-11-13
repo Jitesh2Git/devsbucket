@@ -1,9 +1,7 @@
-import { randomBytes } from "node:crypto";
 import { and, gt, isNull } from "drizzle-orm";
 import { db, pool } from "./client.ts";
+import { createInvite } from "./invites.ts";
 import { invites } from "./schema/invites.ts";
-
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Safe to run many times: reuses an open invite instead of creating another.
 const seed = async () => {
@@ -20,18 +18,7 @@ const seed = async () => {
     return;
   }
 
-  const [created] = await db
-    .insert(invites)
-    .values({
-      code: randomBytes(12).toString("base64url"),
-      expiresAt: new Date(Date.now() + SEVEN_DAYS_MS),
-    })
-    .returning();
-
-  if (!created) {
-    throw new Error("Failed to create invite");
-  }
-
+  const created = await createInvite();
   console.log(`Created invite: ${created.code} (expires ${created.expiresAt.toISOString()})`);
 };
 
