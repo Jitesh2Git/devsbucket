@@ -1,6 +1,7 @@
 "use server";
 
 import { can } from "@devsbucket/authz/can";
+import { getAccess } from "@devsbucket/db/access";
 import { createPendingFile, getItem, markFileReady, setUploadId } from "@devsbucket/db/items";
 import { completeUploadSchema, requestUploadSchema, uploadIdSchema } from "@devsbucket/shared/item";
 import { MULTIPART_THRESHOLD, partSizes, quotaMessage } from "@devsbucket/shared/limits";
@@ -10,7 +11,7 @@ import { completeMultipart, createMultipart, presignParts } from "@devsbucket/st
 import { headObject, itemKey, presignPut } from "@devsbucket/storage/objects";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { resolveFolder } from "@/lib/folders";
+import { deniedMessage, resolveFolder } from "@/lib/items";
 
 const SIGNED_OUT = "You're signed out. Sign in again.";
 const FOLDER_GONE = "This folder no longer exists.";
@@ -21,10 +22,11 @@ const INCOMPLETE = "The file didn't arrive complete. Try again.";
 // to storage → complete (or cancel). Each step is a public endpoint, so each
 // checks the session, the input and the permission again.
 
-// A pending upload `user` may finish or cancel, or null.
-const findPendingUpload = async (user: { id: string }, itemId: string) => {
+// A pending upload that `user` started, or null: only the uploader can
+// finish or cancel it (decision 0008), even inside someone else's folder.
+const findOwnUpload = async (user: { id: string }, itemId: string) => {
   const item = await getItem(itemId);
-  if (item?.type !== "file" || item.status !== "pending" || !can(user, "upload", item)) {
+  if (item?.type !== "file" || item.status !== "pending" || item.createdBy !== user.id) {
     return null;
   }
   return item;
@@ -41,17 +43,18 @@ export const requestUpload = async (input: unknown) => {
   }
   const { parentId, name, size, mimeType } = parsed.data;
   const parent = await resolveFolder(session.user, parentId, "upload");
-  if (!parent) {
-    return { error: FOLDER_GONE } as const;
+  if (parent.denied) {
+    return { error: deniedMessage(parent.denied, FOLDER_GONE) } as const;
   }
   // File size, the app-wide 9 GB, this month's operations.
   const limitError = await checkUploadLimits(size);
   if (limitError) {
     return { error: limitError } as const;
   }
-  // The owner's quota, and the first free name (decision 0007).
+  // The owner's quota (an Editor's upload counts against the tree's
+  // owner, decision 0002), and the first free name (decision 0007).
   const result = await createPendingFile({
-    ownerId: parent.ownerId,
+    ownerId: parent.item.ownerId,
     parentId,
     createdBy: session.user.id,
     name,
@@ -92,8 +95,11 @@ export const completeUpload = async (input: unknown) => {
   if (!parsed.success) {
     return { error: "Invalid request" } as const;
   }
-  const file = await findPendingUpload(session.user, parsed.data.itemId);
-  if (!file) {
+  const file = await findOwnUpload(session.user, parsed.data.itemId);
+  // Still allowed to upload there? Access can change mid-upload; then the
+  // file never appears, and the worker clears the pending row later.
+  const access = file ? await getAccess(session.user.id, file.id) : null;
+  if (!file || !access || !can(access, "upload")) {
     return { error: UPLOAD_GONE } as const;
   }
   const key = itemKey(file.id);
@@ -132,7 +138,8 @@ export const cancelUpload = async (input: unknown) => {
     return { error: SIGNED_OUT } as const;
   }
   const parsed = uploadIdSchema.safeParse(input);
-  const file = parsed.success ? await findPendingUpload(session.user, parsed.data.itemId) : null;
+  // The uploader can always cancel their own upload, with or without access.
+  const file = parsed.success ? await findOwnUpload(session.user, parsed.data.itemId) : null;
   if (file) {
     // The row goes first: it gives the quota back, and a late
     // completeUpload then finds nothing to mark ready.

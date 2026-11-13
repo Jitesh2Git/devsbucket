@@ -72,15 +72,6 @@ export const listTrash = async (ownerId: string) => {
 
 export type TrashedItem = Awaited<ReturnType<typeof listTrash>>[number];
 
-// A trashed item the user trashed directly (a Trash view row), or null.
-export const getTrashRoot = async (id: string) => {
-  const [item] = await db
-    .select()
-    .from(items)
-    .where(and(eq(items.id, id), eq(items.trashRoot, true)));
-  return item ?? null;
-};
-
 // Brings back a trashed item and what was trashed with it. If its folder is
 // in the trash now, it goes to the top level of My Drive; if its name was
 // taken meanwhile, it gets the next free one (decision 0007).

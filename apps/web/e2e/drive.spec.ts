@@ -69,9 +69,10 @@ test("folders: create, name clash, open, breadcrumbs, load more, 404", async ({ 
     await expect(rows.last()).toContainText("Projects");
   });
 
-  await test.step("someone else's folder, or no folder, is a 404", async () => {
+  await test.step("someone else's folder says 'You need access'; no folder is a 404", async () => {
+    // Decision 0008: it exists, but without its name.
     await page.goto(`/drive/folders/${secret.rows[0]?.id}`);
-    await expect(page.getByText("This page could not be found.")).toBeVisible();
+    await expect(page.getByText("You need access")).toBeVisible();
     await expect(page.getByText("Secret")).toBeHidden();
     await page.goto("/drive/folders/not-a-folder");
     await expect(page.getByText("This page could not be found.")).toBeVisible();
