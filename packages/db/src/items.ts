@@ -1,5 +1,6 @@
 import { type Cursor, nextAvailableName, splitExtension } from "@devsbucket/shared/item";
 import { and, eq, isNull, sql } from "drizzle-orm";
+import { logActivity } from "./activity.ts";
 import { db, type Executor } from "./client.ts";
 import { isUniqueViolation } from "./errors.ts";
 import { users } from "./schema/auth.ts";
@@ -106,14 +107,22 @@ export const createFolder = async (values: {
   name: string;
 }) => {
   try {
-    const [folder] = await db
-      .insert(items)
-      .values({ ...values, type: "folder" })
-      .returning({ id: items.id, name: items.name });
-    if (!folder) {
-      throw new Error("Insert returned no row");
-    }
-    return { ok: true, folder } as const;
+    return await db.transaction(async (tx) => {
+      const [folder] = await tx
+        .insert(items)
+        .values({ ...values, type: "folder" })
+        .returning({ id: items.id, name: items.name });
+      if (!folder) {
+        throw new Error("Insert returned no row");
+      }
+      await logActivity(tx, {
+        itemId: folder.id,
+        actorId: values.createdBy,
+        action: "created",
+        metadata: {},
+      });
+      return { ok: true, folder } as const;
+    });
   } catch (error) {
     if (isUniqueViolation(error)) {
       return { ok: false, reason: "name-taken" } as const;
@@ -206,14 +215,26 @@ export const createPendingFile = async (values: {
   throw new Error("No free name after 3 attempts");
 };
 
-// The upload arrived: the file shows up in its folder.
+// The upload arrived: the file shows up in its folder, and "uploaded" is
+// logged for the person who uploaded it.
 export const markFileReady = async (id: string) => {
-  const [file] = await db
-    .update(items)
-    .set({ status: "ready" })
-    .where(and(eq(items.id, id), eq(items.status, "pending")))
-    .returning();
-  return file ?? null;
+  return db.transaction(async (tx) => {
+    const [file] = await tx
+      .update(items)
+      .set({ status: "ready" })
+      .where(and(eq(items.id, id), eq(items.status, "pending")))
+      .returning();
+    if (!file) {
+      return null;
+    }
+    await logActivity(tx, {
+      itemId: file.id,
+      actorId: file.createdBy,
+      action: "uploaded",
+      metadata: { size: file.size ?? 0 },
+    });
+    return file;
+  });
 };
 
 // A cancelled or failed upload: the row goes and its size returns to the
@@ -268,16 +289,45 @@ export const listFolders = async ({
 };
 
 // Renames an item; the unique index refuses a name already in its folder.
-export const renameItem = async (id: string, name: string) => {
+export const renameItem = async ({
+  id,
+  name,
+  actorId,
+}: {
+  id: string;
+  name: string;
+  actorId: string;
+}) => {
   try {
-    const [renamed] = await db
-      .update(items)
-      .set({ name })
-      .where(and(eq(items.id, id), isNull(items.trashedAt)))
-      .returning({ id: items.id, name: items.name, parentId: items.parentId });
-    return renamed
-      ? ({ ok: true, item: renamed } as const)
-      : ({ ok: false, reason: "gone" } as const);
+    return await db.transaction(async (tx) => {
+      // The old name, for the activity. `for update`: a rename at the same
+      // moment waits, so both log the name they really replaced.
+      const [before] = await tx
+        .select({ name: items.name })
+        .from(items)
+        .where(and(eq(items.id, id), isNull(items.trashedAt)))
+        .for("update");
+      if (!before) {
+        return { ok: false, reason: "gone" } as const;
+      }
+      const [renamed] = await tx
+        .update(items)
+        .set({ name })
+        .where(eq(items.id, id))
+        .returning({ id: items.id, name: items.name, parentId: items.parentId });
+      if (!renamed) {
+        return { ok: false, reason: "gone" } as const;
+      }
+      if (before.name !== name) {
+        await logActivity(tx, {
+          itemId: id,
+          actorId,
+          action: "renamed",
+          metadata: { from: before.name, to: name },
+        });
+      }
+      return { ok: true, item: renamed } as const;
+    });
   } catch (error) {
     if (isUniqueViolation(error)) {
       return { ok: false, reason: "name-taken" } as const;
@@ -310,10 +360,12 @@ export const moveItem = async ({
   id,
   ownerId,
   parentId,
+  actorId,
 }: {
   id: string;
   ownerId: string;
   parentId: string | null;
+  actorId: string;
 }) => {
   try {
     return await db.transaction(async (tx) => {
@@ -321,14 +373,29 @@ export const moveItem = async ({
       if (parentId !== null && (await isInside(tx, parentId, id))) {
         return { ok: false, reason: "into-itself" } as const;
       }
+      // Where it was, for the activity (moves in this tree wait on the lock).
+      const [before] = await tx
+        .select({ parentId: items.parentId })
+        .from(items)
+        .where(and(eq(items.id, id), eq(items.ownerId, ownerId), isNull(items.trashedAt)));
+      if (!before) {
+        return { ok: false, reason: "gone" } as const;
+      }
       const [moved] = await tx
         .update(items)
         .set({ parentId })
-        .where(and(eq(items.id, id), eq(items.ownerId, ownerId), isNull(items.trashedAt)))
+        .where(eq(items.id, id))
         .returning({ id: items.id, name: items.name, parentId: items.parentId });
-      return moved
-        ? ({ ok: true, item: moved } as const)
-        : ({ ok: false, reason: "gone" } as const);
+      if (!moved) {
+        return { ok: false, reason: "gone" } as const;
+      }
+      await logActivity(tx, {
+        itemId: id,
+        actorId,
+        action: "moved",
+        metadata: { from: before.parentId, to: parentId },
+      });
+      return { ok: true, item: moved } as const;
     });
   } catch (error) {
     if (isUniqueViolation(error)) {

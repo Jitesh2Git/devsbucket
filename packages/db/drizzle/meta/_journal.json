@@ -36,6 +36,13 @@
       "when": 1794565081466,
       "tag": "0004_item_access",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794576083527,
+      "tag": "0005_activities",
+      "breakpoints": true
     }
   ]
 }

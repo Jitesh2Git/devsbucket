@@ -1,3 +1,4 @@
+import { recordActivity } from "@devsbucket/db/activity";
 import { contentDisposition } from "@devsbucket/shared/preview";
 import { itemKey, presignGet } from "@devsbucket/storage/objects";
 import { auth } from "@/lib/auth";
@@ -27,6 +28,12 @@ export const GET = async (
     return new Response("Not found", { status: 404 });
   }
   const file = found.item;
+  await recordActivity({
+    itemId: file.id,
+    actorId: session.user.id,
+    action: "downloaded",
+    metadata: {},
+  });
   const url = await presignGet({
     key: itemKey(file.id),
     contentDisposition: contentDisposition("attachment", file.name),

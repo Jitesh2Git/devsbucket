@@ -72,7 +72,11 @@ export const restoreItem = async (input: unknown) => {
     return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
   }
   const root = found.item;
-  const result = await restoreRows({ id: root.id, ownerId: root.ownerId });
+  const result = await restoreRows({
+    id: root.id,
+    ownerId: root.ownerId,
+    actorId: session.user.id,
+  });
   if (!result) {
     return { error: ITEM_GONE } as const;
   }
@@ -99,7 +103,11 @@ export const deleteForever = async (input: unknown) => {
     return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
   }
   const root = found.item;
-  const result = await deleteRows({ ids: [root.id], ownerId: root.ownerId });
+  const result = await deleteRows({
+    ids: [root.id],
+    ownerId: root.ownerId,
+    actorId: session.user.id,
+  });
   await deleteFromStorage(result);
   return { error: null } as const;
 };
@@ -114,7 +122,7 @@ export const emptyTrash = async () => {
     return { error: "You can't empty this trash." } as const;
   }
   const ids = await listTrashRootIds(session.user.id);
-  const result = await deleteRows({ ids, ownerId: session.user.id });
+  const result = await deleteRows({ ids, ownerId: session.user.id, actorId: session.user.id });
   await deleteFromStorage(result);
   return { error: null, deleted: result.deleted } as const;
 };

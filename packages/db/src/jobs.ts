@@ -1,7 +1,9 @@
 // Background jobs with pg-boss (LOCKED.md): a queue that lives in Postgres,
 // in its own `pgboss` schema (drizzle-kit only manages `public`). The worker
 // (apps/worker) runs the jobs; the web app only adds them.
-import { PgBoss } from "pg-boss";
+import { sql } from "drizzle-orm";
+import { fromDrizzle, PgBoss } from "pg-boss";
+import type { Executor } from "./client.ts";
 
 export const QUEUES = {
   // Uploads still pending after an hour: a closed tab, a crash.
@@ -10,7 +12,12 @@ export const QUEUES = {
   emptyOldTrash: "empty-old-trash",
   // Storage deletes that failed after the rows were already gone.
   deleteStorage: "delete-storage-objects",
+  // One per activity row, queued in the action's transaction (decision
+  // 0010); the worker turns it into notifications (step 11).
+  notifyActivity: "notify-activity",
 } as const;
+
+export type NotifyActivity = { activityId: string };
 
 export type StorageCleanup = {
   storageKeys: string[];
@@ -50,6 +57,7 @@ export const createQueues = async (boss: PgBoss) => {
     retryDelay: 60,
     retryBackoff: true,
   });
+  await boss.createQueue(QUEUES.notifyActivity, { retryLimit: 5, retryBackoff: true });
 };
 
 // One sending instance per web server process (kept across Next.js dev
@@ -70,4 +78,19 @@ const sender = () => {
 export const queueStorageCleanup = async (cleanup: StorageCleanup) => {
   const boss = await sender();
   await boss.send(QUEUES.deleteStorage, cleanup);
+};
+
+// Queues a job as part of `tx`: it exists only if the transaction commits,
+// so a rolled-back action never leaves a job behind (pg-boss runs its
+// insert through our transaction).
+export const sendInTransaction = async (tx: Executor, queue: string, data: object) => {
+  const boss = await sender();
+  await boss.send(queue, data, { db: fromDrizzle(tx, sql) });
+};
+
+// Closes this process's sending connection (scripts and tests that finish).
+export const stopSender = async () => {
+  const boss = await globalForBoss.sender;
+  globalForBoss.sender = undefined;
+  await boss?.stop({ graceful: false, close: true });
 };
