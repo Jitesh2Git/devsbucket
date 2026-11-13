@@ -42,9 +42,11 @@ export type TrashRow = TrashedItem & { daysLeft: number };
 type Confirming = { item: TrashRow } | "all" | null;
 
 // The Trash page's list: restore, or delete forever (with a confirm, since
-// it can't be undone). The rows come from the server; after a change the
-// page is refreshed, and the drive's cached folder lists too.
-const TrashList = ({ items }: { items: TrashRow[] }) => {
+// it can't be undone). Rows from other people's trees (what an Editor
+// trashed there) can only be restored: only the Owner deletes forever. The
+// rows come from the server; after a change the page is refreshed, and the
+// drive's cached folder lists too.
+const TrashList = ({ items, userId }: { items: TrashRow[]; userId: string }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState<Confirming>(null);
@@ -119,6 +121,7 @@ const TrashList = ({ items }: { items: TrashRow[] }) => {
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead className="w-40">Was in</TableHead>
+            <TableHead className="w-32">Trashed by</TableHead>
             <TableHead className="w-24 text-right">Size</TableHead>
             <TableHead className="w-28">Days left</TableHead>
             <TableHead className="w-56">
@@ -140,7 +143,10 @@ const TrashList = ({ items }: { items: TrashRow[] }) => {
                 </span>
               </TableCell>
               <TableCell className="max-w-0 truncate text-muted-foreground">
-                {item.parentName ?? "My Drive"}
+                {item.parentName ?? (item.ownerId === userId ? "My Drive" : "—")}
+              </TableCell>
+              <TableCell className="max-w-0 truncate text-muted-foreground">
+                {item.trashedBy === userId ? "You" : (item.trashedByName ?? "—")}
               </TableCell>
               <TableCell className="text-right text-muted-foreground">
                 {item.size === null ? "—" : formatBytes(item.size)}
@@ -160,16 +166,18 @@ const TrashList = ({ items }: { items: TrashRow[] }) => {
                     <RotateCcw />
                     Restore
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive"
-                    onClick={() => setConfirming({ item })}
-                    disabled={busy}
-                    aria-label={`Delete ${item.name} forever`}
-                  >
-                    Delete forever
-                  </Button>
+                  {item.ownerId === userId && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive"
+                      onClick={() => setConfirming({ item })}
+                      disabled={busy}
+                      aria-label={`Delete ${item.name} forever`}
+                    >
+                      Delete forever
+                    </Button>
+                  )}
                 </div>
               </TableCell>
             </TableRow>

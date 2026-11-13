@@ -4,6 +4,7 @@ import {
   FREE_OPS,
   MAX_FILE_SIZE,
   opsLevel,
+  ownerQuotaMessage,
   PART_SIZE,
   partSizes,
   quotaMessage,
@@ -74,6 +75,10 @@ describe("uploadLimitError", () => {
 describe("quotaMessage", () => {
   it("shows used and quota in readable units", () => {
     expect(quotaMessage(512 * 1024 ** 2, 1024 ** 3)).toBe("Not enough space: 512 MB of 1 GB used.");
+  });
+
+  it("names the owner, without their numbers, in someone else's folder", () => {
+    expect(ownerQuotaMessage("Ada")).toBe("Not enough space in Ada's drive.");
   });
 });
 

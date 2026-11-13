@@ -13,8 +13,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// What the user's role allows on a row (from can(), on the server).
+export type ItemActions = { share: boolean; rename: boolean; move: boolean; trash: boolean };
+
 type ItemMenuProps = {
   item: Pick<ListedItem, "id" | "name" | "type">;
+  actions: ItemActions;
   onPreview: () => void;
   onRename: () => void;
   onMove: () => void;
@@ -22,8 +26,17 @@ type ItemMenuProps = {
   onTrash: () => void;
 };
 
-// The ⋯ menu on each row.
-const ItemMenu = ({ item, onPreview, onRename, onMove, onShare, onTrash }: ItemMenuProps) => {
+// The ⋯ menu on each row: only what the user may do. A Viewer's folder has
+// nothing to offer, so it gets no menu.
+const ItemMenu = ({
+  item,
+  actions,
+  onPreview,
+  onRename,
+  onMove,
+  onShare,
+  onTrash,
+}: ItemMenuProps) => {
   // Dialogs open once the menu has fully closed. Opened sooner, the closing
   // menu and the dialog fight over focus, and the dialog's focus trap ends
   // up selecting the whole name field in Rename.
@@ -31,6 +44,11 @@ const ItemMenu = ({ item, onPreview, onRename, onMove, onShare, onTrash }: ItemM
   const openDialog = (open: () => void) => () => {
     pending.current = open;
   };
+  const isFile = item.type === "file";
+  const changes = actions.share || actions.rename || actions.move;
+  if (!isFile && !changes && !actions.trash) {
+    return null;
+  }
 
   return (
     <DropdownMenu>
@@ -50,7 +68,7 @@ const ItemMenu = ({ item, onPreview, onRename, onMove, onShare, onTrash }: ItemM
           }
         }}
       >
-        {item.type === "file" && (
+        {isFile && (
           <>
             <DropdownMenuItem onSelect={openDialog(onPreview)}>
               <Eye />
@@ -62,26 +80,36 @@ const ItemMenu = ({ item, onPreview, onRename, onMove, onShare, onTrash }: ItemM
                 Download
               </a>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            {(changes || actions.trash) && <DropdownMenuSeparator />}
           </>
         )}
-        <DropdownMenuItem onSelect={openDialog(onShare)}>
-          <UserPlus />
-          Share
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={openDialog(onRename)}>
-          <Pencil />
-          Rename
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={openDialog(onMove)}>
-          <FolderInput />
-          Move
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" onSelect={onTrash}>
-          <Trash2 />
-          Move to trash
-        </DropdownMenuItem>
+        {actions.share && (
+          <DropdownMenuItem onSelect={openDialog(onShare)}>
+            <UserPlus />
+            Share
+          </DropdownMenuItem>
+        )}
+        {actions.rename && (
+          <DropdownMenuItem onSelect={openDialog(onRename)}>
+            <Pencil />
+            Rename
+          </DropdownMenuItem>
+        )}
+        {actions.move && (
+          <DropdownMenuItem onSelect={openDialog(onMove)}>
+            <FolderInput />
+            Move
+          </DropdownMenuItem>
+        )}
+        {actions.trash && (
+          <>
+            {changes && <DropdownMenuSeparator />}
+            <DropdownMenuItem variant="destructive" onSelect={onTrash}>
+              <Trash2 />
+              Move to trash
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

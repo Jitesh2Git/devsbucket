@@ -3,7 +3,7 @@
 // brings back what was trashed together; delete forever removes the rows
 // and hands back what storage still has to delete.
 import { nextAvailableName } from "@devsbucket/shared/item";
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { logActivity } from "./activity.ts";
 import { db, type Executor } from "./client.ts";
@@ -53,24 +53,42 @@ export const trashItem = async ({
 };
 
 const parents = alias(items, "parents");
+const trashers = alias(users, "trashers");
 
-// What the Trash view shows: the items the user trashed, newest first, with
-// the folder each one was in. Capped; the worker empties anything older
-// than 30 days (step 11), which keeps the list short.
-export const listTrash = async (ownerId: string) => {
-  return db
+// What a user's Trash view shows, newest first, with the folder each item
+// was in and who trashed it: everything trashed in their own trees, and
+// what they trashed in other people's trees while they're still an Editor
+// there, so they can restore it (decision 0008). Capped; the worker empties
+// anything older than 30 days, which keeps the list short.
+export const listTrash = async (userId: string, tx: Executor = db) => {
+  return tx
     .select({
       id: items.id,
       type: items.type,
       name: items.name,
       size: items.size,
+      ownerId: items.ownerId,
       trashedAt: items.trashedAt,
+      trashedBy: items.trashedBy,
+      trashedByName: trashers.name,
       parentId: items.parentId,
       parentName: parents.name,
     })
     .from(items)
     .leftJoin(parents, eq(parents.id, items.parentId))
-    .where(and(eq(items.ownerId, ownerId), eq(items.trashRoot, true)))
+    .leftJoin(trashers, eq(trashers.id, items.trashedBy))
+    .where(
+      and(
+        eq(items.trashRoot, true),
+        or(
+          eq(items.ownerId, userId),
+          and(
+            eq(items.trashedBy, userId),
+            sql`(select role from item_access(${userId}, ${items.id})) = 'editor'`,
+          ),
+        ),
+      ),
+    )
     .orderBy(desc(items.trashedAt), items.id)
     .limit(200);
 };

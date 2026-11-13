@@ -13,6 +13,7 @@ const TrashContent = async () => {
   const now = new Date();
   return (
     <TrashList
+      userId={user.id}
       items={items.map((item) => ({
         ...item,
         daysLeft: item.trashedAt ? trashDaysLeft(item.trashedAt, now) : 0,

@@ -18,15 +18,24 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { foldersQueryKey, itemsQueryKey } from "@/lib/query-keys";
 
-type Crumb = { id: string; name: string };
+export type Crumb = { id: string; name: string };
 
-type MovePickerProps = { item: ItemRef; fromParentId: string | null; onDone: () => void };
+type MovePickerProps = {
+  item: ItemRef;
+  fromParentId: string | null;
+  // null: the top of the user's own My Drive. In someone else's tree: the
+  // top-most folder shared with them (moves stay inside one tree).
+  root: Crumb | null;
+  onDone: () => void;
+};
 
-// Browse from the top of My Drive into folders, then "Move here".
-const MovePicker = ({ item, fromParentId, onDone }: MovePickerProps) => {
+// Browse from the top (My Drive, or the shared folder) into folders, then
+// "Move here".
+const MovePicker = ({ item, fromParentId, root, onDone }: MovePickerProps) => {
   const queryClient = useQueryClient();
-  // Where the picker is: [] = the top of My Drive, then each folder opened.
-  const [path, setPath] = useState<Crumb[]>([]);
+  // Where the picker is: the folders opened below the top.
+  const top = root ? [root] : [];
+  const [path, setPath] = useState<Crumb[]>(top);
   const here = path.at(-1) ?? null;
   const hereId = here?.id ?? null;
   const [error, setError] = useState<string | null>(null);
@@ -72,18 +81,24 @@ const MovePicker = ({ item, fromParentId, onDone }: MovePickerProps) => {
         <DialogDescription>Choose a folder, then Move here.</DialogDescription>
       </DialogHeader>
       <nav aria-label="Folder path" className="flex min-w-0 flex-wrap items-center gap-1 text-sm">
-        <Button variant="ghost" size="sm" onClick={() => go([])} disabled={path.length === 0}>
-          My Drive
+        <Button
+          variant="ghost"
+          size="sm"
+          className="max-w-40"
+          onClick={() => go(top)}
+          disabled={path.length === top.length}
+        >
+          <span className="truncate">{root?.name ?? "My Drive"}</span>
         </Button>
-        {path.map((crumb, index) => (
+        {path.slice(top.length).map((crumb, index) => (
           <Fragment key={crumb.id}>
             <ChevronRight className="size-4 text-muted-foreground" />
             <Button
               variant="ghost"
               size="sm"
               className="max-w-40"
-              onClick={() => go(path.slice(0, index + 1))}
-              disabled={index === path.length - 1}
+              onClick={() => go(path.slice(0, top.length + index + 1))}
+              disabled={top.length + index === path.length - 1}
             >
               <span className="truncate">{crumb.name}</span>
             </Button>
@@ -140,15 +155,25 @@ const MovePicker = ({ item, fromParentId, onDone }: MovePickerProps) => {
 const MoveDialog = ({
   item,
   parentId,
+  root,
   onClose,
 }: {
   item: ItemRef | null;
   parentId: string | null;
+  root: Crumb | null;
   onClose: () => void;
 }) => {
   return (
     <Dialog open={item !== null} onOpenChange={(open) => !open && onClose()}>
-      {item && <MovePicker key={item.id} item={item} fromParentId={parentId} onDone={onClose} />}
+      {item && (
+        <MovePicker
+          key={item.id}
+          item={item}
+          fromParentId={parentId}
+          root={root}
+          onDone={onClose}
+        />
+      )}
     </Dialog>
   );
 };

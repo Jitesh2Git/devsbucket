@@ -21,13 +21,15 @@ const FolderContent = async ({ params }: { params: Promise<{ folderId: string }>
   if (found.denied) {
     notFound();
   }
-  const { item: folder } = found;
+  const { item: folder, access } = found;
   if (folder.trashedAt !== null) {
     return (
       <TrashedFolder folder={{ id: folder.id, name: folder.name }} isTrashRoot={folder.trashRoot} />
     );
   }
-  return <FolderView folderId={folderId} ownerId={folder.ownerId} />;
+  return (
+    <FolderView folderId={folderId} ownerId={folder.ownerId} userId={user.id} access={access} />
+  );
 };
 
 const FolderPage = ({ params }: PageProps<"/drive/folders/[folderId]">) => {

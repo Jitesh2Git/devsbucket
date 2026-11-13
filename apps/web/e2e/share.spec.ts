@@ -93,10 +93,10 @@ test("sharing: add people, inherited access, settings, change and remove", async
     await expect(dialog(editor).getByText("Editors can share")).toHaveCount(0);
   });
 
-  await test.step("Cy, a Viewer, can't open sharing", async () => {
+  await test.step("Cy, a Viewer, has no Share button", async () => {
     await viewer.goto(folderUrl);
-    await openShare(viewer);
-    await expect(dialog(viewer).getByText("You can't share this. Ask its owner.")).toBeVisible();
+    await expect(viewer.getByRole("heading", { name: "Team" })).toBeVisible();
+    await expect(viewer.getByRole("button", { name: "Share", exact: true })).toHaveCount(0);
   });
 
   await test.step("Ada turns off sharing for Editors: Bob can't share any more", async () => {
@@ -104,9 +104,12 @@ test("sharing: add people, inherited access, settings, change and remove", async
     await openShare(owner);
     await dialog(owner).getByLabel("Editors can share").click();
     await expect(owner.getByText("Editors can share: off")).toBeVisible();
+    // Bob's dialog is still open from before: the server refuses.
+    await share(editor, cyEmail, "Editor");
+    await expect(dialog(editor).getByText("You don't have permission to do that.")).toBeVisible();
     await editor.reload();
-    await openShare(editor);
-    await expect(dialog(editor).getByText("You can't share this. Ask its owner.")).toBeVisible();
+    await expect(editor.getByRole("heading", { name: "Team" })).toBeVisible();
+    await expect(editor.getByRole("button", { name: "Share", exact: true })).toHaveCount(0);
   });
 
   await test.step("Ada makes Cy an Editor, then removes Cy", async () => {
