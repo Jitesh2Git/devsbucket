@@ -145,7 +145,7 @@ Value sets used below:
 - `Item.type`: folder, file, note
 - `Item.status`: pending, ready
 - `Item.trashedAt` is set on a trashed item and everything inside it; `trashRoot` marks the one the user trashed (decision 0007). Total stored bytes is `sum(User.storageUsed)`, not a counter.
-- `Item.editorsCanShare` and `Item.viewersCanDownload` arrive with sharing in Phase 3; off on a folder means off for everything inside (decision 0008).
+- `Item.editorsCanShare` arrives with sharing in Phase 3; off on a folder means off for everything inside (decision 0008). There's no download setting: Viewers can always download (decision 0012).
 - `ShareLink`: one active link per item; `ShareLinkVisit` records who opened it, and gives them the link's role while it's active (decision 0008).
 - `OwnershipTransfer.status`: pending, accepted, declined, cancelled (decision 0009). `AlertState` remembers raised system alerts so they don't repeat (decision 0010).
 - `role`: editor, viewer
@@ -198,7 +198,6 @@ classDiagram
     +status
     +uploadId
     +editorsCanShare
-    +viewersCanDownload
     +createdAt
     +updatedAt
     +trashedAt

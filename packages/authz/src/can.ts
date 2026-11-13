@@ -14,7 +14,7 @@ export const actions = [
   "restore",
   "delete_forever",
   "share", // people and links
-  "change_settings", // editors can share, viewers can download
+  "change_settings", // editors can share
   "transfer", // ownership
   "view_activity",
   "request_access", // only when there's no role
@@ -27,14 +27,12 @@ export type Action = (typeof actions)[number];
 export type AuthzAccess = {
   role: "owner" | "editor" | "viewer" | null;
   editorsCanShare: boolean;
-  viewersCanDownload: boolean;
 };
 
 // The top level of My Drive has no row: it's always the user's own.
 export const MY_DRIVE: AuthzAccess = {
   role: "owner",
   editorsCanShare: true,
-  viewersCanDownload: true,
 };
 
 const isOwner = (access: AuthzAccess) => access.role === "owner";
@@ -42,10 +40,10 @@ const isEditor = (access: AuthzAccess) => access.role === "owner" || access.role
 
 // Owner: everything. Editor: everything a Viewer can, plus changing
 // content, restoring, activity and sharing (unless the Owner turned it off).
-// Viewer: view, and download unless the Owner turned it off.
+// Viewer: view and download (decision 0012: a preview sends the bytes anyway).
 const rules: Record<Action, (access: AuthzAccess) => boolean> = {
   view: (access) => access.role !== null,
-  download: (access) => isEditor(access) || (access.role === "viewer" && access.viewersCanDownload),
+  download: (access) => access.role !== null,
   upload: isEditor,
   create_folder: isEditor,
   rename: isEditor,

@@ -7,11 +7,10 @@ type Column = (typeof roles)[number];
 const access = (role: Column, settings: Partial<AuthzAccess> = {}): AuthzAccess => ({
   role: role === "none" ? null : role,
   editorsCanShare: true,
-  viewersCanDownload: true,
   ...settings,
 });
 
-// Every action × every role, with both settings on (LOCKED.md "Roles").
+// Every action × every role, with sharing on (LOCKED.md "Roles").
 const grid: Record<Action, Record<Column, boolean>> = {
   view: { owner: true, editor: true, viewer: true, none: false },
   download: { owner: true, editor: true, viewer: true, none: false },
@@ -29,12 +28,6 @@ const grid: Record<Action, Record<Column, boolean>> = {
   request_access: { owner: false, editor: false, viewer: false, none: true },
 };
 
-// What changes when the Owner turns a setting off: only these cells.
-const settingsOff: { setting: Partial<AuthzAccess>; action: Action; changes: Column[] }[] = [
-  { setting: { editorsCanShare: false }, action: "share", changes: ["editor"] },
-  { setting: { viewersCanDownload: false }, action: "download", changes: ["viewer"] },
-];
-
 describe("can", () => {
   it.each(actions)("%s: owner, editor, viewer, no role", (action) => {
     for (const role of roles) {
@@ -42,18 +35,12 @@ describe("can", () => {
     }
   });
 
-  it.each(settingsOff)("$action with $setting", ({ setting, action, changes }) => {
-    for (const role of roles) {
-      const expected = changes.includes(role) ? false : grid[action][role];
-      expect(can(access(role, setting), action), role).toBe(expected);
-    }
-  });
-
-  it("leaves every other action alone when both settings are off", () => {
-    const off = { editorsCanShare: false, viewersCanDownload: false };
-    for (const action of actions.filter((a) => a !== "share" && a !== "download")) {
+  it("with sharing off, only Editors lose share, and nothing else changes", () => {
+    const off = { editorsCanShare: false };
+    for (const action of actions) {
       for (const role of roles) {
-        expect(can(access(role, off), action), `${action} ${role}`).toBe(grid[action][role]);
+        const expected = action === "share" && role === "editor" ? false : grid[action][role];
+        expect(can(access(role, off), action), `${action} ${role}`).toBe(expected);
       }
     }
   });

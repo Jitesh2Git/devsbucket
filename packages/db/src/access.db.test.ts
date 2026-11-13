@@ -76,7 +76,6 @@ describe("item_access", () => {
       expect(await getAccess(ada, projects, tx)).toEqual({
         role: "owner",
         editorsCanShare: true,
-        viewersCanDownload: true,
         trashed: false,
       });
       expect(await roleOf(tx, ada, notes)).toBe("owner");
@@ -132,20 +131,14 @@ describe("item_access", () => {
     });
   });
 
-  it("turns a setting off for everything below a folder that turns it off", async () => {
+  it("turns sharing off for everything below a folder that turns it off", async () => {
     await withRollback(async (tx) => {
       const { bob, projects, web, notes } = await setUp(tx);
-      await grant(tx, projects, bob, "viewer");
-      await tx.update(items).set({ editorsCanShare: false }).where(eq(items.id, projects));
-      await tx.update(items).set({ viewersCanDownload: false }).where(eq(items.id, web));
-      expect(await getAccess(bob, projects, tx)).toMatchObject({
-        editorsCanShare: false,
-        viewersCanDownload: true,
-      });
-      expect(await getAccess(bob, notes, tx)).toMatchObject({
-        editorsCanShare: false,
-        viewersCanDownload: false,
-      });
+      await grant(tx, projects, bob, "editor");
+      await tx.update(items).set({ editorsCanShare: false }).where(eq(items.id, web));
+      expect(await getAccess(bob, projects, tx)).toMatchObject({ editorsCanShare: true });
+      expect(await getAccess(bob, web, tx)).toMatchObject({ editorsCanShare: false });
+      expect(await getAccess(bob, notes, tx)).toMatchObject({ editorsCanShare: false });
     });
   });
 

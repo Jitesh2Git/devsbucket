@@ -79,7 +79,7 @@ item_access(p_user uuid, p_item uuid)
 
 ### Sharing UI
 
-- **Share dialog** (row menu and folder header, for those who may share): add people by exact email + role; list of people with access, each with a role menu or "Remove"; inherited access shown as "Editor, from <folder>" (changed on that folder). Owner only: "Editors can share", "Viewers can download" switches.
+- **Share dialog** (row menu and folder header, for those who may share): add people by exact email + role; list of people with access, each with a role menu or "Remove"; inherited access shown as "Editor, from <folder>" (changed on that folder). Owner only: the "Editors can share" switch. ("Viewers can download" was dropped in step 5, decision 0012: migration 0006 removes the column and recreates `item_access()` without it.)
 - **Link section** in the same dialog: off / on, role, optional expiry, copy, disable, reset (new token).
 - **`/s/[token]`**: signed out → sign in, then back; valid → record the visit (first time: activity) → redirect to the item; disabled or expired → "This link no longer works".
 - **Shared with me** (`/drive/shared`, sidebar): top-most shared items, owner, your role, date; "Remove from Shared with me" removes your own grant or visit. Cursor pagination like folders.

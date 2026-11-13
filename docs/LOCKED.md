@@ -40,7 +40,7 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 - **Roles:** Owner > Editor > Viewer.
 - **Inheritance:** a role on a folder covers everything inside it, and the highest role wins.
 - **Ownership:** everything in a folder tree belongs to the tree's owner, and counts against the owner's quota. `createdBy` records who uploaded each item.
-- **Viewer:** can view, preview, see live cursors read-only, and download or copy (the owner can turn downloads off).
+- **Viewer:** can view, preview, see live cursors read-only, and download or copy (always: decision 0012).
 - **Editor:** can do everything a Viewer can, plus edit, upload, create folders, rename, move, trash, restore, see version history, and share or create share links (the owner can turn sharing off).
 - **Owner:** can do everything an Editor can, plus delete forever, transfer ownership and change sharing settings.
 - **Sharing (decision 0008):** with existing accounts by email. Share links work for signed-in users only. Items shared with you appear in a flat Shared with me list (no shortcuts). Someone signed in without access sees "You need access" and can request it.

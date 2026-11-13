@@ -7,14 +7,12 @@ import { db, type Executor } from "./client.ts";
 type Row = {
   role: Role | null;
   editors_can_share: boolean;
-  viewers_can_download: boolean;
   trashed: boolean;
 };
 
 const toAccess = (row: Row): Access => ({
   role: row.role,
   editorsCanShare: row.editors_can_share,
-  viewersCanDownload: row.viewers_can_download,
   trashed: row.trashed,
 });
 

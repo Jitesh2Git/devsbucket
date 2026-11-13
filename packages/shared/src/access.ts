@@ -10,6 +10,5 @@ export type Access = {
   role: Role | null;
   // Off if the item or any folder above it turned it off.
   editorsCanShare: boolean;
-  viewersCanDownload: boolean;
   trashed: boolean;
 };
