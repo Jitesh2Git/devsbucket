@@ -73,6 +73,7 @@ Run from the repo root. Turborepo runs each task in every package that has that 
 - `pnpm lint`: Biome lint + format check + import sorting over the whole repo, without changing files (what CI runs).
 - `pnpm lint:fix`: same, and applies safe fixes and formatting. `pnpm format`: formatting only.
 - `pnpm test`: unit tests (Vitest, `*.test.ts` next to the code) in every package that has them, through turbo (cached). Nothing needs to be running.
+- `pnpm test:db`: database tests (`packages/db/src/*.db.test.ts`, Vitest) against `devsbucket_test` (the URL from `packages/db/.env` + `_test`; created and migrated by `src/test-setup.ts`, refuses any name not ending in `_test`). Needs Docker up. Each test builds its rows in a transaction and rolls it back. CI runs it after the unit tests.
 - `pnpm test:e2e`: Playwright end-to-end tests (`apps/web/e2e/`). Needs Docker up and Playwright's Chromium (`pnpm --filter web exec playwright install chromium`). Resets the separate `devsbucket_test` database, empties the `devsbucket-test` bucket (create it once with `pnpm storage:setup-test`) and starts its own server on port 3100 (build folder `.next-e2e`), so it runs next to `pnpm dev` and never touches dev data. `worker.spec.ts` runs the worker's jobs (`pnpm --filter worker job …`) against the same test database and bucket. Locally that server is `next dev`; CI uses a production build (`next build && next start`), where Better Auth's rate limits apply, so the e2e server sets `AUTH_RATE_LIMIT=off` (`playwright.config.ts`, read in `lib/auth.ts`; never set it anywhere else). To run e2e exactly like CI: `cd apps/web && (set -a; . ./.env.local; set +a; CI=1 pnpm exec playwright test)`.
 - `pnpm --filter web <script>`: run a script in one package only.
 
@@ -112,5 +113,6 @@ Web app (`apps/web`, needs `apps/web/.env.local` copied from `.env.example`: the
 Single tests:
 
 - One unit test file: `pnpm --filter @devsbucket/shared exec vitest run src/user.test.ts` (add `-t "name"` for one test; drop `run` to watch).
+- One database test file: `pnpm test:db src/access.db.test.ts` (same flags).
 - One e2e test: `pnpm --filter web test:e2e e2e/auth.spec.ts` (add `-g "name"` to filter by title, `--headed` to watch the browser, `--ui` for Playwright's UI).
 - `pnpm --filter @devsbucket/db db:reset-test` resets the test database by hand (needs `DATABASE_URL` ending in `_test` and `E2E_INVITE_CODE`).

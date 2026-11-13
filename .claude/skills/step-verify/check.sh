@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Read-only checks for a finished step. Run from the repo root:
 #   .claude/skills/step-verify/check.sh          # install, lint, typecheck, unit tests
-#   .claude/skills/step-verify/check.sh --e2e    # ...and Playwright (needs Docker up)
+#   .claude/skills/step-verify/check.sh --e2e    # ...and database tests + Playwright (needs Docker up)
 # Prints one PASS/FAIL line per check, and the tail of the output of any that fail.
 set -uo pipefail
 
@@ -40,6 +40,7 @@ if [[ "${1:-}" == "--e2e" ]]; then
     echo "FAIL  e2e: Postgres isn't running (pnpm docker:up)"
     failed=1
   else
+    run "database tests" pnpm test:db
     run "e2e" pnpm test:e2e
   fi
 fi

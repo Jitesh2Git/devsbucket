@@ -1,4 +1,4 @@
 {
   "extends": "@devsbucket/typescript-config/base.json",
-  "include": ["src", "drizzle.config.ts"]
+  "include": ["src", "drizzle.config.ts", "vitest.config.ts"]
 }
