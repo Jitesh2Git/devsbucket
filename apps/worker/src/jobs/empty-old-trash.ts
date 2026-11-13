@@ -16,7 +16,8 @@ export const emptyOldTrash = async (send: (cleanup: StorageCleanup) => Promise<v
       byOwner.set(item.ownerId, [...(byOwner.get(item.ownerId) ?? []), item.id]);
     }
     for (const [ownerId, ids] of byOwner) {
-      const result = await deleteForever({ ids, ownerId });
+      // Logged with no actor: nobody did it, 30 days did.
+      const result = await deleteForever({ ids, ownerId, actorId: null });
       const failed = await deleteStoredFiles(result);
       if (!isComplete(failed)) {
         await send(failed);

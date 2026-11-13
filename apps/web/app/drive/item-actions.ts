@@ -36,7 +36,7 @@ export const renameItem = async (input: unknown) => {
   if (found.denied) {
     return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
   }
-  const result = await renameItemRow(found.item.id, name);
+  const result = await renameItemRow({ id: found.item.id, name, actorId: session.user.id });
   if (!result.ok) {
     return { error: result.reason === "name-taken" ? nameTakenMessage(name) : ITEM_GONE } as const;
   }
@@ -71,7 +71,12 @@ export const moveItem = async (input: unknown) => {
   if (item.parentId === parentId) {
     return { error: null, item } as const;
   }
-  const result = await moveItemRow({ id: item.id, ownerId: item.ownerId, parentId });
+  const result = await moveItemRow({
+    id: item.id,
+    ownerId: item.ownerId,
+    parentId,
+    actorId: session.user.id,
+  });
   if (!result.ok) {
     const error = {
       "into-itself": "A folder can't be moved into itself or one of its own folders.",

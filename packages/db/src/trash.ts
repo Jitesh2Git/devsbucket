@@ -5,6 +5,7 @@
 import { nextAvailableName } from "@devsbucket/shared/item";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { logActivity } from "./activity.ts";
 import { db, type Executor } from "./client.ts";
 import { takenNames } from "./items.ts";
 import { users } from "./schema/auth.ts";
@@ -43,7 +44,11 @@ export const trashItem = async ({
       where id in (select id from tree)
       returning id
     `);
-    return result.rows.length > 0;
+    if (result.rows.length === 0) {
+      return false;
+    }
+    await logActivity(tx, { itemId: id, actorId: trashedBy, action: "trashed", metadata: {} });
+    return true;
   });
 };
 
@@ -75,7 +80,15 @@ export type TrashedItem = Awaited<ReturnType<typeof listTrash>>[number];
 // Brings back a trashed item and what was trashed with it. If its folder is
 // in the trash now, it goes to the top level of My Drive; if its name was
 // taken meanwhile, it gets the next free one (decision 0007).
-export const restoreItem = async ({ id, ownerId }: { id: string; ownerId: string }) => {
+export const restoreItem = async ({
+  id,
+  ownerId,
+  actorId,
+}: {
+  id: string;
+  ownerId: string;
+  actorId: string;
+}) => {
   return db.transaction(async (tx) => {
     await lockOwner(tx, ownerId);
     const [root] = await tx
@@ -120,6 +133,12 @@ export const restoreItem = async ({ id, ownerId }: { id: string; ownerId: string
       .update(items)
       .set({ parentId, name, trashedAt: null, trashedBy: null, trashRoot: false })
       .where(eq(items.id, root.id));
+    await logActivity(tx, {
+      itemId: root.id,
+      actorId,
+      action: "restored",
+      metadata: { name, movedToTop: parentId !== root.parentId },
+    });
     return {
       name,
       renamed: name !== root.name,
@@ -132,11 +151,20 @@ export const restoreItem = async ({ id, ownerId }: { id: string; ownerId: string
 // inside them (the parent_id cascade), and their bytes from the owner's
 // quota. Returns what's left to delete from storage: object keys and
 // unfinished multipart uploads.
-export const deleteForever = async ({ ids, ownerId }: { ids: string[]; ownerId: string }) => {
+export const deleteForever = async ({
+  ids,
+  ownerId,
+  actorId,
+}: {
+  ids: string[];
+  ownerId: string;
+  // null: the worker, emptying old trash.
+  actorId: string | null;
+}) => {
   return db.transaction(async (tx) => {
     await lockOwner(tx, ownerId);
     const roots = await tx
-      .select({ id: items.id })
+      .select({ id: items.id, parentId: items.parentId, name: items.name, type: items.type })
       .from(items)
       .where(and(inArray(items.id, ids), eq(items.ownerId, ownerId), eq(items.trashRoot, true)));
     if (roots.length === 0) {
@@ -156,6 +184,18 @@ export const deleteForever = async ({ ids, ownerId }: { ids: string[]; ownerId: 
       select storage_key, upload_id, size from ${items}
       where id in (select id from tree) and type = 'file' and storage_key is not null
     `);
+    // The item is about to go, so this is logged on the folder it was in. A
+    // top-level item has no folder: nobody else can see that level anyway.
+    for (const root of roots) {
+      if (root.parentId !== null) {
+        await logActivity(tx, {
+          itemId: root.parentId,
+          actorId,
+          action: "deleted_forever",
+          metadata: { name: root.name, type: root.type },
+        });
+      }
+    }
     await tx.delete(items).where(inArray(items.id, rootIds));
     const bytes = files.rows.reduce((sum, file) => sum + Number(file.size ?? 0), 0);
     await releaseStorage(ownerId, bytes, tx);

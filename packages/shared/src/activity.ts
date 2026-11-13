@@ -1,0 +1,48 @@
+// Activity (LOCKED.md "Activity", decision 0010): every action on an item
+// writes one row, in the same transaction as the change. Read by the worker
+// for notifications (step 11) and by the activity panel (Phase 5).
+
+// Phase 3's actions. The database check allows exactly these; Phase 4 adds
+// edited, version_saved and version_restored with a migration.
+export const activityActions = [
+  "created",
+  "uploaded",
+  "renamed",
+  "moved",
+  "trashed",
+  "restored",
+  "deleted_forever",
+  "downloaded",
+  "shared",
+  "access_changed",
+  "access_removed",
+  "link_created",
+  "link_disabled",
+  "link_opened",
+  "access_requested",
+  "access_approved",
+  "access_denied",
+  "ownership_offered",
+  "ownership_transferred",
+  "settings_changed",
+] as const;
+
+export type ActivityAction = (typeof activityActions)[number];
+
+// What each action records besides the item and the actor. Only ids and
+// names: an activity row never holds file contents. Each step adds the
+// shapes of the actions it starts writing.
+export type ActivityMetadata = {
+  created: Record<string, never>;
+  uploaded: { size: number };
+  renamed: { from: string; to: string };
+  // Folder ids; null = the top level of the owner's My Drive.
+  moved: { from: string | null; to: string | null };
+  trashed: Record<string, never>;
+  restored: { name: string; movedToTop: boolean };
+  // Logged on the folder it was in (the item itself is gone).
+  deleted_forever: { name: string; type: "folder" | "file" | "note" };
+  downloaded: Record<string, never>;
+};
+
+export type LoggedAction = keyof ActivityMetadata;

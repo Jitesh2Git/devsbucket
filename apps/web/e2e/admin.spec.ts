@@ -16,6 +16,8 @@ const admin = (args: string[], input?: string) =>
   });
 
 test("admin: reset a password, change roles and quota, invite, remove a user", async ({ page }) => {
+  // Nine `pnpm admin` runs: slow on a busy machine.
+  test.slow();
   const db = await connectTestDb();
   const email = await test.step("sign up", () => signUpWithOwnInvite(page, db, "admin"));
   const user = async () =>

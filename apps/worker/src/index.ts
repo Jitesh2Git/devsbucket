@@ -1,5 +1,11 @@
 import { pool } from "@devsbucket/db/client";
-import { createBoss, createQueues, QUEUES, type StorageCleanup } from "@devsbucket/db/jobs";
+import {
+  createBoss,
+  createQueues,
+  type NotifyActivity,
+  QUEUES,
+  type StorageCleanup,
+} from "@devsbucket/db/jobs";
 import { cleanupPendingUploads } from "./jobs/cleanup-pending-uploads.ts";
 import { deleteStorageObjects } from "./jobs/delete-storage-objects.ts";
 import { emptyOldTrash } from "./jobs/empty-old-trash.ts";
@@ -35,6 +41,10 @@ await boss.work<StorageCleanup>(QUEUES.deleteStorage, async (jobs) => {
     log(`deleted ${job.data.storageKeys.length} objects from storage (retry)`);
   }
 });
+
+// Activity → notifications comes in step 11. Until then the jobs are
+// taken and done, so the queue doesn't grow.
+await boss.work<NotifyActivity>(QUEUES.notifyActivity, async () => {});
 
 log("started: cleanup every 15 minutes, old trash daily at 03:00 UTC");
 
