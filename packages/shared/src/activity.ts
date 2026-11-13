@@ -43,6 +43,11 @@ export type ActivityMetadata = {
   // Logged on the folder it was in (the item itself is gone).
   deleted_forever: { name: string; type: "folder" | "file" | "note" };
   downloaded: Record<string, never>;
+  // The person given, changed or removed (step 5).
+  shared: { userId: string; role: "editor" | "viewer" };
+  access_changed: { userId: string; from: "editor" | "viewer"; to: "editor" | "viewer" };
+  access_removed: { userId: string; role: "editor" | "viewer" };
+  settings_changed: { setting: "editorsCanShare"; value: boolean };
 };
 
 export type LoggedAction = keyof ActivityMetadata;

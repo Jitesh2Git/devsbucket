@@ -19,11 +19,8 @@ export const GET = async (
     return new Response("Not found", { status: 404 });
   }
   const found = await resolveFile(session.user, itemId, "download");
-  // A Viewer when the Owner turned downloads off: 403. Anyone without a
-  // role gets the same 404 as a missing file.
-  if (found.denied === "forbidden") {
-    return new Response("Forbidden", { status: 403 });
-  }
+  // Anyone with a role may download (decision 0012). Anyone without one
+  // gets the same 404 as a missing file.
   if (found.denied) {
     return new Response("Not found", { status: 404 });
   }

@@ -49,10 +49,9 @@ export const items = pgTable(
     trashedBy: uuid().references(() => users.id, { onDelete: "set null" }),
     // True only on the item the user trashed (what the Trash view lists).
     trashRoot: boolean().notNull().default(false),
-    // Sharing settings, changed by the Owner only. Off on a folder means off
-    // for everything inside it (decision 0008; item_access() applies it).
+    // Changed by the Owner only. Off on a folder means off for everything
+    // inside it (decisions 0008 and 0012; item_access() applies it).
     editorsCanShare: boolean().notNull().default(true),
-    viewersCanDownload: boolean().notNull().default(true),
   },
   (table) => [
     check("items_type_check", sql`${table.type} in ('folder', 'file', 'note')`),

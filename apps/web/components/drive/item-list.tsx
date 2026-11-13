@@ -14,6 +14,7 @@ import FilePreview, { type PreviewFile } from "@/components/drive/file-preview";
 import ItemMenu from "@/components/drive/item-menu";
 import MoveDialog from "@/components/drive/move-dialog";
 import RenameDialog, { type ItemRef } from "@/components/drive/rename-dialog";
+import ShareDialog, { type ShareTarget } from "@/components/drive/share-dialog";
 import LocalDate from "@/components/local-date";
 import { Button } from "@/components/ui/button";
 import {
@@ -94,6 +95,7 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
   const [previewing, setPreviewing] = useState<PreviewFile | null>(null);
   const [renaming, setRenaming] = useState<ItemRef | null>(null);
   const [moving, setMoving] = useState<ItemRef | null>(null);
+  const [sharing, setSharing] = useState<ShareTarget | null>(null);
   // Leaving the page only hides it (Activity): close any dialog, so a video
   // doesn't keep playing out of sight and nothing is open on return.
   useLayoutEffect(
@@ -101,6 +103,7 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
       setPreviewing(null);
       setRenaming(null);
       setMoving(null);
+      setSharing(null);
     },
     [],
   );
@@ -167,6 +170,7 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
                   onPreview={() => setPreviewing(item)}
                   onRename={() => setRenaming(item)}
                   onMove={() => setMoving(item)}
+                  onShare={() => setSharing(item)}
                   onTrash={() => moveToTrash(item)}
                 />
               </TableCell>
@@ -192,6 +196,7 @@ const ItemList = ({ parentId, firstPage }: ItemListProps) => {
       <FilePreview file={previewing} onClose={() => setPreviewing(null)} />
       <RenameDialog item={renaming} parentId={parentId} onClose={() => setRenaming(null)} />
       <MoveDialog item={moving} parentId={parentId} onClose={() => setMoving(null)} />
+      <ShareDialog item={sharing} onClose={() => setSharing(null)} />
     </div>
   );
 };

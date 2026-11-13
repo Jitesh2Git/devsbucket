@@ -89,15 +89,6 @@ test("roles: a Viewer opens but can't change, an Editor can, no role sees 'You n
     expect(await query("select 1 from items where name = 'nope.txt'")).toHaveLength(0);
   });
 
-  await test.step("downloads turned off for Viewers: 403", async () => {
-    await db.query("update items set viewers_can_download = false where id = $1", [folderId]);
-    const download = await member.request.get(`/api/items/${fileId}/download`, {
-      maxRedirects: 0,
-    });
-    expect(download.status()).toBe(403);
-    await db.query("update items set viewers_can_download = true where id = $1", [folderId]);
-  });
-
   await test.step("an Editor renames, uploads on the owner's quota, and trashes", async () => {
     await grant("editor");
     await member.reload();
