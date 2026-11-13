@@ -1,7 +1,9 @@
 "use client";
 
-import { LogOut, UserRound } from "lucide-react";
+import { LogOut, Shield, UserRound } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,9 +20,27 @@ type UserMenuDropdownProps = {
   name: string;
   email: string;
   image: string | null;
+  // Shows the Admin link; the page checks for itself.
+  isAdmin: boolean;
 };
 
-const UserMenuDropdown = ({ name, email, image }: UserMenuDropdownProps) => {
+// Pages proxy.ts only lets signed-out people see.
+const SIGNED_OUT_PAGES = ["/", "/sign-in", "/sign-up"];
+
+const UserMenuDropdown = ({ name, email, image, isAdmin }: UserMenuDropdownProps) => {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // This menu on a signed-out page means the session ended somewhere else
+  // (an admin removed the account, signed it out or reset its password).
+  // The header sits in the root layout, which moving between pages doesn't
+  // re-render, so ask the server for a fresh one: it shows "Sign in".
+  useEffect(() => {
+    if (SIGNED_OUT_PAGES.includes(pathname)) {
+      router.refresh();
+    }
+  }, [pathname, router]);
+
   const signOut = async () => {
     await authClient.signOut();
     // A full page load, not router.push: Next.js keeps visited pages alive in
@@ -48,6 +68,14 @@ const UserMenuDropdown = ({ name, email, image }: UserMenuDropdownProps) => {
             Profile
           </Link>
         </DropdownMenuItem>
+        {isAdmin && (
+          <DropdownMenuItem asChild>
+            <Link href="/admin">
+              <Shield />
+              Admin
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onSelect={signOut}>
           <LogOut />
           Sign out

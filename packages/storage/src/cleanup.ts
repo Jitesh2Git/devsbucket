@@ -1,7 +1,8 @@
 // Cleanup shared by the web app and the worker (apps/worker): the same code
 // discards an abandoned upload and deletes trashed files from storage.
 import { deletePendingFile } from "@devsbucket/db/items";
-import type { StorageCleanup } from "@devsbucket/db/jobs";
+import { queueStorageCleanup, type StorageCleanup } from "@devsbucket/db/jobs";
+import { deleteUser } from "@devsbucket/db/users";
 import { abortMultipart } from "./multipart.ts";
 import { deleteObject, deleteObjects, itemKey } from "./objects.ts";
 
@@ -41,3 +42,15 @@ export const deleteStoredFiles = async ({
 
 export const isComplete = (cleanup: StorageCleanup) =>
   cleanup.storageKeys.length === 0 && cleanup.uploads.length === 0;
+
+// Deletes an account and everything it owns forever (`pnpm admin
+// remove-user` and the admin page): the rows in one transaction, then the
+// stored files; what storage can't delete now goes to the retry queue.
+export const removeUser = async (userId: string) => {
+  const cleanup = await deleteUser(userId);
+  const failed = await deleteStoredFiles(cleanup);
+  if (!isComplete(failed)) {
+    await queueStorageCleanup(failed);
+  }
+  return { files: cleanup.storageKeys.length, queued: failed.storageKeys.length };
+};

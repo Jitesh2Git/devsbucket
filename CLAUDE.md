@@ -106,6 +106,7 @@ Worker (`apps/worker`, pg-boss; needs `apps/worker/.env` copied from `.env.examp
 Web app (`apps/web`, needs `apps/web/.env.local` copied from `.env.example`: the same `DATABASE_URL` as `packages/db/.env`, `BETTER_AUTH_SECRET` from `openssl rand -base64 32`, `BETTER_AUTH_URL=http://localhost:3000`, `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` from the local GitHub OAuth app, whose callback is `http://localhost:3000/api/auth/callback/github`, and the `S3_*` values from `docker/.env`; restart `pnpm dev` after changing it):
 
 - Sign-up is invite-only: get a code with `pnpm db:seed` (it prints an open invite, or creates one), then open `/sign-up`.
+- Admin page `/admin` (decision 0011): for users with `is_admin` (make the first one with `pnpm admin set-admin <email>`); Account menu → Admin. Invites, users (reset password, quota, admin on/off, sign out everywhere, remove) and app usage. Every action checks `canAdmin()` from `@devsbucket/authz/admin`; non-admins get a 404.
 - `pnpm --filter web exec shadcn add <component>`: add a shadcn component, then run `pnpm lint:fix` (shadcn's own style fails `pnpm lint` until Biome reformats it).
 
 Single tests:

@@ -15,7 +15,7 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 | Runtime      | Docker Compose in both local and prod. Caddy for HTTPS. DuckDNS for the free domain.                                                                                                        |
 | Language     | TypeScript, Node 24 LTS. pnpm + Turborepo monorepo with `apps/web`, `apps/realtime`, `apps/worker`, `packages/db`, `packages/authz`, `packages/shared`, `packages/storage` (decision 0006). |
 | Web          | Next.js App Router, Tailwind v4, shadcn/ui (other UI libraries allowed), TanStack Query, react-hook-form + Zod                                                                              |
-| Auth         | Better Auth: email/password and GitHub login. Sign-ups are invite-only. No email for now, so passwords are reset with an admin command. GitHub linking rules: see decision 0005.            |
+| Auth         | Better Auth: email/password and GitHub login. Sign-ups are invite-only. No email for now, so an admin resets passwords (decision 0011). GitHub linking rules: see decision 0005.            |
 | Database     | Postgres 18 in Docker (prod too), Drizzle ORM + drizzle-kit                                                                                                                                 |
 | Files        | Cloudflare R2, private bucket, presigned URLs, browser uploads directly. Local dev uses Garage (S3-compatible) in Docker; see decision 0004.                                                |
 | Live editing | Yjs + Hocuspocus. Monaco (y-monaco) edits every text file. Tiptap handles rich notes only.                                                                                                  |
