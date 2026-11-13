@@ -43,6 +43,8 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 - **Viewer:** can view, preview, see live cursors read-only, and download or copy (the owner can turn downloads off).
 - **Editor:** can do everything a Viewer can, plus edit, upload, create folders, rename, move, trash, restore, see version history, and share or create share links (the owner can turn sharing off).
 - **Owner:** can do everything an Editor can, plus delete forever, transfer ownership and change sharing settings.
+- **Sharing (decision 0008):** with existing accounts by email. Share links work for signed-in users only. Items shared with you appear in a flat Shared with me list (no shortcuts). Someone signed in without access sees "You need access" and can request it.
+- **Transfer (decision 0009):** offered to someone who has access, who accepts; the whole tree moves to the top of their My Drive and the old owner keeps Editor access.
 
 ## Editing
 
@@ -53,13 +55,13 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 ## Notifications
 
 - **Never sent** to the person who did the action. Each type can be turned off, and any item can be muted. They're deleted after 90 days.
-- **Sharing:** shared with you, access changed, access removed (always on), access requested, request approved or denied, ownership transferred.
+- **Sharing:** shared with you, access changed, access removed (always on), access requested, request approved or denied, ownership offered (decision 0009), ownership transferred.
 - **Content** (to the Owner, batched): files added to your folder, file edited (at most once per file per hour), moved to trash or restored, old version restored.
 - **System:** storage at 80% and 95%, storage full (always on), trash emptying in 3 days, invite used, and for admins only, R2 at 70% and 90%.
 
 ## Activity
 
-Activity is a permanent, per-item log, visible to the Owner and Editors. Every action writes one activity row, and the worker turns those rows into notifications.
+Activity is a permanent, per-item log, visible to the Owner and Editors. Every action writes one activity row in the same transaction, and the worker turns those rows into notifications (decision 0010).
 
 - **Content:** created/uploaded, edited (one entry per editing session), version saved, version restored, renamed, moved, copied, trashed/restored, deleted forever (logged on the parent), downloaded.
 - **Sharing:** shared, access changed or removed, share link created or disabled, first open via a share link, access requested/approved/denied, ownership transferred, settings changed.
