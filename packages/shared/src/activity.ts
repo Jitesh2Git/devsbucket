@@ -2,8 +2,8 @@
 // writes one row, in the same transaction as the change. Read by the worker
 // for notifications (step 11) and by the activity panel (Phase 5).
 
-// Phase 3's actions. The database check allows exactly these; Phase 4 adds
-// edited, version_saved and version_restored with a migration.
+// The database check allows exactly these, so a new one needs a migration.
+// Phase 4 (decision 0013) added edited, version_saved and version_restored.
 export const activityActions = [
   "created",
   "uploaded",
@@ -26,6 +26,9 @@ export const activityActions = [
   "ownership_offered",
   "ownership_transferred",
   "settings_changed",
+  "edited",
+  "version_saved",
+  "version_restored",
 ] as const;
 
 export type ActivityAction = (typeof activityActions)[number];
@@ -64,6 +67,14 @@ export type ActivityMetadata = {
   // Transferred: the new owner accepted, and is the actor.
   ownership_offered: { toUserId: string };
   ownership_transferred: { fromUserId: string; toUserId: string };
+  // Live editing (Phase 4, decision 0013), written by realtime. Edited: once
+  // per person per editing session; versionNumber is the version that holds
+  // their changes, null if none was saved (storage full).
+  edited: { versionNumber: number | null };
+  // Named versions only: automatic ones would flood the log.
+  version_saved: { versionNumber: number; message: string };
+  // The new version's number, and the number of the one restored.
+  version_restored: { versionNumber: number; from: number };
 };
 
 export type LoggedAction = keyof ActivityMetadata;

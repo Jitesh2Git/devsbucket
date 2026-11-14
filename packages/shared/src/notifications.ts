@@ -19,6 +19,10 @@ export const notificationTypes = [
   "files_added",
   "trashed",
   "restored",
+  // Content, Phase 4 (decision 0013): to the Owner. file_edited at most once
+  // per file per hour; the worker starts sending both in step 10.
+  "file_edited",
+  "version_restored",
   // System (step 13).
   "storage_80",
   "storage_95",
@@ -62,6 +66,8 @@ export const notificationGroups: {
       { type: "files_added", label: "Files are added" },
       { type: "trashed", label: "Items are moved to the trash" },
       { type: "restored", label: "Items are restored" },
+      { type: "file_edited", label: "A file is edited" },
+      { type: "version_restored", label: "An old version is restored" },
     ],
   },
   {
@@ -206,6 +212,10 @@ export const notificationText = (n: {
         `${actor} restored ${name} in ${item}`,
         `${actor} restored ${n.count} items in ${item}`,
       );
+    case "file_edited":
+      return `${actor} edited ${item}`;
+    case "version_restored":
+      return `${actor} restored an old version of ${item}`;
     // System (step 13).
     case "storage_80":
       return "Your storage is 80% full";

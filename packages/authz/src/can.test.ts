@@ -26,6 +26,8 @@ const grid: Record<Action, Record<Column, boolean>> = {
   change_settings: { owner: true, editor: false, viewer: false, none: false },
   transfer: { owner: true, editor: false, viewer: false, none: false },
   request_access: { owner: false, editor: false, viewer: false, none: true },
+  edit: { owner: true, editor: true, viewer: false, none: false },
+  view_versions: { owner: true, editor: true, viewer: false, none: false },
 };
 
 describe("can", () => {

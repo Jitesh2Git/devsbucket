@@ -18,6 +18,8 @@ export const actions = [
   "transfer", // ownership
   "view_activity",
   "request_access", // only when there's no role
+  "edit", // a text file's content (Phase 4, decision 0013)
+  "view_versions", // history and diff; with edit, also save and restore
 ] as const;
 
 export type Action = (typeof actions)[number];
@@ -39,7 +41,8 @@ const isOwner = (access: AuthzAccess) => access.role === "owner";
 const isEditor = (access: AuthzAccess) => access.role === "owner" || access.role === "editor";
 
 // Owner: everything. Editor: everything a Viewer can, plus changing
-// content, restoring, activity and sharing (unless the Owner turned it off).
+// content, editing text files, restoring, activity, version history and
+// sharing (unless the Owner turned it off).
 // Viewer: view and download (decision 0012: a preview sends the bytes anyway).
 const rules: Record<Action, (access: AuthzAccess) => boolean> = {
   view: (access) => access.role !== null,
@@ -51,6 +54,8 @@ const rules: Record<Action, (access: AuthzAccess) => boolean> = {
   trash: isEditor,
   restore: isEditor,
   view_activity: isEditor,
+  edit: isEditor,
+  view_versions: isEditor,
   share: (access) => isOwner(access) || (access.role === "editor" && access.editorsCanShare),
   delete_forever: isOwner,
   change_settings: isOwner,
