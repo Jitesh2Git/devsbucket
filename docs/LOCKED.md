@@ -32,7 +32,8 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 - **Per file:** 100 MB. Files over 50 MB upload in parts.
 - **Names:** unique per folder, ignoring case; uploads and restores rename visibly (`notes (1).md`), typed names get an error (decision 0007).
 - **Trash:** 30 days, then deleted forever. Trashed files count against the quota until then (decision 0007).
-- **Live editing:** no size limit.
+- **Live editing:** no size limit; UTF-8 text files only (decision 0013).
+- **Versions:** count against the owner's quota. Automatic ones are kept 30 days, then one per file per day; named and restore versions forever (decision 0013).
 - **R2, whole app:** uploads stop at 9 GB. Operation counters warn at 70% of the free tier and block at 90%.
 
 ## Roles
@@ -48,8 +49,9 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 
 ## Editing
 
-- **Monaco** edits every text file, with live cursors.
-- **Versions** are saved automatically every few minutes and when the last person leaves, or manually with a message.
+- **Monaco** edits every text file (UTF-8, no size limit), with live cursors, on its own file page. Markdown files get a live preview. Editors can create an empty text file (decision 0013).
+- **Hocuspocus** runs inside `realtime` on `/collab`; Viewer connections are read-only. The live Yjs state and every version's text live in Postgres; the file's object is rewritten at each version (decision 0013).
+- **Versions** are saved automatically every 5 minutes while the text changes and when the last person leaves, or manually with a message, and when an old one is restored.
 - **Diff view:** the Monaco diff editor, for any two versions. Tiptap notes are converted to Markdown for the diff.
 
 ## Notifications
@@ -63,7 +65,7 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 
 Activity is a permanent, per-item log, visible to the Owner and Editors. Every action writes one activity row in the same transaction, and the worker turns those rows into notifications (decision 0010).
 
-- **Content:** created/uploaded, edited (one entry per editing session), version saved, version restored, renamed, moved, copied, trashed/restored, deleted forever (logged on the parent), downloaded.
+- **Content:** created/uploaded, edited (one entry per person per editing session), version saved (named versions only, decision 0013), version restored, renamed, moved, copied, trashed/restored, deleted forever (logged on the parent), downloaded.
 - **Sharing:** shared, access changed or removed, share link created, changed (role or expiry) or disabled, first open via a share link, access requested/approved/denied, ownership offered and transferred, settings changed.
 - **Not logged here:** opening a file goes to the `ItemView` table, which powers the Recent view. Sign-ins are covered by Better Auth sessions.
 
