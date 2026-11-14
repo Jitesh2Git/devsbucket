@@ -1,6 +1,7 @@
 "use client";
 
 import type { SharedItem } from "@devsbucket/db/shared-with-me";
+import type { TransferOffer } from "@devsbucket/db/transfers";
 import { roleLabel } from "@devsbucket/shared/sharing";
 import { Download, File, Folder, LogOut, MoreHorizontal, Users } from "lucide-react";
 import Link from "next/link";
@@ -9,6 +10,7 @@ import { useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
 import { leaveSharedItem } from "@/app/drive/shared-actions";
 import FilePreview, { downloadUrl, type PreviewFile } from "@/components/drive/file-preview";
+import OwnershipOfferActions from "@/components/drive/ownership-offer-actions";
 import LocalDate from "@/components/local-date";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,13 +38,15 @@ import {
 
 type SharedListProps = {
   items: SharedItem[];
+  // Ownership offered to you, waiting for your answer.
+  offers: TransferOffer[];
   // A file opened from a share link: its preview starts open.
   opened: PreviewFile | null;
 };
 
 // The Shared with me page: the top-most items shared with you. Folders open
 // in the drive (breadcrumbs start here); files open in the preview.
-const SharedList = ({ items, opened }: SharedListProps) => {
+const SharedList = ({ items, offers, opened }: SharedListProps) => {
   const router = useRouter();
   const [previewing, setPreviewing] = useState<PreviewFile | null>(opened);
   useLayoutEffect(() => () => setPreviewing(null), []);
@@ -59,9 +63,27 @@ const SharedList = ({ items, opened }: SharedListProps) => {
 
   const preview = <FilePreview file={previewing} onClose={() => setPreviewing(null)} />;
 
+  const offerList = offers.length > 0 && (
+    <section className="flex flex-col gap-2 rounded-lg border p-4">
+      <h2 className="text-sm font-medium">Ownership offers</h2>
+      <ul aria-label="Ownership offers" className="flex flex-col divide-y">
+        {offers.map((offer) => (
+          <li key={offer.id} className="flex items-center justify-between gap-4 py-2">
+            <span className="min-w-0 truncate text-sm">
+              {offer.fromName} wants to make you the owner of "{offer.name}"
+            </span>
+            <OwnershipOfferActions offer={offer} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+
   if (items.length === 0) {
     return (
       <>
+        {offerList}
+
         <Empty className="border border-dashed">
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -81,6 +103,8 @@ const SharedList = ({ items, opened }: SharedListProps) => {
 
   return (
     <>
+      {offerList}
+
       <Table>
         <TableHeader>
           <TableRow>

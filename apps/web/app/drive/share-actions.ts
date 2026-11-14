@@ -10,6 +10,7 @@ import {
   setSharingSetting,
   shareItem,
 } from "@devsbucket/db/sharing";
+import { getPendingTransfer } from "@devsbucket/db/transfers";
 import { findUserByEmail } from "@devsbucket/db/users";
 import { itemRefSchema } from "@devsbucket/shared/item";
 import {
@@ -52,10 +53,11 @@ export const getSharing = async (input: unknown) => {
           : deniedMessage(found.denied, ITEM_GONE),
     } as const;
   }
-  const [sharing, link, requests] = await Promise.all([
+  const [sharing, link, requests, transfer] = await Promise.all([
     listSharing(found.item.id),
     getActiveLink(found.item.id),
     listPendingRequests(found.item.id),
+    getPendingTransfer(found.item.id),
   ]);
   if (!sharing) return { error: ITEM_GONE } as const;
   return {
@@ -69,8 +71,12 @@ export const getSharing = async (input: unknown) => {
       visitors: link.visitors,
     },
     requests,
+    transfer,
+    // Accepting moves a nested item out of its folder (decision 0009).
+    nested: found.item.parentId !== null,
     me: session.user.id,
     canChangeSettings: can(found.access, "change_settings"),
+    canTransfer: can(found.access, "transfer"),
   } as const;
 };
 

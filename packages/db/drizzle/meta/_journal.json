@@ -64,6 +64,13 @@
       "when": 1794636582990,
       "tag": "0008_access_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794639698910,
+      "tag": "0009_ownership_transfers",
+      "breakpoints": true
     }
   ]
 }
