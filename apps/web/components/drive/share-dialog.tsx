@@ -17,6 +17,7 @@ import {
 } from "@/app/drive/share-actions";
 import RoleMenu from "@/components/drive/role-menu";
 import ShareLinkSection from "@/components/drive/share-link-section";
+import ShareOwnershipSection from "@/components/drive/share-ownership-section";
 import ShareRequestsSection from "@/components/drive/share-requests-section";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -180,6 +181,13 @@ const ShareBody = ({ item, sharing }: ShareBodyProps) => {
         <h3 className="text-sm font-medium">Link</h3>
         <ShareLinkSection itemId={item.id} link={sharing.link} onChanged={refresh} />
       </section>
+
+      {sharing.canTransfer && (
+        <section className="flex flex-col gap-2">
+          <h3 className="text-sm font-medium">Owner</h3>
+          <ShareOwnershipSection item={item} sharing={sharing} onChanged={refresh} />
+        </section>
+      )}
 
       {sharing.canChangeSettings && (
         <section className="flex flex-col gap-3">

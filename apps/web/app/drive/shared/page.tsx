@@ -1,4 +1,5 @@
 import { listSharedWithMe } from "@devsbucket/db/shared-with-me";
+import { listOffersTo } from "@devsbucket/db/transfers";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import SharedList from "@/components/drive/shared-list";
@@ -15,8 +16,9 @@ const SharedContent = async ({
   searchParams: PageProps<"/drive/shared">["searchParams"];
 }) => {
   const [{ file }, { user }] = await Promise.all([searchParams, requireSession()]);
-  const [items, found] = await Promise.all([
+  const [items, offers, found] = await Promise.all([
     listSharedWithMe(user.id),
+    listOffersTo(user.id),
     typeof file === "string" ? resolveFile(user, file, "view") : null,
   ]);
   const opened = found && !found.denied ? found.item : null;
@@ -25,6 +27,7 @@ const SharedContent = async ({
       // A new file to open starts a fresh list, with its preview open.
       key={opened?.id ?? "list"}
       items={items}
+      offers={offers}
       opened={
         opened && { id: opened.id, name: opened.name, mimeType: opened.mimeType, size: opened.size }
       }

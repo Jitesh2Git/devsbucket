@@ -60,6 +60,10 @@ export type ActivityMetadata = {
   access_requested: { role: "editor" | "viewer" };
   access_approved: { userId: string; role: "editor" | "viewer" };
   access_denied: { userId: string };
+  // Ownership transfers (step 9). Offered: by the owner, to toUserId.
+  // Transferred: the new owner accepted, and is the actor.
+  ownership_offered: { toUserId: string };
+  ownership_transferred: { fromUserId: string; toUserId: string };
 };
 
 export type LoggedAction = keyof ActivityMetadata;

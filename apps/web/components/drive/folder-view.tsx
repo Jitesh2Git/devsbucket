@@ -1,11 +1,13 @@
 import { type AuthzAccess, can } from "@devsbucket/authz/can";
 import { getBreadcrumbs, listItems } from "@devsbucket/db/items";
+import { getPendingTransfer } from "@devsbucket/db/transfers";
 import { roleLabel } from "@devsbucket/shared/sharing";
 import type { ReactNode } from "react";
 import DriveBreadcrumbs from "@/components/drive/drive-breadcrumbs";
 import DropZone from "@/components/drive/drop-zone";
 import ItemList from "@/components/drive/item-list";
 import NewFolderDialog from "@/components/drive/new-folder-dialog";
+import OwnershipOfferActions from "@/components/drive/ownership-offer-actions";
 import ShareButton from "@/components/drive/share-button";
 import UploadButton from "@/components/drive/upload-button";
 
@@ -25,9 +27,10 @@ type FolderViewProps = {
 // for every row (a higher grant on one row inside isn't offered here; the
 // server still allows it).
 const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps) => {
-  const [firstPage, breadcrumbs] = await Promise.all([
+  const [firstPage, breadcrumbs, transfer] = await Promise.all([
     listItems({ ownerId, parentId: folderId, cursor: null }),
     folderId ? getBreadcrumbs(folderId, userId) : { root: "my-drive" as const, folders: [] },
+    folderId ? getPendingTransfer(folderId) : null,
   ]);
 
   // The folder being viewed (the last breadcrumb); none at the top of My Drive.
@@ -44,6 +47,16 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
 
   const page: ReactNode = (
     <div className="flex flex-col gap-4">
+      {current && transfer?.toUserId === userId && (
+        // Offered to you (decision 0009): the banner on the item.
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm">
+          <span>{transfer.fromName} wants to make you the owner of this folder.</span>
+          <OwnershipOfferActions
+            offer={{ id: transfer.id, itemId: current.id, name: current.name }}
+          />
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <DriveBreadcrumbs root={breadcrumbs.root} folders={breadcrumbs.folders} />
