@@ -31,7 +31,7 @@ test("notifications: live count, open one, batching, never your own, mark all re
     const chooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: "Upload", exact: true }).click();
     await (await chooser).setFiles({ name, mimeType: "text/plain", buffer: Buffer.from(name) });
-    await expect(page.getByRole("button", { name, exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
   };
 
   let deskUrl = "";

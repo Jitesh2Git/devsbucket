@@ -30,7 +30,7 @@ test("rename and move: keep the extension, name clash, move into a folder, not i
       mimeType: "text/markdown",
       buffer: Buffer.from("# Notes\n"),
     });
-    await expect(page.getByRole("button", { name: "notes.md", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "notes.md", exact: true })).toBeVisible();
   });
 
   await test.step("rename selects the name without its extension", async () => {
@@ -39,7 +39,7 @@ test("rename and move: keep the extension, name clash, move into a folder, not i
     // Typing replaces the selected "notes" and keeps ".md".
     await page.keyboard.type("todo");
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("button", { name: "todo.md", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "todo.md", exact: true })).toBeVisible();
     await expect(dialog).toBeHidden();
   });
 
@@ -58,10 +58,10 @@ test("rename and move: keep the extension, name clash, move into a folder, not i
     await dialog.getByRole("button", { name: "Docs" }).click();
     await dialog.getByRole("button", { name: "Move here" }).click();
     await expect(page.getByText("Moved to Docs")).toBeVisible();
-    await expect(page.getByRole("button", { name: "todo.md", exact: true })).toBeHidden();
+    await expect(page.getByRole("link", { name: "todo.md", exact: true })).toBeHidden();
     await page.getByRole("link", { name: "Docs", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Docs" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "todo.md", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "todo.md", exact: true })).toBeVisible();
     await page.getByRole("link", { name: "My Drive" }).first().click();
   });
 

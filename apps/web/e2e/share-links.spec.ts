@@ -54,7 +54,7 @@ test("share links: open, sign-in round trip, role, expiry, reset, disable, file"
       mimeType: "text/plain",
       buffer: Buffer.from("plan"),
     });
-    await expect(owner.getByRole("button", { name: "plan.txt", exact: true })).toBeVisible();
+    await expect(owner.getByRole("link", { name: "plan.txt", exact: true })).toBeVisible();
     await openLaunchShare();
     await dialog.getByRole("button", { name: "Create link" }).click();
     await expect(linkInput).toHaveValue(/\/s\/[A-Za-z0-9_-]{43}$/);

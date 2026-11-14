@@ -46,9 +46,17 @@ test("previews and downloads: text, image, HTML as text, download name, 404s", a
   const dialog = page.getByRole("dialog");
   const close = () => dialog.getByRole("button", { name: "Close" }).first().click();
 
+  // Text files open in the editor when clicked (Phase 4); their preview is
+  // in the row's menu.
+  const preview = async (name: string) => {
+    await page.getByRole("button", { name: `Actions for ${name}`, exact: true }).click();
+    await page.getByRole("menuitem", { name: "Preview" }).click();
+  };
+
   await test.step("a text file shows its content", async () => {
-    await page.getByRole("button", { name: "résumé.md", exact: true }).click();
+    await preview("résumé.md");
     await expect(dialog.getByText("# Hello preview")).toBeVisible();
+    await expect(dialog.getByRole("link", { name: "Open in editor" })).toBeVisible();
     await close();
     await expect(dialog).toBeHidden();
   });
@@ -62,7 +70,7 @@ test("previews and downloads: text, image, HTML as text, download name, 404s", a
   });
 
   await test.step("HTML is shown as text, never rendered", async () => {
-    await page.getByRole("button", { name: "page.html", exact: true }).click();
+    await preview("page.html");
     await expect(dialog.getByText("<script>alert(1)</script>")).toBeVisible();
     await close();
     const { rows } = await db.query<{ id: string }>(

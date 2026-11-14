@@ -75,7 +75,7 @@ test("realtime: live folder changes, access removed, only signed-in pages connec
       mimeType: "text/plain",
       buffer: Buffer.from("hi"),
     });
-    await expect(member.getByRole("button", { name: "note.txt", exact: true })).toBeVisible();
+    await expect(member.getByRole("link", { name: "note.txt", exact: true })).toBeVisible();
   });
 
   await test.step("Bob's new folder and rename show up for Ada", async () => {
@@ -85,7 +85,7 @@ test("realtime: live folder changes, access removed, only signed-in pages connec
     await member.getByRole("menuitem", { name: "Rename" }).click();
     await member.getByRole("dialog").getByLabel("New name").fill("todo.txt");
     await member.getByRole("dialog").getByRole("button", { name: "Rename" }).click();
-    await expect(owner.getByRole("button", { name: "todo.txt", exact: true })).toBeVisible();
+    await expect(owner.getByRole("link", { name: "todo.txt", exact: true })).toBeVisible();
   });
 
   await test.step("the top of My Drive is live too, in Ada's other tab", async () => {

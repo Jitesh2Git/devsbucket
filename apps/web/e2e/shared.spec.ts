@@ -63,7 +63,7 @@ test("shared with me: top-most list, browsing, role-aware buttons, quota, trash,
   let teamUrl = "";
   await test.step("Ada shares Team and notes.txt as Viewer, plan.txt inside Team as Editor", async () => {
     await upload(owner, "notes.txt", "notes");
-    await expect(owner.getByRole("button", { name: "notes.txt", exact: true })).toBeVisible();
+    await expect(owner.getByRole("link", { name: "notes.txt", exact: true })).toBeVisible();
     await openMenu(owner, "notes.txt", "Share");
     await shareWithBob("Viewer");
     await owner.getByRole("button", { name: "New folder" }).click();
@@ -73,7 +73,7 @@ test("shared with me: top-most list, browsing, role-aware buttons, quota, trash,
     await expect(owner.getByRole("heading", { name: "Team" })).toBeVisible();
     teamUrl = new URL(owner.url()).pathname;
     await upload(owner, "plan.txt", "plan");
-    await expect(owner.getByRole("button", { name: "plan.txt", exact: true })).toBeVisible();
+    await expect(owner.getByRole("link", { name: "plan.txt", exact: true })).toBeVisible();
     await openMenu(owner, "plan.txt", "Share");
     await shareWithBob("Editor");
     await owner.getByRole("button", { name: "Share", exact: true }).click();
@@ -121,7 +121,7 @@ test("shared with me: top-most list, browsing, role-aware buttons, quota, trash,
     await db.query("update users set storage_quota = 1073741824 where email = $1", [adaEmail]);
     const before = await storageUsed(adaEmail);
     await upload(member, "bob.txt", "12345");
-    await expect(member.getByRole("button", { name: "bob.txt", exact: true })).toBeVisible();
+    await expect(member.getByRole("link", { name: "bob.txt", exact: true })).toBeVisible();
     expect(await storageUsed(adaEmail)).toBe(before + 5);
     expect(await storageUsed(bobEmail)).toBe(0);
   });
@@ -142,7 +142,7 @@ test("shared with me: top-most list, browsing, role-aware buttons, quota, trash,
     await member.getByRole("link", { name: "Sub" }).click();
     await expect(member.getByRole("heading", { name: "Sub" })).toBeVisible();
     await expect(breadcrumb.getByRole("link", { name: "Team" })).toBeVisible();
-    await expect(member.getByRole("button", { name: "plan.txt", exact: true })).toBeVisible();
+    await expect(member.getByRole("link", { name: "plan.txt", exact: true })).toBeVisible();
     await breadcrumb.getByRole("link", { name: "Team" }).click();
   });
 
@@ -158,7 +158,7 @@ test("shared with me: top-most list, browsing, role-aware buttons, quota, trash,
     await row.getByRole("button", { name: "Restore bob.txt" }).click();
     await expect(member.getByText(/Restored/)).toBeVisible();
     await member.goto(teamUrl);
-    await expect(member.getByRole("button", { name: "bob.txt", exact: true })).toBeVisible();
+    await expect(member.getByRole("link", { name: "bob.txt", exact: true })).toBeVisible();
   });
 
   await test.step("Bob removes Team from Shared with me: plan.txt shows instead", async () => {

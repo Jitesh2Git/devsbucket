@@ -4,7 +4,8 @@ import type { ListedItem } from "@devsbucket/db/items";
 import { formatBytes } from "@devsbucket/shared/bytes";
 import { previewKind } from "@devsbucket/shared/preview";
 import { useQuery } from "@tanstack/react-query";
-import { Download } from "lucide-react";
+import { Download, SquarePen } from "lucide-react";
+import Link from "next/link";
 import { loadTextPreview } from "@/app/drive/preview-actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -109,6 +110,15 @@ const FilePreview = ({ file, onClose }: { file: PreviewFile | null; onClose: () 
             </DialogHeader>
             <PreviewBody file={file} />
             <DialogFooter>
+              {previewKind(file.name, file.mimeType) === "text" && (
+                <Button asChild variant="outline">
+                  <Link href={`/drive/files/${file.id}`}>
+                    <SquarePen />
+                    Open in editor
+                  </Link>
+                </Button>
+              )}
+
               <Button asChild variant="outline">
                 <a href={downloadUrl(file.id)}>
                   <Download />

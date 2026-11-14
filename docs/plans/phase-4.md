@@ -18,7 +18,7 @@ Every text file opens in a Monaco editor on its own page, where everyone with ac
 
 Same as Phases 2 and 3 (learning mode): one branch and one PR per step, researched and tested in a scratch copy first (`step-scratch`), explained for the user to build, then verified (`step-verify`). Versions are checked with `npm view` at the time of the step. Each step adds its own tests.
 
-Versions on 2026-11-14 (check again in each step): `@hocuspocus/server` and `@hocuspocus/provider` 4.8.0 (Node ≥ 22, peers `yjs` ^13.6.8 and `y-protocols` ^1.0.6), `yjs` 13.6.33, `y-protocols` 1.0.7, `y-monaco` 0.1.6 (peers `monaco-editor` ≥ 0.20, `yjs` ^13.3.1), `monaco-editor` 0.57.0, `@monaco-editor/react` 4.7.0 (React 19 and `monaco-editor` < 1), `react-markdown` 10.1.0, `remark-gfm` 4.0.1.
+Versions on 2026-11-14 (check again in each step): `@hocuspocus/server` and `@hocuspocus/provider` 4.8.0 (Node ≥ 22, peers `yjs` ^13.6.8 and `y-protocols` ^1.0.6), `yjs` 13.6.33, `y-protocols` 1.0.7, `y-monaco` 0.1.6 (peers `monaco-editor` ≥ 0.20, `yjs` ^13.3.1), `monaco-editor` 0.57.0, `react-markdown` 10.1.0, `remark-gfm` 4.0.1.
 
 ## Design
 
@@ -99,14 +99,14 @@ Checked in scratch on 2026-11-14 with Hocuspocus 4.8.0: it runs next to the exis
 ### Version history and the diff view
 
 - A **History** panel on the file page (Editors and Owner, `view_versions`): newest first, each with number, kind, message, authors, time and size. Server action `listVersions(fileId)` through `resolveFile(…, "view_versions")`.
-- **Compare:** pick any two versions (default: the selected one against the current text) → the Monaco `DiffEditor` from `@monaco-editor/react`, side by side, with an inline toggle, read-only. Version contents come from `getVersion(fileId, versionId)`; "current" is the live `Y.Text`.
+- **Compare:** pick any two versions (default: the selected one against the current text) → a Monaco diff editor (`monaco.editor.createDiffEditor`, created and disposed in one effect like `code-editor.tsx`, step 2), side by side, with an inline toggle, read-only. Version contents come from `getVersion(fileId, versionId)`; "current" is the live `Y.Text`.
 - **Restore** (Editor or Owner): confirm → a stateless `restore-version { versionId }` to realtime, which checks access, replaces the `Y.Text` content in one Yjs transaction (everyone's editor updates), saves a `restore` version and logs `version_restored`. Restoring through realtime keeps one writer of the live document; a web server action would have to reach into realtime anyway. Realtime still uses `getAccess` + `can()` (CLAUDE.md: every realtime handler goes through authz).
 - Viewers don't see History, Save version or Restore.
 
 ### The file page and the editor
 
 - **`/drive/files/[fileId]`**: header with breadcrumbs, name, role badge, presence avatars, connection status ("Saved", "Saving…", "Offline, reconnecting"), Save version, History, Download. `resolveFile(…, "view")` decides 404 / "You need access" like folder pages. Clicking a text file in a folder opens this page; other files keep the preview dialog. The preview dialog gets an "Open in editor" button for text files.
-- **Monaco without a CDN:** `@monaco-editor/react` loads Monaco from jsDelivr by default. We bundle the `monaco-editor` package and point the loader at it (`loader.config({ monaco })`), because `y-monaco` imports `monaco-editor` itself and two copies break the binding. Loaded only in the browser (`next/dynamic` with `ssr: false`). Step 2 checks Turbopack, the editor's web workers, and the bundle size; that's this phase's biggest unknown.
+- **Monaco without a CDN:** the `monaco-editor` package bundled by Turbopack, with its web workers (`components/editor/monaco.ts`), because `y-monaco` imports `monaco-editor` itself and two copies break the binding. Loaded only in the browser (`next/dynamic` with `ssr: false`). Our own `code-editor.tsx` creates and disposes the editor in one effect; step 2 dropped `@monaco-editor/react`, which breaks when Next hides a page (PROGRESS.md).
 - **Language** from the extension (Monaco's built-in languages); theme follows the app's light/dark mode.
 - **Live:** a `HocuspocusProvider` (URL `NEXT_PUBLIC_REALTIME_URL` + `/collab`, `name` = file id) and `new MonacoBinding(ytext, editor.getModel(), new Set([editor]), provider.awareness)`. Destroy both on leave (Next.js 16 keeps hidden pages alive, memory `nextjs16-activity-state`: tie them to the component's lifetime and check a hidden page doesn't keep its socket).
 - **Cursors:** awareness `user: { name, color }`, color picked from the user id so it's stable; y-monaco adds `yRemoteSelection-<clientId>` classes, styled with a small CSS block that a component writes for the current awareness states (name label above the caret). Viewers' cursors show too (LOCKED.md: "see live cursors read-only").
@@ -179,7 +179,7 @@ Each is one branch and PR.
 ## Open questions (to answer during the steps)
 
 - **Step 1:** does Drizzle 0.45 (or a newer one) have a `bytea` column, or do we keep a `customType`; `uuid[]` with Drizzle (`uuid().array()`).
-- **Step 2:** Monaco with Next.js 16 and Turbopack: bundling `monaco-editor` (workers: `MonacoEnvironment.getWorker` with `new Worker(new URL(…, import.meta.url))`), what that adds to the page's JavaScript, and whether `@monaco-editor/react` is still worth it or we use `monaco-editor` directly (y-monaco needs the editor instance either way).
+- **Step 2:** Monaco with Next.js 16 and Turbopack: bundling `monaco-editor` (workers: `MonacoEnvironment.getWorker` with `new Worker(new URL(…, import.meta.url))`), what that adds to the page's JavaScript, and whether `@monaco-editor/react` is still worth it or we use `monaco-editor` directly (y-monaco needs the editor instance either way). Answered: Turbopack bundles it with no config, ~1.3 MB gzipped on the file page only, and `monaco-editor` directly (details in PROGRESS.md).
 - **Step 4:** how big files behave with no size limit (load from storage into Yjs, memory in realtime, Monaco in the browser); whether a realtime test in Vitest is worth it next to e2e; what Hocuspocus's `timeout` does to idle tabs and whether we ping.
 - **Step 5:** one WebSocket per tab for both events and collab (`HocuspocusProviderWebsocket` can share a socket between documents, but not with our events protocol) or two; two is simpler. Cursor label styling with y-monaco's classes.
 - **Step 6:** what happens to a version when `PutObject` fails (retry on the next save, or a worker retry like deletes); where the 5-minute timer lives across a realtime restart (it's lost; the next change starts it again, and `collab_states` keeps the text).
