@@ -60,12 +60,19 @@ await boss.work<StorageCleanup>(QUEUES.deleteStorage, async (jobs) => {
   }
 });
 
-// Activity → notifications (decision 0010), one job per activity row.
-await boss.work<NotifyActivity>(QUEUES.notifyActivity, async (jobs) => {
-  for (const job of jobs) {
-    await notifyForActivity(job.data.activityId);
-  }
-});
+// Activity → notifications (decision 0010), one job per activity row. By
+// default pg-boss takes one job and then waits 2 s before the next fetch,
+// even with a backlog: take up to 20 at a time, and keep going while
+// batches come back full.
+await boss.work<NotifyActivity>(
+  QUEUES.notifyActivity,
+  { batchSize: 20, burstWhenBatchFull: true },
+  async (jobs) => {
+    for (const job of jobs) {
+      await notifyForActivity(job.data.activityId);
+    }
+  },
+);
 
 await boss.work(QUEUES.cleanupNotifications, async () => {
   const deleted = await deleteOldNotifications(NOTIFICATION_DAYS);

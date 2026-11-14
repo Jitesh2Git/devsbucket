@@ -43,6 +43,9 @@ export const createBoss = (options: { worker: boolean }) => {
     // Maintenance and cron belong to the worker alone.
     supervise: options.worker,
     schedule: options.worker,
+    // Wake the worker the moment a job lands on a `notify` queue, instead of
+    // at its next poll (polling stays as the fallback).
+    useListenNotify: options.worker,
     max: options.worker ? 4 : 2,
   });
   boss.on("error", (error) => console.error("pg-boss:", error));
@@ -59,7 +62,15 @@ export const createQueues = async (boss: PgBoss) => {
     retryDelay: 60,
     retryBackoff: true,
   });
-  await boss.createQueue(QUEUES.notifyActivity, { retryLimit: 5, retryBackoff: true });
+  // Someone is waiting for these (a live unread count): `notify` wakes the
+  // worker right away. createQueue leaves an existing queue as it is, so
+  // updateQueue turns it on for queues made before.
+  await boss.createQueue(QUEUES.notifyActivity, {
+    retryLimit: 5,
+    retryBackoff: true,
+    notify: true,
+  });
+  await boss.updateQueue(QUEUES.notifyActivity, { notify: true });
   await boss.createQueue(QUEUES.cleanupNotifications, { policy: "singleton" });
 };
 

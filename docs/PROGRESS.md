@@ -309,6 +309,7 @@ Full plan: `docs/plans/phase-3.md` (design, data model, `item_access()`, realtim
   - Gotcha: Playwright starts web servers before `globalSetup`, and the worker waits for the database that globalSetup creates: on a fresh machine nothing moved. The worker's `wait` regex also accepts "database not ready".
   - Gotcha: `roles.spec.ts` checks that no `mine.txt` exists anywhere; the notifications test uploads `ada.txt` and `n1–n3.txt`.
   - Gotcha: a full local run once hit a load of 37 (macOS XProtect scan + Spotlight indexing): `trash.spec.ts` ran past its 30 s budget; it passed alone in 21 s.
+  - Gotcha: CI failed the notifications test twice: by default a pg-boss worker takes one job, then waits 2 s before the next fetch even with a backlog, so `notify-activity` handled one job every 2 s and the share waited behind the earlier tests' jobs. Now the queue has `notify: true` (set with `updateQueue` too, since `createQueue` leaves an existing queue alone) and the worker's instance `useListenNotify`, so a new job wakes it at once; and it fetches 20 at a time with `burstWhenBatchFull`. Verified with the full suite in CI mode (production build, 5 s waits).
   - Note (step 12): no preferences or mutes yet; every planned notification is sent.
 - [ ] 12. **Preferences and mutes:** profile switches, mute an item
 - [ ] 13. **System notifications:** storage, R2 (admins), trash in 3 days, invite used
