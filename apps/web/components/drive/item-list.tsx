@@ -16,6 +16,7 @@ import MoveDialog, { type Crumb } from "@/components/drive/move-dialog";
 import RenameDialog, { type ItemRef } from "@/components/drive/rename-dialog";
 import ShareDialog, { type ShareTarget } from "@/components/drive/share-dialog";
 import LocalDate from "@/components/local-date";
+import { useFolderEvents } from "@/components/realtime-provider";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -70,6 +71,9 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
       queryClient.invalidateQueries({ queryKey: itemsQueryKey(parentId) }),
       queryClient.invalidateQueries({ queryKey: ["folders"] }),
     ]);
+
+  // Someone (maybe you, in another tab) changed this folder: refetch it.
+  useFolderEvents(parentId, refresh);
 
   // No confirm: trash is undoable, from the toast or from the Trash page.
   const moveToTrash = async (item: ItemRef) => {
