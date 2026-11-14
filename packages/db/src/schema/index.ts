@@ -6,4 +6,5 @@ export * from "./auth.ts";
 export * from "./invites.ts";
 export * from "./items.ts";
 export * from "./permissions.ts";
+export * from "./share-links.ts";
 export * from "./usage.ts";

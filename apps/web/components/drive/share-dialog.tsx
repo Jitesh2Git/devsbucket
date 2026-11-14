@@ -1,10 +1,9 @@
 "use client";
 
-import type { GrantRole, ShareFormInput, SharingSetting } from "@devsbucket/shared/sharing";
+import type { ShareFormInput, SharingSetting } from "@devsbucket/shared/sharing";
 import { roleLabel, shareFormSchema } from "@devsbucket/shared/sharing";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -16,6 +15,8 @@ import {
   type SharingView,
   shareWithPerson,
 } from "@/app/drive/share-actions";
+import RoleMenu from "@/components/drive/role-menu";
+import ShareLinkSection from "@/components/drive/share-link-section";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -25,57 +26,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { sharingQueryKey } from "@/lib/query-keys";
 
 export type ShareTarget = { id: string; name: string };
-
-type RoleMenuProps = {
-  label: string;
-  value: GrantRole;
-  onChange: (role: GrantRole) => void;
-  onRemove?: () => void;
-  disabled?: boolean;
-};
-
-// Editor / Viewer, and (for an existing grant) Remove access.
-const RoleMenu = ({ label, value, onChange, onRemove, disabled }: RoleMenuProps) => {
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" aria-label={label} disabled={disabled}>
-          {roleLabel(value)}
-          <ChevronDown />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuRadioGroup value={value} onValueChange={(next) => onChange(next as GrantRole)}>
-          <DropdownMenuRadioItem value="editor">Editor</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="viewer">Viewer</DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-        {onRemove && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onSelect={onRemove}>
-              Remove access
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-};
 
 const SETTINGS: { key: SharingSetting; label: string; description: string }[] = [
   {
@@ -217,6 +173,11 @@ const ShareBody = ({ item, sharing }: ShareBodyProps) => {
         </ul>
       </section>
 
+      <section className="flex flex-col gap-2">
+        <h3 className="text-sm font-medium">Link</h3>
+        <ShareLinkSection itemId={item.id} link={sharing.link} onChanged={refresh} />
+      </section>
+
       {sharing.canChangeSettings && (
         <section className="flex flex-col gap-3">
           <h3 className="text-sm font-medium">Settings</h3>
@@ -272,6 +233,9 @@ const ShareContent = ({ item }: { item: ShareTarget }) => {
       return result;
     },
     retry: false,
+    // Other people change access too (and open links): fetch it again each
+    // time the dialog opens, not the app's usual minute-old copy.
+    staleTime: 0,
   });
 
   return (

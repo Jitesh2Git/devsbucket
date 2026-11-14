@@ -34,11 +34,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+type SharedListProps = {
+  items: SharedItem[];
+  // A file opened from a share link: its preview starts open.
+  opened: PreviewFile | null;
+};
+
 // The Shared with me page: the top-most items shared with you. Folders open
 // in the drive (breadcrumbs start here); files open in the preview.
-const SharedList = ({ items }: { items: SharedItem[] }) => {
+const SharedList = ({ items, opened }: SharedListProps) => {
   const router = useRouter();
-  const [previewing, setPreviewing] = useState<PreviewFile | null>(null);
+  const [previewing, setPreviewing] = useState<PreviewFile | null>(opened);
   useLayoutEffect(() => () => setPreviewing(null), []);
 
   const leave = async (item: SharedItem) => {
@@ -51,19 +57,25 @@ const SharedList = ({ items }: { items: SharedItem[] }) => {
     router.refresh();
   };
 
+  const preview = <FilePreview file={previewing} onClose={() => setPreviewing(null)} />;
+
   if (items.length === 0) {
     return (
-      <Empty className="border border-dashed">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <Users />
-          </EmptyMedia>
-          <EmptyTitle>Nothing shared with you yet</EmptyTitle>
-          <EmptyDescription>
-            Files and folders other people share with you show up here.
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <>
+        <Empty className="border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Users />
+            </EmptyMedia>
+            <EmptyTitle>Nothing shared with you yet</EmptyTitle>
+            <EmptyDescription>
+              Files and folders other people share with you show up here.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+
+        {preview}
+      </>
     );
   }
 
@@ -141,7 +153,7 @@ const SharedList = ({ items }: { items: SharedItem[] }) => {
           ))}
         </TableBody>
       </Table>
-      <FilePreview file={previewing} onClose={() => setPreviewing(null)} />
+      {preview}
     </>
   );
 };

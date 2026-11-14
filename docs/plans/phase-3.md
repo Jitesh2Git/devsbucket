@@ -74,7 +74,7 @@ item_access(p_user uuid, p_item uuid)
 ### Activity (decision 0010)
 
 - `logActivity(tx, { itemId, actorId, action, metadata })` in `@devsbucket/db/activity`, called inside the transaction of every action, and the same transaction sends a `notify-activity` pg-boss job (pg-boss 12's `send` takes a `db` option that runs its SQL on our transaction; confirm in step 4).
-- Phase 3 actions: `created`, `uploaded`, `renamed`, `moved` (from/to folder), `trashed`, `restored`, `deleted_forever` (on the parent, with the name), `downloaded`, `shared`, `access_changed`, `access_removed`, `link_created`, `link_disabled`, `link_opened` (first open), `access_requested`, `access_approved`, `access_denied`, `ownership_offered`, `ownership_transferred`, `settings_changed`. Phase 4 adds `edited`, `version_saved`, `version_restored`.
+- Phase 3 actions: `created`, `uploaded`, `renamed`, `moved` (from/to folder), `trashed`, `restored`, `deleted_forever` (on the parent, with the name), `downloaded`, `shared`, `access_changed`, `access_removed`, `link_created`, `link_disabled`, `link_changed` (role or expiry, added in step 7), `link_opened` (first open), `access_requested`, `access_approved`, `access_denied`, `ownership_offered`, `ownership_transferred`, `settings_changed`. Phase 4 adds `edited`, `version_saved`, `version_restored`.
 - Nothing reads activity in the UI yet except the worker (panel: Phase 5).
 
 ### Sharing UI
