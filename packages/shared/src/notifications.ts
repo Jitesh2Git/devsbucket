@@ -34,6 +34,56 @@ export type NotificationType = (typeof notificationTypes)[number];
 // Content notifications are batched (decision 0010).
 export const batchedTypes: readonly NotificationType[] = ["files_added", "trashed", "restored"];
 
+// These can't be turned off or muted (LOCKED.md).
+export const alwaysOnTypes: readonly NotificationType[] = ["access_removed", "storage_full"];
+
+// The profile's switches, in groups. R2 alerts are for admins only.
+export const notificationGroups: {
+  title: string;
+  adminOnly?: boolean;
+  types: { type: NotificationType; label: string }[];
+}[] = [
+  {
+    title: "Sharing",
+    types: [
+      { type: "shared", label: "Something is shared with you" },
+      { type: "access_changed", label: "Your access changes" },
+      { type: "access_removed", label: "Your access is removed" },
+      { type: "access_requested", label: "Someone asks for access" },
+      { type: "access_approved", label: "Your request is approved" },
+      { type: "access_denied", label: "Your request is denied" },
+      { type: "ownership_offered", label: "You're offered ownership" },
+      { type: "ownership_transferred", label: "Ownership you offered is accepted" },
+    ],
+  },
+  {
+    title: "Your folders",
+    types: [
+      { type: "files_added", label: "Files are added" },
+      { type: "trashed", label: "Items are moved to the trash" },
+      { type: "restored", label: "Items are restored" },
+    ],
+  },
+  {
+    title: "System",
+    types: [
+      { type: "storage_80", label: "Storage is 80% full" },
+      { type: "storage_95", label: "Storage is 95% full" },
+      { type: "storage_full", label: "Storage is full" },
+      { type: "trash_emptying", label: "Trash will be emptied in 3 days" },
+      { type: "invite_used", label: "Someone signs up with your invite" },
+    ],
+  },
+  {
+    title: "Admin",
+    adminOnly: true,
+    types: [
+      { type: "r2_ops_70", label: "Storage operations at 70% of the free tier" },
+      { type: "r2_ops_90", label: "Storage operations at 90% of the free tier" },
+    ],
+  },
+];
+
 // What a notification to be created looks like.
 export type PlannedNotification = {
   recipientId: string;
@@ -163,3 +213,13 @@ export const notificationText = (n: {
 
 // Mark one notification as read (opening it), or all of them.
 export const markReadSchema = z.object({ id: z.union([z.uuid(), z.literal("all")]) });
+
+// A profile switch. Always-on types are refused.
+export const notificationPrefSchema = z.object({
+  type: z
+    .enum(notificationTypes)
+    .refine((type) => !alwaysOnTypes.includes(type), "This one is always on"),
+  enabled: z.boolean(),
+});
+
+export const muteSchema = z.object({ itemId: z.uuid(), muted: z.boolean() });

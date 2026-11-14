@@ -4,6 +4,7 @@ import type { ListedItem } from "@devsbucket/db/items";
 import { Download, Eye, FolderInput, MoreHorizontal, Pencil, Trash2, UserPlus } from "lucide-react";
 import { useRef } from "react";
 import { downloadUrl } from "@/components/drive/file-preview";
+import MuteMenuItem from "@/components/drive/mute-menu-item";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -26,8 +27,8 @@ type ItemMenuProps = {
   onTrash: () => void;
 };
 
-// The ⋯ menu on each row: only what the user may do. A Viewer's folder has
-// nothing to offer, so it gets no menu.
+// The ⋯ menu on each row: only what the user may do, and muting, which
+// everyone may.
 const ItemMenu = ({
   item,
   actions,
@@ -45,10 +46,6 @@ const ItemMenu = ({
     pending.current = open;
   };
   const isFile = item.type === "file";
-  const changes = actions.share || actions.rename || actions.move;
-  if (!isFile && !changes && !actions.trash) {
-    return null;
-  }
 
   return (
     <DropdownMenu>
@@ -80,7 +77,7 @@ const ItemMenu = ({
                 Download
               </a>
             </DropdownMenuItem>
-            {(changes || actions.trash) && <DropdownMenuSeparator />}
+            <DropdownMenuSeparator />
           </>
         )}
         {actions.share && (
@@ -101,9 +98,10 @@ const ItemMenu = ({
             Move
           </DropdownMenuItem>
         )}
+        <MuteMenuItem item={item} />
         {actions.trash && (
           <>
-            {changes && <DropdownMenuSeparator />}
+            <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onSelect={onTrash}>
               <Trash2 />
               Move to trash

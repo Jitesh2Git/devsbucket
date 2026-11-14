@@ -10,6 +10,7 @@ import { useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
 import { leaveSharedItem } from "@/app/drive/shared-actions";
 import FilePreview, { downloadUrl, type PreviewFile } from "@/components/drive/file-preview";
+import MuteMenuItem from "@/components/drive/mute-menu-item";
 import OwnershipOfferActions from "@/components/drive/ownership-offer-actions";
 import LocalDate from "@/components/local-date";
 import { Button } from "@/components/ui/button";
@@ -166,6 +167,7 @@ const SharedList = ({ items, offers, opened }: SharedListProps) => {
                         <DropdownMenuSeparator />
                       </>
                     )}
+                    <MuteMenuItem item={item} />
                     <DropdownMenuItem onSelect={() => leave(item)}>
                       <LogOut />
                       Remove from Shared with me

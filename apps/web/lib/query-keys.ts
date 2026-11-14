@@ -14,3 +14,6 @@ export const sharingQueryKey = (itemId: string) => ["sharing", itemId] as const;
 // unread count in the sidebar.
 export const notificationsQueryKey = ["notifications"] as const;
 export const unreadQueryKey = ["notifications", "unread"] as const;
+
+// Whether the user muted an item (its menu's Mute notifications).
+export const muteQueryKey = (itemId: string) => ["mute", itemId] as const;

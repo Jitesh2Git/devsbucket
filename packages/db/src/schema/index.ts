@@ -6,6 +6,7 @@ export * from "./activities.ts";
 export * from "./auth.ts";
 export * from "./invites.ts";
 export * from "./items.ts";
+export * from "./notification-settings.ts";
 export * from "./notifications.ts";
 export * from "./ownership-transfers.ts";
 export * from "./permissions.ts";

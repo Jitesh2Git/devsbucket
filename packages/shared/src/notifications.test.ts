@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { notificationText, planNotifications } from "./notifications.ts";
+import {
+  notificationGroups,
+  notificationPrefSchema,
+  notificationText,
+  notificationTypes,
+  planNotifications,
+} from "./notifications.ts";
 
 const team = { id: "team", name: "Team", ownerId: "ada", parentId: null };
 const plan = { id: "plan", name: "plan.txt", ownerId: "ada", parentId: "team" };
@@ -100,5 +106,24 @@ describe("notificationText", () => {
     expect(notificationText({ ...base, actorName: null, type: "access_removed", count: 1 })).toBe(
       'Someone removed your access to "Team"',
     );
+  });
+});
+
+describe("notificationGroups", () => {
+  it("has a switch for every type, once", () => {
+    const listed = notificationGroups.flatMap((group) => group.types.map((t) => t.type));
+    expect([...listed].sort()).toEqual([...notificationTypes].sort());
+  });
+});
+
+describe("notificationPrefSchema", () => {
+  it("refuses to turn off an always-on type", () => {
+    expect(notificationPrefSchema.safeParse({ type: "files_added", enabled: false }).success).toBe(
+      true,
+    );
+    expect(
+      notificationPrefSchema.safeParse({ type: "access_removed", enabled: false }).success,
+    ).toBe(false);
+    expect(notificationPrefSchema.safeParse({ type: "nope", enabled: false }).success).toBe(false);
   });
 });
