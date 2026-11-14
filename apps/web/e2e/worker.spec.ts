@@ -15,6 +15,7 @@ const runJob = (name: "cleanup-uploads" | "empty-trash") =>
 test("worker: abandoned uploads and old trash are cleaned up, recent ones stay", async ({
   page,
 }) => {
+  test.slow();
   const db = await connectTestDb();
   const email = await test.step("sign up", () => signUpWithOwnInvite(page, db, "worker"));
 

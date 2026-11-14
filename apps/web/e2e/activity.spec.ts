@@ -36,8 +36,15 @@ test("activity: one row per action with its actor; a refused action writes none"
   const log = async () =>
     (await rows()).map((row) => [row.action, row.actor, row.item, row.metadata]);
   const activityIds = new Set<string>();
+  // Ada's item by name (other tests share the database and its names).
   const idOf = async (name: string) =>
-    (await db.query<{ id: string }>("select id from items where name = $1", [name])).rows[0]?.id;
+    (
+      await db.query<{ id: string }>(
+        `select i.id from items i join users u on u.id = i.owner_id
+         where i.name = $1 and u.email = $2`,
+        [name, adaEmail],
+      )
+    ).rows[0]?.id;
   const openMenu = async (page: Page, name: string, item: string) => {
     await page.getByRole("button", { name: `Actions for ${name}`, exact: true }).click();
     await page.getByRole("menuitem", { name: item, exact: true }).click();

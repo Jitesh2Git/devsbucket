@@ -133,8 +133,11 @@ test("sharing: add people, inherited access, settings, change and remove", async
 
   await test.step("each change was logged", async () => {
     const { rows } = await db.query<{ action: string }>(
-      `select a.action from activities a join items i on i.id = a.item_id
-       where i.name = 'Team' and a.action <> 'created' order by a.created_at, a.id`,
+      `select a.action from activities a
+       join items i on i.id = a.item_id join users u on u.id = i.owner_id
+       where u.email = $1 and i.name = 'Team' and a.action <> 'created'
+       order by a.created_at, a.id`,
+      [adaEmail],
     );
     expect(rows.map((row) => row.action)).toEqual([
       "shared",
