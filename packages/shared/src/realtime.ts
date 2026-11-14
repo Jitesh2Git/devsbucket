@@ -18,6 +18,12 @@ export type ActivityEvent = {
   metadata: Record<string, unknown>;
 };
 
+// Everything sent on the channel: activity, and "this person has a new
+// notification" from the worker (step 11).
+export type ChannelEvent =
+  | ({ kind: "activity" } & ActivityEvent)
+  | { kind: "notification"; userId: string };
+
 // Browser → realtime: follow a folder (null = the top of your own My
 // Drive), or stop following it.
 export const clientMessageSchema = z.discriminatedUnion("type", [
@@ -29,7 +35,8 @@ export type ClientMessage = z.infer<typeof clientMessageSchema>;
 // Realtime → browser.
 export type ServerMessage =
   | { type: "folder-changed"; folderId: string | null }
-  | { type: "access-changed" };
+  | { type: "access-changed" }
+  | { type: "notification" };
 
 // Which folder listings an action changes:
 // - "parent": the folder the item is in now (or the top of its owner's drive)

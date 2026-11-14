@@ -4,6 +4,7 @@ import type { ClientMessage, ServerMessage } from "@devsbucket/shared/realtime";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { createContext, type ReactNode, use, useCallback, useEffect, useRef } from "react";
+import { notificationsQueryKey } from "@/lib/query-keys";
 
 type Listener = () => void;
 type Subscribe = (folderId: string | null, onChange: Listener) => () => void;
@@ -53,6 +54,8 @@ const RealtimeProvider = ({ children }: { children: ReactNode }) => {
         } else if (message.type === "access-changed") {
           void queryClient.invalidateQueries();
           router.refresh();
+        } else if (message.type === "notification") {
+          void queryClient.invalidateQueries({ queryKey: notificationsQueryKey });
         }
       };
       ws.onclose = () => {

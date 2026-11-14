@@ -18,6 +18,14 @@ const name = await prepareTestDatabase(databaseUrl);
 const client = new pg.Client({ connectionString: databaseUrl });
 await client.connect();
 await client.query("truncate users, invites, usage_counters restart identity cascade");
+// pg-boss's queued jobs (its own schema, once the worker has created it):
+// jobs left from earlier runs would make the worker in this run work
+// through them first.
+await client.query(`
+  do $$ begin
+    if to_regclass('pgboss.job') is not null then truncate pgboss.job; end if;
+  end $$
+`);
 await drizzle({ client, casing: "snake_case" })
   .insert(invites)
   .values({

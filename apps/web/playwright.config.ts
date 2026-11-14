@@ -25,9 +25,9 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  // Its own app server on port 3100 and realtime server on 3101, pointed at
-  // the test database and test bucket, so they never touch your dev data or
-  // your `pnpm dev` on ports 3000 and 3001.
+  // Its own app server on port 3100, realtime server on 3101 and worker,
+  // pointed at the test database and test bucket, so they never touch your
+  // dev data or your `pnpm dev`.
   webServer: [
     {
       command: process.env.CI
@@ -60,6 +60,19 @@ export default defineConfig({
         WEB_URL: baseURL,
         PORT: String(E2E_REALTIME_PORT),
       },
+    },
+    {
+      // The worker turns activity into notifications. No port: it's ready
+      // when it says so. Without --env-file, like realtime. On a fresh
+      // machine the test database only exists after globalSetup, which runs
+      // once these servers are up: "waiting for the database" counts too
+      // (the worker starts properly a moment later).
+      command: "node src/index.ts",
+      cwd: "../worker",
+      wait: { stdout: /\[worker\] (started|database not ready)/ },
+      reuseExistingServer: false,
+      timeout: 60_000,
+      env: { ...process.env, ...testEnv() },
     },
   ],
 });

@@ -9,3 +9,8 @@ export const foldersQueryKey = (parentId: string | null) =>
 
 // Who has access to one item (the Share dialog).
 export const sharingQueryKey = (itemId: string) => ["sharing", itemId] as const;
+
+// The user's notifications, and (under it, so both refresh together) the
+// unread count in the sidebar.
+export const notificationsQueryKey = ["notifications"] as const;
+export const unreadQueryKey = ["notifications", "unread"] as const;

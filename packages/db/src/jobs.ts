@@ -13,8 +13,10 @@ export const QUEUES = {
   // Storage deletes that failed after the rows were already gone.
   deleteStorage: "delete-storage-objects",
   // One per activity row, queued in the action's transaction (decision
-  // 0010); the worker turns it into notifications (step 11).
+  // 0010); the worker turns it into notifications.
   notifyActivity: "notify-activity",
+  // Notifications older than 90 days (LOCKED.md).
+  cleanupNotifications: "cleanup-notifications",
 } as const;
 
 export type NotifyActivity = { activityId: string };
@@ -58,6 +60,7 @@ export const createQueues = async (boss: PgBoss) => {
     retryBackoff: true,
   });
   await boss.createQueue(QUEUES.notifyActivity, { retryLimit: 5, retryBackoff: true });
+  await boss.createQueue(QUEUES.cleanupNotifications, { policy: "singleton" });
 };
 
 // One sending instance per web server process (kept across Next.js dev

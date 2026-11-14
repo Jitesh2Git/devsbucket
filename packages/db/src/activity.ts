@@ -27,6 +27,7 @@ export const logActivity = async <A extends LoggedAction>(
   const job: NotifyActivity = { activityId: row.id };
   await sendInTransaction(tx, QUEUES.notifyActivity, job);
   await sendEvent(tx, {
+    kind: "activity",
     itemId: entry.itemId,
     action: entry.action,
     actorId: entry.actorId,

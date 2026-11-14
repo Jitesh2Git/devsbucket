@@ -15,6 +15,9 @@ export const FREE_OPS = { classA: 1_000_000, classB: 10_000_000 } as const;
 export const OPS_WARN_AT = 0.7;
 export const OPS_BLOCK_AT = 0.9;
 
+// Notifications are deleted after this many days (LOCKED.md).
+export const NOTIFICATION_DAYS = 90;
+
 export type OpsCount = { classA: number; classB: number };
 
 // How close this month's operations are to the free tier, by the fuller class.
