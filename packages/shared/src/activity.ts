@@ -55,6 +55,11 @@ export type ActivityMetadata = {
   link_disabled: Record<string, never>;
   // The visitor is the actor; logged on their first open only.
   link_opened: { role: "editor" | "viewer" };
+  // Access requests (step 8). Requested: the requester is the actor.
+  // Approved or denied: the one who decided is, and userId the requester.
+  access_requested: { role: "editor" | "viewer" };
+  access_approved: { userId: string; role: "editor" | "viewer" };
+  access_denied: { userId: string };
 };
 
 export type LoggedAction = keyof ActivityMetadata;

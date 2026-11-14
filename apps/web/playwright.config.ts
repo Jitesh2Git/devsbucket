@@ -18,6 +18,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
+  // Locally `next dev` on a busy laptop can take more than 5 s to answer.
+  expect: { timeout: process.env.CI ? 5_000 : 10_000 },
   use: {
     baseURL,
     trace: "retain-on-failure",
