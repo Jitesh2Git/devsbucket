@@ -140,6 +140,7 @@ test("shared with me: top-most list, browsing, role-aware buttons, quota, trash,
     await dialog.getByRole("button", { name: "Move here" }).click();
     await expect(member.getByText("Moved to Sub")).toBeVisible();
     await member.getByRole("link", { name: "Sub" }).click();
+    await expect(member.getByRole("heading", { name: "Sub" })).toBeVisible();
     await expect(breadcrumb.getByRole("link", { name: "Team" })).toBeVisible();
     await expect(member.getByRole("button", { name: "plan.txt", exact: true })).toBeVisible();
     await breadcrumb.getByRole("link", { name: "Team" }).click();
