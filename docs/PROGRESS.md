@@ -273,7 +273,15 @@ Full plan: `docs/plans/phase-3.md` (design, data model, `item_access()`, realtim
   - Gotcha: e2e tests that look folders up by name across the test database collide when two specs use the same name ("Team"): the link test uses "Launch" and filters by its owner.
   - Gotcha: drizzle-kit only sees tables exported from `schema/index.ts`; without the export the migration had no `CREATE TABLE`, and `item_access()` (an SQL function, checked when created) failed on the missing table. drizzle-kit hides the error; the migration ran in a transaction, so nothing was applied.
   - Gotcha: with `pnpm dev` running alongside (load around 5), the full e2e run timed out once on "Disable link" (still busy after 5 s); the spec passed twice alone. Stop `pnpm dev` before `pnpm test:e2e`.
-- [ ] 8. **Access requests:** request page, approve/deny
+- [x] 8. **Access requests:** request page, approve/deny
+  - Note: `access_requests` (migration 0008): role, optional message (≤ 500 characters, a check), status `pending`/`approved`/`denied`, `decided_by`/`decided_at`; a unique `(item_id, requester_id) where status = 'pending'` index (one pending request per person per item; it also serves the dialog's list). Decided requests are kept, so someone denied can ask again.
+  - Note: `@devsbucket/db/access-requests`: `getPendingRequest`, `requestAccess` (updates a pending one, else inserts with `onConflictDoNothing`; logs `access_requested` only for a new one), `listPendingRequests`, `approveRequest` (marks it approved and upserts the grant with the chosen role, in one transaction; logs `access_approved`), `denyRequest` (logs `access_denied`). Both return false if the request is no longer pending.
+  - Note: "You need access" (`need-access.tsx`, now async with `itemId`/`userId`) shows `RequestAccessForm` (role menu, optional message with the new shadcn `Textarea`, "Change request" once sent). The Share dialog lists pending requests (`share-requests-section.tsx`) with a role menu, Approve and Deny, for anyone who may share. `app/drive/request-actions.ts`: `requestAccess`, `approveAccessRequest`, `denyAccessRequest`.
+  - Note: E2E `access-requests.spec.ts` (3 people): request, change it (still one row), approve with another role (opens as Viewer), deny then ask again, the activity rows. Database tests in `access-requests.db.test.ts` (2).
+  - Gotcha: `resolveItem` answers `no-access` before it checks the action, so `request_access` can never pass through it; `requestAccess` checks `view` and treats `no-access` as the one case where asking is allowed.
+  - Gotcha: the button spinner has `role="status"`, so `getByRole("status")` matched it; the test finds the "Request sent" text instead.
+  - Gotcha: local e2e kept timing out on a different test each run (5 s waits, `next dev`, macOS background services pushing load to about 6). `playwright.config.ts` now waits 10 s locally (`expect.timeout`), 5 s in CI.
+  - Note (step 11): the owner only sees requests by opening the Share dialog until notifications arrive.
 - [ ] 9. **Ownership transfer:** offer, accept/decline/cancel, quota move
 - [ ] 10. **Realtime server:** `apps/realtime`, session check, LISTEN/NOTIFY, live folders
 - [ ] 11. **Notifications:** worker fan-out with batching, bell, page, live count, 90-day cleanup

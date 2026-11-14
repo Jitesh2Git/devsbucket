@@ -17,6 +17,7 @@ import {
 } from "@/app/drive/share-actions";
 import RoleMenu from "@/components/drive/role-menu";
 import ShareLinkSection from "@/components/drive/share-link-section";
+import ShareRequestsSection from "@/components/drive/share-requests-section";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -116,6 +117,8 @@ const ShareBody = ({ item, sharing }: ShareBodyProps) => {
           Share
         </Button>
       </form>
+
+      <ShareRequestsSection itemId={item.id} requests={sharing.requests} onChanged={refresh} />
 
       <section className="flex flex-col gap-2">
         <h3 className="text-sm font-medium">People with access</h3>

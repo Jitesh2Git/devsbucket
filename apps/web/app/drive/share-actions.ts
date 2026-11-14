@@ -1,6 +1,7 @@
 "use server";
 
 import { can } from "@devsbucket/authz/can";
+import { listPendingRequests } from "@devsbucket/db/access-requests";
 import { changeLink, createLink, disableLink, getActiveLink } from "@devsbucket/db/share-links";
 import {
   changeGrant,
@@ -51,9 +52,10 @@ export const getSharing = async (input: unknown) => {
           : deniedMessage(found.denied, ITEM_GONE),
     } as const;
   }
-  const [sharing, link] = await Promise.all([
+  const [sharing, link, requests] = await Promise.all([
     listSharing(found.item.id),
     getActiveLink(found.item.id),
+    listPendingRequests(found.item.id),
   ]);
   if (!sharing) return { error: ITEM_GONE } as const;
   return {
@@ -66,6 +68,7 @@ export const getSharing = async (input: unknown) => {
       expired: !isLinkActive({ disabledAt: null, expiresAt: link.expiresAt }),
       visitors: link.visitors,
     },
+    requests,
     me: session.user.id,
     canChangeSettings: can(found.access, "change_settings"),
   } as const;
