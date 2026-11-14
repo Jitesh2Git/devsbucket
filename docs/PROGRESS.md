@@ -340,8 +340,29 @@ Full plan: `docs/plans/phase-3.md` (design, data model, `item_access()`, realtim
 - [ ] Phase 6: realtime behind Caddy (`wss://` on the same site, `WEB_URL` the public address, `NEXT_PUBLIC_REALTIME_URL` at build time); events while realtime's database connection is down are lost (browsers refetch on reconnect); the worker and realtime as containers.
 - [ ] Local e2e runs are sensitive to machine load (a busy VS Code extension, Spotlight, XProtect): waits are 10 s locally and the long tests use `test.slow()`; CI is the reference.
 
+## Phase 4: Live editing
+
+Full plan: `docs/plans/phase-4.md` (design, data model, Hocuspocus in realtime, versions, step table). Decision: 0013 (live editing: storage, versions and limits).
+
+**Done when:** two users in two browsers edit the same file and see each other's text and cursors live; a Viewer sees both but can't type; leaving saves a version and the download has the new content; a named version can be saved, compared with any other and restored for everyone; `.md` files show a live preview; "New file" creates and opens an empty file. Authz, version saving and thinning have tests, e2e covers two-browser editing, and CI is green.
+
+- [x] 0. **Plan:** `docs/plans/phase-4.md`, decision 0013, LOCKED.md and diagrams 3, 6 and 9 updated
+  - Note: choices agreed on 2026-11-14: no size limit for editing (step 4 measures 10 MB and 100 MB files); Yjs state and version texts in Postgres; automatic versions every 5 minutes and on last leave, thinned to one a day after 30 days, named and restore versions kept forever, versions count against the owner's quota; a "New file" button joins Phase 4; Tiptap notes and making a copy stay in Phase 5.
+  - Note: checked in scratch with Hocuspocus 4.8.0: a `Hocuspocus` instance runs inside our own `ws` server on a path, with `handleConnection(ws, new Request(url, { headers }), context)`; the integration must forward `message` (`handleMessage`) and `close` (`handleClose`) itself, or the provider connects and nothing syncs. A read-only connection's edits never reach the document or `onStoreDocument`.
+- [ ] 1. **Editing schema + authz:** `collab_states`, `item_versions`, `items.versions_size`, new activity and notification types, `edit` / `view_versions`
+- [ ] 2. **File page (read-only):** `/drive/files/[fileId]`, bundled Monaco, "Open in editor"
+- [ ] 3. **New text file:** "New file" dialog, empty object, opens the editor
+- [ ] 4. **Hocuspocus in realtime:** `/collab`, `onAuthenticate` with `item_access()` + `can()`, load and store, closing connections on access change
+- [ ] 5. **Live editor and cursors:** provider + y-monaco binding, presence, named cursors, read-only badges
+- [ ] 6. **Versions:** 5-minute and last-leave versions, named versions, object rewrite, quota, `edited` / `version_saved`
+- [ ] 7. **History, diff, restore:** history panel, Monaco diff editor for any two versions, restore for everyone
+- [ ] 8. **Markdown preview:** split view, `react-markdown` + `remark-gfm`, no raw HTML
+- [ ] 9. **Quota everywhere:** `versions_size` in delete forever, trash, transfer, remove user; `thin-versions` job
+- [ ] 10. **Editing notifications:** `file_edited` (once per file per hour), `version_restored`
+- [ ] 11. **Tests + review:** two-browser e2e, docs check, tag `v0.4.0`
+
 ## Later phases (summary)
 
-4. **Live editing:** Monaco + Yjs + Hocuspocus, cursors, versions, diff view, Markdown preview
+4. **Live editing:** see Phase 4 above
 5. **Notes and extras:** Tiptap notes, Cmd+K search, starred and recent, activity panel, ZIP download
 6. **Prod:** Oracle VM, Caddy, DuckDNS, R2, backups, deploy pipeline
