@@ -1,8 +1,11 @@
+import { canAdmin } from "@devsbucket/authz/admin";
+import { listNotificationPrefs } from "@devsbucket/db/notification-settings";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import OAuthError from "@/components/auth/oauth-error";
+import NotificationSettings from "@/components/profile/notification-settings";
 import SignInMethods from "@/components/profile/sign-in-methods";
 import UsernameForm from "@/components/profile/username-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +21,7 @@ const ProfileContent = async () => {
     redirect("/sign-in");
   }
   const { name, email, image, username } = session.user;
+  const prefs = await listNotificationPrefs(session.user.id);
 
   return (
     <div className="flex flex-col gap-6">
@@ -40,6 +44,17 @@ const ProfileContent = async () => {
         </CardContent>
       </Card>
       <SignInMethods />
+      <Card>
+        <CardHeader>
+          <CardTitle>Notifications</CardTitle>
+          <CardDescription>
+            What you're told about. To stop hearing about one folder or file, mute it from its menu.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <NotificationSettings prefs={prefs} isAdmin={canAdmin(session.user, "view")} />
+        </CardContent>
+      </Card>
     </div>
   );
 };

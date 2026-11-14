@@ -10,6 +10,7 @@ import { and, count, desc, eq, isNull, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db, type Executor } from "./client.ts";
 import { sendEvent } from "./events.ts";
+import { wantsNotification } from "./notification-settings.ts";
 import { activities } from "./schema/activities.ts";
 import { users } from "./schema/auth.ts";
 import { items } from "./schema/items.ts";
@@ -36,9 +37,10 @@ const sharersOf = async (itemId: string, tx: Executor) => {
 };
 
 // The notifications one activity row makes (the worker's `notify-activity`
-// job). Content types are batched: an unread one of the same type, for the
-// same folder and actor, from the last hour counts one more instead of
-// adding a row. Returns how many people were notified.
+// job), for the people who want them (their switches and mutes). Content
+// types are batched: an unread one of the same type, for the same folder
+// and actor, from the last hour counts one more instead of adding a row.
+// Returns how many people were notified.
 export const notifyForActivity = async (activityId: string, tx: Executor = db) => {
   return tx.transaction(async (t) => {
     const [activity] = await t.select().from(activities).where(eq(activities.id, activityId));
@@ -55,7 +57,12 @@ export const notifyForActivity = async (activityId: string, tx: Executor = db) =
     }
     const sharers = activity.action === "access_requested" ? await sharersOf(item.id, t) : [];
     const planned = planNotifications(activity, item, sharers);
+    let notified = 0;
     for (const notification of planned) {
+      if (!(await wantsNotification(notification, t))) {
+        continue;
+      }
+      notified += 1;
       const batched =
         batchedTypes.includes(notification.type) && activity.actorId !== null
           ? await t
@@ -82,7 +89,7 @@ export const notifyForActivity = async (activityId: string, tx: Executor = db) =
       }
       await sendEvent(t, { kind: "notification", userId: notification.recipientId });
     }
-    return planned.length;
+    return notified;
   });
 };
 

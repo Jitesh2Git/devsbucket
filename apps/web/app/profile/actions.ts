@@ -1,7 +1,9 @@
 "use server";
 
+import { setNotificationPref } from "@devsbucket/db/notification-settings";
 import { setUsername } from "@devsbucket/db/users";
 import { setPasswordSchema } from "@devsbucket/shared/auth";
+import { notificationPrefSchema } from "@devsbucket/shared/notifications";
 import { setUsernameSchema } from "@devsbucket/shared/user";
 import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
@@ -56,5 +58,20 @@ export const setPassword = async (input: unknown) => {
     }
     throw error;
   }
+  return { error: null };
+};
+
+// One notification switch (Notifications on the profile). Always-on types
+// are refused by the schema.
+export const setNotificationPreference = async (input: unknown) => {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    return { error: "You're signed out. Sign in again." };
+  }
+  const parsed = notificationPrefSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid request" };
+  }
+  await setNotificationPref({ userId: session.user.id, ...parsed.data });
   return { error: null };
 };
