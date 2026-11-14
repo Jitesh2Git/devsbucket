@@ -96,10 +96,14 @@ export const createInvite = async (input: unknown) => {
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? INVALID } as const;
   }
-  if (!(await getAdmin("manage_invites"))) {
+  const admin = await getAdmin("manage_invites");
+  if (!admin) {
     return { error: NOT_ALLOWED } as const;
   }
-  const invite = await createInviteRow({ email: parsed.data.email || undefined });
+  const invite = await createInviteRow({
+    email: parsed.data.email || undefined,
+    createdBy: admin.id,
+  });
   return { error: null, code: invite.code } as const;
 };
 

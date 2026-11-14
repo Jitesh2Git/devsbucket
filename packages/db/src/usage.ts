@@ -22,8 +22,8 @@ export const countOps = async ({ classA = 0, classB = 0 }: Partial<OpsCount>) =>
     });
 };
 
-export const getOpsThisMonth = async (): Promise<OpsCount> => {
-  const [row] = await db
+export const getOpsThisMonth = async (tx: Executor = db): Promise<OpsCount> => {
+  const [row] = await tx
     .select()
     .from(usageCounters)
     .where(eq(usageCounters.month, currentMonth()));

@@ -1,3 +1,4 @@
+import { checkOpsAlerts, checkStorageAlerts, warnTrashEmptying } from "@devsbucket/db/alerts";
 import { pool } from "@devsbucket/db/client";
 import {
   createBoss,
@@ -53,6 +54,9 @@ await boss.work(QUEUES.emptyOldTrash, async () => {
 
 await boss.schedule(QUEUES.cleanupNotifications, "30 3 * * *");
 
+await boss.schedule(QUEUES.checkAlerts, "*/15 * * * *");
+await boss.schedule(QUEUES.trashWarning, "0 4 * * *");
+
 await boss.work<StorageCleanup>(QUEUES.deleteStorage, async (jobs) => {
   for (const job of jobs) {
     await deleteStorageObjects(job.data);
@@ -79,8 +83,20 @@ await boss.work(QUEUES.cleanupNotifications, async () => {
   if (deleted > 0) log(`deleted ${deleted} notifications older than ${NOTIFICATION_DAYS} days`);
 });
 
+// System notifications (decision 0010): thresholds every 15 minutes, the
+// trash warning once a day.
+await boss.work(QUEUES.checkAlerts, async () => {
+  const sent = (await checkStorageAlerts()) + (await checkOpsAlerts());
+  if (sent > 0) log(`sent ${sent} storage alerts`);
+});
+
+await boss.work(QUEUES.trashWarning, async () => {
+  const owners = await warnTrashEmptying();
+  if (owners > 0) log(`warned ${owners} people about trash being emptied`);
+});
+
 log(
-  "started: cleanup every 15 minutes, old trash daily at 03:00 UTC, old notifications at 03:30 UTC",
+  "started: cleanup and alerts every 15 minutes; daily old trash 03:00, old notifications 03:30, trash warning 04:00 UTC",
 );
 
 // Ctrl+C, `node --watch` restarts and container stops: let running jobs

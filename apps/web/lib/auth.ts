@@ -1,3 +1,4 @@
+import { notifyInviteUsed } from "@devsbucket/db/alerts";
 import { db } from "@devsbucket/db/client";
 import * as schema from "@devsbucket/db/schema/index";
 import { type BetterAuthPlugin, betterAuth, getCurrentAdapter } from "better-auth";
@@ -120,6 +121,11 @@ export const auth = betterAuth({
             ],
             update: { usedBy: user.id },
           });
+          // "Invite used" for whoever made it (decision 0010). A failure here
+          // mustn't undo a sign-up that already happened.
+          await notifyInviteUsed({ code, userId: user.id }).catch((error) =>
+            console.error("invite-used notification failed:", error),
+          );
         },
       },
     },
