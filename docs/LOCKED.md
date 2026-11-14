@@ -64,7 +64,7 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 Activity is a permanent, per-item log, visible to the Owner and Editors. Every action writes one activity row in the same transaction, and the worker turns those rows into notifications (decision 0010).
 
 - **Content:** created/uploaded, edited (one entry per editing session), version saved, version restored, renamed, moved, copied, trashed/restored, deleted forever (logged on the parent), downloaded.
-- **Sharing:** shared, access changed or removed, share link created or disabled, first open via a share link, access requested/approved/denied, ownership transferred, settings changed.
+- **Sharing:** shared, access changed or removed, share link created, changed (role or expiry) or disabled, first open via a share link, access requested/approved/denied, ownership transferred, settings changed.
 - **Not logged here:** opening a file goes to the `ItemView` table, which powers the Recent view. Sign-ins are covered by Better Auth sessions.
 
 ## Environments

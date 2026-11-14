@@ -1,6 +1,7 @@
 "use client";
 
 import { type SignInInput, signInSchema } from "@devsbucket/shared/auth";
+import { safeNextPath } from "@devsbucket/shared/redirect";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -58,6 +59,13 @@ const SignInForm = () => {
     }
     // Stay busy until the next page has loaded.
     submitted.current = true;
+    // Came from a share link (/sign-in?next=/s/…): back to it, as a full
+    // page load, since /s/… is a route handler that redirects again.
+    const next = safeNextPath(new URLSearchParams(window.location.search).get("next"));
+    if (next) {
+      window.location.assign(next);
+      return;
+    }
     router.push("/drive");
     router.refresh();
   };

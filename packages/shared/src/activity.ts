@@ -18,6 +18,7 @@ export const activityActions = [
   "access_removed",
   "link_created",
   "link_disabled",
+  "link_changed",
   "link_opened",
   "access_requested",
   "access_approved",
@@ -48,6 +49,12 @@ export type ActivityMetadata = {
   access_changed: { userId: string; from: "editor" | "viewer"; to: "editor" | "viewer" };
   access_removed: { userId: string; role: "editor" | "viewer" };
   settings_changed: { setting: "editorsCanShare"; value: boolean };
+  // The link as it is after the change (step 7). expiresAt: ISO date or null.
+  link_created: { role: "editor" | "viewer"; expiresAt: string | null };
+  link_changed: { role: "editor" | "viewer"; expiresAt: string | null };
+  link_disabled: Record<string, never>;
+  // The visitor is the actor; logged on their first open only.
+  link_opened: { role: "editor" | "viewer" };
 };
 
 export type LoggedAction = keyof ActivityMetadata;

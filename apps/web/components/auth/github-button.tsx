@@ -1,5 +1,6 @@
 "use client";
 
+import { safeNextPath } from "@devsbucket/shared/redirect";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -29,9 +30,15 @@ const GitHubButton = ({ mode, pending, onPendingChange }: GitHubButtonProps) => 
     // Sends the browser to GitHub; it comes back to /api/auth/callback/github,
     // then to callbackURL, or to errorCallbackURL with ?error=<code>.
     // On success we stay pending until the browser has left the page.
+    // Signing in from a share link (/sign-in?next=/s/…) comes back to it.
+    const next =
+      mode === "sign-in"
+        ? safeNextPath(new URLSearchParams(window.location.search).get("next"))
+        : null;
+
     const { error } = await authClient.signIn.social({
       provider: "github",
-      callbackURL: "/drive",
+      callbackURL: next ?? "/drive",
       errorCallbackURL: mode === "sign-up" ? "/sign-up" : "/sign-in",
       requestSignUp: mode === "sign-up",
     });

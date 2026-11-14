@@ -5,7 +5,7 @@ import { db, type Executor } from "./client.ts";
 import { isUniqueViolation } from "./errors.ts";
 import { users } from "./schema/auth.ts";
 import { items } from "./schema/items.ts";
-import { itemPermissions } from "./schema/permissions.ts";
+import { accessRoots } from "./shared-with-me.ts";
 import { releaseStorage, reserveStorage } from "./usage.ts";
 
 export type Item = typeof items.$inferSelect;
@@ -85,10 +85,12 @@ export type ListedItem = ListItemsPage["items"][number];
 // The folders above `folderId` (itself included) that `userId` can see, in
 // one recursive query up the parent chain. In their own tree: from the top
 // of My Drive. In someone else's: from the top-most folder shared with
-// them (the one Shared with me lists), never the owner's folders above it.
+// them or reached by a link they opened (the one Shared with me lists),
+// never the owner's folders above it.
 export const getBreadcrumbs = async (folderId: string, userId: string, tx: Executor = db) => {
   const result = await tx.execute<{ id: string; name: string; own: boolean; granted: boolean }>(sql`
-    with recursive chain as (
+       with recursive roots as (${accessRoots(userId)}),
+    chain as (
       select id, parent_id, owner_id, name, 0 as depth from ${items} where id = ${folderId}
       union all
       select i.id, i.parent_id, i.owner_id, i.name, c.depth + 1
@@ -97,9 +99,7 @@ export const getBreadcrumbs = async (folderId: string, userId: string, tx: Execu
       where c.depth < 100
     )
     select c.id, c.name, c.owner_id = ${userId} as own,
-      exists (
-        select 1 from ${itemPermissions} p where p.item_id = c.id and p.user_id = ${userId}
-      ) as granted
+            exists (select 1 from roots r where r.item_id = c.id) as granted
     from chain c order by c.depth desc
   `);
   const chain = result.rows;

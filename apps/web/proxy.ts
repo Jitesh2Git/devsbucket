@@ -1,3 +1,4 @@
+import { safeNextPath } from "@devsbucket/shared/redirect";
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
@@ -17,8 +18,11 @@ export const proxy = async (request: NextRequest) => {
   const onLanding = pathname === "/";
 
   if (session && (onAuthPage || onLanding)) {
-    return NextResponse.redirect(new URL(HOME, request.url));
+    // Already signed in, coming from a share link: straight back to it.
+    const next = onAuthPage ? safeNextPath(request.nextUrl.searchParams.get("next")) : null;
+    return NextResponse.redirect(new URL(next ?? HOME, request.url));
   }
+
   // Signed out: every other matched page needs an account.
   if (!session && !onAuthPage && !onLanding) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
