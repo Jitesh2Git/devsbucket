@@ -59,7 +59,13 @@ test("roles: a Viewer opens but can't change, an Editor can, no role sees 'You n
     await expect(owner.getByRole("button", { name: "plan.txt", exact: true })).toBeVisible();
     folderId = owner.url().split("/").at(-1) ?? "";
     fileId =
-      (await query<{ id: string }>("select id from items where name = 'plan.txt'"))[0]?.id ?? "";
+      (
+        await query<{ id: string }>(
+          `select i.id from items i join users u on u.id = i.owner_id
+           where i.name = 'plan.txt' and u.email = $1`,
+          [adaEmail],
+        )
+      )[0]?.id ?? "";
   });
 
   await test.step("without a role: 'You need access', and a missing folder is a 404", async () => {
@@ -107,7 +113,8 @@ test("roles: a Viewer opens but can't change, an Editor can, no role sees 'You n
     const [row] = await query<{ owner: string; creator: string }>(
       `select o.email as owner, c.email as creator from items i
        join users o on o.id = i.owner_id join users c on c.id = i.created_by
-       where i.name = 'bob.txt'`,
+       where i.name = 'bob.txt' and o.email = $1`,
+      [adaEmail],
     );
     expect(row).toEqual({ owner: adaEmail, creator: bobEmail });
 
@@ -128,9 +135,13 @@ test("roles: a Viewer opens but can't change, an Editor can, no role sees 'You n
     await member.keyboard.press("Escape");
     await upload(member, "nope.txt", "nope");
     await expect(member.getByText("You don't have permission to do that.")).toBeVisible();
-    expect(await query("select 1 from items where name in ('nope.txt', 'mine.txt')")).toHaveLength(
-      0,
-    );
+    expect(
+      await query(
+        `select 1 from items i join users u on u.id = i.owner_id
+         where u.email = $1 and i.name in ('nope.txt', 'mine.txt')`,
+        [adaEmail],
+      ),
+    ).toHaveLength(0);
   });
 
   await db.end();

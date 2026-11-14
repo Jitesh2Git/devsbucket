@@ -145,6 +145,18 @@ Each is one branch and PR. Each step logs activity and sends events for what it 
 
 ## Open questions (to answer during the steps)
 
+Answered during the steps (details in `docs/PROGRESS.md`):
+
+- Step 1: `pnpm admin` lives in `apps/worker` (`src/admin.ts`, it has the env and the storage cleanup); passwords are hashed with `better-auth/crypto`'s `hashPassword`.
+- Step 2: `item_access()` is plain SQL (`LANGUAGE sql STABLE`), called with `db.execute(sql\`…\`)` (`@devsbucket/db/access`); `test:db`and the e2e reset share`prepareTestDatabase`, and CI runs `test:db` before e2e.
+- Step 4: pg-boss 12's `send(…, { db: fromDrizzle(tx, sql) })` runs inside the Drizzle transaction (a database test proves commit and rollback).
+- Step 6: the Shared with me query uses the `item_permissions(user_id)` index; no new index.
+- Step 10: the cookie reaches `localhost:3001` (cookies ignore ports); realtime checks the `Origin` header (403) and the session (401); Playwright starts web, realtime and worker as three `webServer` entries.
+
+Changed while building (each recorded in PROGRESS.md): "Viewers can download" dropped (decision 0012, step 5); share links can change role and expiry in place (`link_changed`, step 7); notifications are a sidebar link with a live count and a `/drive/notifications` page instead of a header bell and popover (step 11); Shared with me and notifications are capped (200, 100) instead of paginated; one review branch instead of two (step 14).
+
+Asked before the steps:
+
 - **Step 1:** where `pnpm admin` lives (a package script in `packages/db`, `apps/worker`, or a small `apps/admin`), and how to hash a password with Better Auth 1.7 outside the web app.
 - **Step 2:** `item_access()` in plain SQL or PL/pgSQL; whether Drizzle can call it cleanly (`db.execute(sql\`…\`)`); how `test:db` shares the reset with e2e in CI.
 - **Step 4:** confirm pg-boss 12's `send(…, { db })` runs inside a Drizzle transaction (otherwise: a trigger-free outbox read by the worker).

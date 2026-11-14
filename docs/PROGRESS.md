@@ -195,10 +195,10 @@ Only the owner can see or touch their items in this phase. Sharing, the role gri
 ### Follow-ups from Phase 2
 
 - [x] Admin command for password resets and removing accounts (carried over from Phase 1). Done in Phase 3 step 1.
-- [ ] Phase 3: notifications from LOCKED.md that Phase 2 only prepared: storage at 80%/95% and full, R2 operations at 70% and 90% (today a server log line in `checkUploadLimits`), "trash emptying in 3 days" (the worker knows the dates). Planned as Phase 3 step 13.
+- [x] Phase 3: notifications from LOCKED.md that Phase 2 only prepared: storage at 80%/95% and full, R2 operations at 70% and 90% (today a server log line in `checkUploadLimits`), "trash emptying in 3 days" (the worker knows the dates). Done in Phase 3 step 13.
 - [x] Phase 3: how items shared with you appear (a "Shared with me" list where the name rule doesn't apply; shortcuts or not). Raised in step 4.
   - Note: decided while planning Phase 3 (decision 0008): a flat Shared with me list, no shortcuts. Built in Phase 3 step 6.
-- [ ] Phase 3: with Editors, finishing or cancelling a pending upload should be limited to its uploader (`createdBy`); today `findPendingUpload` only checks `can(user, "upload", item)`, which is the owner in Phase 2. Planned as Phase 3 step 3 (decision 0008).
+- [x] Phase 3: with Editors, finishing or cancelling a pending upload should be limited to its uploader (`createdBy`); today `findPendingUpload` only checks `can(user, "upload", item)`, which is the owner in Phase 2. Done in Phase 3 step 3 (`findOwnUpload`).
 - [ ] Phase 6: run the worker as its own container; set R2's CORS with `pnpm storage:setup` (never `storage:setup-test` in prod); re-check R2's free tier.
 - [ ] Lists that are capped rather than paginated: the Trash view (200 rows), Shared with me (200 rows) and the Move dialog's folder picker (500 folders per level). Fine for now; paginate if a real drive gets near them.
 - [ ] Dropping folders onto the drive is refused with a toast; uploading a folder tree is for later.
@@ -207,7 +207,7 @@ Only the owner can see or touch their items in this phase. Sharing, the role gri
 - [ ] Small UI glitch: while the Trash's delete-forever dialog fades out, its title briefly reads `Delete "undefined" forever?` (the item is cleared before the animation ends).
 - [ ] Ideas: file-type icons from the old project (check their licence; 512 px PNGs to shrink or SVGs) and a colour theme beyond shadcn's neutral one (CSS variables in `globals.css`).
 
-## Phase 3: Sharing (next)
+## Phase 3: Sharing (done, `v0.3.0`)
 
 Full plan: `docs/plans/phase-3.md` (design, data model, `item_access()`, realtime, notifications, step table). Decisions: 0008 (sharing model), 0009 (ownership transfer), 0010 (activity, live events, notifications).
 
@@ -323,7 +323,22 @@ Full plan: `docs/plans/phase-3.md` (design, data model, `item_access()`, realtim
   - Note: E2E `system-notifications.spec.ts`: invite used (live), storage 85% told once over two checks, a 28-day-old trash item warned and the notification opens the Trash, R2 at 90% for an admin and not a member (its `finally` puts the counters back and clears its alert keys). Database tests in `alerts.db.test.ts` (5).
   - Gotcha: e2e and `pnpm test:db` share `devsbucket_test`: the e2e test's R2 alert keys made the database test see them as already raised. The e2e test now clears them, and the database test deletes them inside its rolled-back transaction. CI runs `test:db` first, so it wouldn't have shown there.
   - Gotcha: under load (5.9 min run, load 5–7) `worker.spec.ts` once saw a 10-byte upload still in progress after 10 s; it passed twice alone, in the full run's order.
-- [ ] 14. **Tests and phase review:** two-user e2e, CLAUDE.md, tag `v0.3.0`
+- [x] 14. **Tests and phase review:** two-user e2e, CLAUDE.md, tag `v0.3.0`
+  - Note: one branch, `chore/phase-3-review`, instead of the plan's two: every flow in "Done when" already has its own two-person e2e test (`share`, `shared`, `share-links`, `access-requests`, `transfers`, `realtime`, `notifications`, `notification-settings`, `system-notifications`), 21 in all, so `test/sharing-e2e` had nothing left to add. Checked with the whole suite in CI mode (production build, 5 s waits).
+  - Note: test hygiene: `activity.spec.ts`, `roles.spec.ts` and `share.spec.ts` looked items up by name across the whole test database, which clashed with newer tests three times this phase; their queries now go through the owner's email. `worker.spec.ts` gets `test.slow()` (it timed out under load), like `trash.spec.ts`.
+  - Note: compared with LOCKED.md and `docs/plans/phase-3.md`. Locked decisions changed this phase, each with a note: 0011 (admin page, step 1b), 0012 (no "Viewers can download", step 5). LOCKED.md now also lists "ownership offered" in the activity log (logged since step 9). Plan changes, recorded in the plan: notifications are a sidebar link with a live count and a page rather than a header bell and popover; Shared with me and notifications are capped lists (200, 100) rather than paginated; share links can change role and expiry in place (`link_changed`). The plan's open questions are answered in the plan.
+  - Note: CLAUDE.md gets two conventions, "Notifications" (who gets what, switches and mutes, system alerts) and "Live events" (the channel, data-free messages, `useFolderEvents`). Annotated tag `v0.3.0` on the merge commit.
+
+### Follow-ups from Phase 3
+
+- [ ] Inside a shared folder the sidebar highlights My Drive (the URL doesn't say whose folder it is).
+- [ ] A row with a higher grant than its folder doesn't show the extra buttons (the server allows them); per-row access would need `getAccessMany` in the listing.
+- [ ] Cancelling and declining an ownership offer aren't logged as activity (no type in LOCKED.md); the offer row keeps its status.
+- [ ] Access requests reach the Owner and Editors with a grant; Editors who got their role from a share link aren't asked (`sharersOf`).
+- [ ] Capped lists: Shared with me (200) and Notifications (100), next to the Trash and the folder picker above.
+- [ ] Maybe: a bell with a popover in the header (the plan's idea), now that the page and the live count exist.
+- [ ] Phase 6: realtime behind Caddy (`wss://` on the same site, `WEB_URL` the public address, `NEXT_PUBLIC_REALTIME_URL` at build time); events while realtime's database connection is down are lost (browsers refetch on reconnect); the worker and realtime as containers.
+- [ ] Local e2e runs are sensitive to machine load (a busy VS Code extension, Spotlight, XProtect): waits are 10 s locally and the long tests use `test.slow()`; CI is the reference.
 
 ## Later phases (summary)
 
