@@ -34,6 +34,9 @@ export const items = pgTable(
     // Files only.
     mimeType: text(),
     size: bigint({ mode: "number" }),
+    // Files only: the bytes of all its saved versions, counted in the
+    // owner's quota with `size` (decision 0013).
+    versionsSize: bigint({ mode: "number" }).notNull().default(0),
     // Files only: `items/<item id>`, so renames never touch storage.
     storageKey: text().unique("items_storage_key_unique"),
     status: text({ enum: itemStatuses }).notNull().default("ready"),
