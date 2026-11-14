@@ -13,7 +13,9 @@ const getSession = async () => auth.api.getSession({ headers: await headers() })
 
 // Where a notification leads: a folder opens in the drive, a file in the
 // preview on Shared with me. Opening it checks access again, as always.
-const hrefFor = (item: { id: string | null; type: string | null }) => {
+// System ones have no item: the trash warning opens the Trash.
+const hrefFor = (item: { id: string | null; type: string | null }, kind: string) => {
+  if (kind === "trash_emptying") return "/drive/trash";
   if (!item.id) return null;
   return item.type === "folder" ? `/drive/folders/${item.id}` : `/drive/shared?file=${item.id}`;
 };
@@ -27,7 +29,7 @@ export const loadNotifications = async () => {
     notifications: rows.map((row) => ({
       id: row.id,
       text: notificationText(row),
-      href: hrefFor({ id: row.itemId, type: row.itemType }),
+      href: hrefFor({ id: row.itemId, type: row.itemType }, row.type),
       read: row.readAt !== null,
       createdAt: row.createdAt,
     })),

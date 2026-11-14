@@ -1,3 +1,4 @@
+import { checkOpsAlerts, checkStorageAlerts, warnTrashEmptying } from "@devsbucket/db/alerts";
 import { pool } from "@devsbucket/db/client";
 import { queueStorageCleanup } from "@devsbucket/db/jobs";
 import { deleteOldNotifications } from "@devsbucket/db/notifications";
@@ -9,10 +10,14 @@ import { emptyOldTrash } from "./jobs/empty-old-trash.ts";
 //   pnpm --filter worker job cleanup-uploads
 //   pnpm --filter worker job empty-trash
 //   pnpm --filter worker job cleanup-notifications
+//   pnpm --filter worker job check-alerts
+//   pnpm --filter worker job trash-warning
 const jobs: Record<string, () => Promise<number>> = {
   "cleanup-uploads": cleanupPendingUploads,
   "empty-trash": () => emptyOldTrash(queueStorageCleanup),
   "cleanup-notifications": () => deleteOldNotifications(NOTIFICATION_DAYS),
+  "check-alerts": async () => (await checkStorageAlerts()) + (await checkOpsAlerts()),
+  "trash-warning": warnTrashEmptying,
 };
 
 const name = process.argv[2] ?? "";

@@ -18,13 +18,21 @@ export const findOpenInvite = async (code: string) => {
 };
 
 // A new invite, valid for 7 days. With an email, only that address can use
-// it (the sign-up hook in apps/web/lib/auth.ts checks it).
-export const createInvite = async ({ email }: { email?: string } = {}) => {
+// it (the sign-up hook in apps/web/lib/auth.ts checks it). `createdBy` hears
+// when it's used; without one (seed, admin command), every admin does.
+export const createInvite = async ({
+  email,
+  createdBy,
+}: {
+  email?: string;
+  createdBy?: string;
+} = {}) => {
   const [invite] = await db
     .insert(invites)
     .values({
       code: randomBytes(12).toString("base64url"),
       email: email?.toLowerCase(),
+      createdBy,
       expiresAt: new Date(Date.now() + SEVEN_DAYS_MS),
     })
     .returning();

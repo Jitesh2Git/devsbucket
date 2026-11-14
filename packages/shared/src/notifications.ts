@@ -206,6 +206,24 @@ export const notificationText = (n: {
         `${actor} restored ${name} in ${item}`,
         `${actor} restored ${n.count} items in ${item}`,
       );
+    // System (step 13).
+    case "storage_80":
+      return "Your storage is 80% full";
+    case "storage_95":
+      return "Your storage is 95% full";
+    case "storage_full":
+      return "Your storage is full: uploads stop until you free up space";
+    case "trash_emptying":
+      return many(
+        "1 item in your trash will be deleted forever in 3 days",
+        `${n.count} items in your trash will be deleted forever in 3 days`,
+      );
+    case "invite_used":
+      return `${actor} signed up with your invite`;
+    case "r2_ops_70":
+      return "Storage operations this month are at 70% of the free tier";
+    case "r2_ops_90":
+      return "Storage operations this month are at 90% of the free tier: uploads are paused until next month";
     default:
       return "Something changed";
   }

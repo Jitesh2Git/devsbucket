@@ -17,6 +17,10 @@ export const QUEUES = {
   notifyActivity: "notify-activity",
   // Notifications older than 90 days (LOCKED.md).
   cleanupNotifications: "cleanup-notifications",
+  // Storage per user and R2 operations against their thresholds.
+  checkAlerts: "check-alerts",
+  // Trash about to be emptied (3 days left).
+  trashWarning: "trash-warning",
 } as const;
 
 export type NotifyActivity = { activityId: string };
@@ -72,6 +76,8 @@ export const createQueues = async (boss: PgBoss) => {
   });
   await boss.updateQueue(QUEUES.notifyActivity, { notify: true });
   await boss.createQueue(QUEUES.cleanupNotifications, { policy: "singleton" });
+  await boss.createQueue(QUEUES.checkAlerts, { policy: "singleton" });
+  await boss.createQueue(QUEUES.trashWarning, { policy: "singleton" });
 };
 
 // One sending instance per web server process (kept across Next.js dev

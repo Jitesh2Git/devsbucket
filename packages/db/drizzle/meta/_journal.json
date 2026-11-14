@@ -85,6 +85,13 @@
       "when": 1794653180578,
       "tag": "0011_notification_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794661196120,
+      "tag": "0012_alert_states",
+      "breakpoints": true
     }
   ]
 }
