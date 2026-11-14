@@ -68,7 +68,7 @@ test("worker: abandoned uploads and old trash are cleaned up, recent ones stay",
   await test.step("files in the trash for 31 and 29 days", async () => {
     for (const name of ["old.txt", "young.txt"]) {
       await upload(name);
-      await expect(page.getByRole("button", { name, exact: true })).toBeVisible();
+      await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
     }
     // Where old.txt is stored, to check later that the object is gone too.
     const [old] = await query<{ id: string }>("select id from items where name = 'old.txt'");

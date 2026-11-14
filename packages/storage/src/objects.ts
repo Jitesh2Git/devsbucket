@@ -91,6 +91,16 @@ export const getRange = async (key: string, bytes: number) => {
   return object.Body.transformToByteArray();
 };
 
+// A whole object (the editor reads the full file; there's no size limit).
+export const getObject = async (key: string) => {
+  await countOps({ classB: 1 });
+  const object = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+  if (!object.Body) {
+    throw new Error("Storage returned no body");
+  }
+  return object.Body.transformToByteArray();
+};
+
 // Deletes many objects, 1000 per request (the S3 maximum). Free on R2, so
 // not counted. Returns the keys storage couldn't delete.
 export const deleteObjects = async (keys: string[]) => {

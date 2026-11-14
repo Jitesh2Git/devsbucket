@@ -23,7 +23,7 @@ test("notification settings: a switch off, a muted folder, always-on types locke
     const chooser = member.waitForEvent("filechooser");
     await member.getByRole("button", { name: "Upload", exact: true }).click();
     await (await chooser).setFiles({ name, mimeType: "text/plain", buffer: Buffer.from(name) });
-    await expect(member.getByRole("button", { name, exact: true })).toBeVisible();
+    await expect(member.getByRole("link", { name, exact: true })).toBeVisible();
   };
   const latest = async () => {
     await owner.getByRole("link", { name: /Notifications/ }).click();

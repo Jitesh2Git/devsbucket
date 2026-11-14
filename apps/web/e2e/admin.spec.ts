@@ -43,7 +43,7 @@ test("admin: reset a password, change roles and quota, invite, remove a user", a
       mimeType: "text/plain",
       buffer: Buffer.from("0123456789"),
     });
-    await expect(page.getByRole("button", { name: "keep.txt", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "keep.txt", exact: true })).toBeVisible();
     const [file] = (await db.query<{ id: string }>("select id from items where name = 'keep.txt'"))
       .rows;
     const download = await page.request.get(`/api/items/${file?.id}/download`, {

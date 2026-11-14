@@ -12,7 +12,8 @@ test("a file's life: folder, upload, preview, rename, move, trash, restore, dele
   await test.step("sign up", () => signUpWithOwnInvite(page, db, "flow"));
 
   const myDrive = () => page.getByRole("link", { name: "My Drive" }).first().click();
-  const fileButton = (name: string) => page.getByRole("button", { name, exact: true });
+  // Text files are links to the editor (Phase 4).
+  const fileLink = (name: string) => page.getByRole("link", { name, exact: true });
   const menu = async (name: string, item: string) => {
     await page.getByRole("button", { name: `Actions for ${name}`, exact: true }).click();
     await page.getByRole("menuitem", { name: item, exact: true }).click();
@@ -39,12 +40,12 @@ test("a file's life: folder, upload, preview, rename, move, trash, restore, dele
       mimeType: "text/markdown",
       buffer: Buffer.from("# Report\n"),
     });
-    await expect(fileButton("report.md")).toBeVisible();
+    await expect(fileLink("report.md")).toBeVisible();
     await expect(page.getByText("9 B of 1 GB used")).toBeVisible();
   });
 
   await test.step("preview", async () => {
-    await fileButton("report.md").click();
+    await menu("report.md", "Preview");
     const dialog = page.getByRole("dialog");
     await expect(dialog.getByText("# Report")).toBeVisible();
     await page.keyboard.press("Escape");
@@ -56,7 +57,7 @@ test("a file's life: folder, upload, preview, rename, move, trash, restore, dele
     await expect(page.getByLabel("New name")).toBeFocused();
     await page.keyboard.type("summary");
     await page.keyboard.press("Enter");
-    await expect(fileButton("summary.md")).toBeVisible();
+    await expect(fileLink("summary.md")).toBeVisible();
   });
 
   await test.step("move into Archive", async () => {
@@ -65,22 +66,22 @@ test("a file's life: folder, upload, preview, rename, move, trash, restore, dele
     await dialog.getByRole("button", { name: "Archive" }).click();
     await dialog.getByRole("button", { name: "Move here" }).click();
     await expect(page.getByText("Moved to Archive")).toBeVisible();
-    await expect(fileButton("summary.md")).toBeHidden();
+    await expect(fileLink("summary.md")).toBeHidden();
     await myDrive();
     await page.getByRole("link", { name: "Archive", exact: true }).click();
-    await expect(fileButton("summary.md")).toBeVisible();
+    await expect(fileLink("summary.md")).toBeVisible();
   });
 
   await test.step("trash, then restore from the Trash", async () => {
     await menu("summary.md", "Move to trash");
-    await expect(fileButton("summary.md")).toBeHidden();
+    await expect(fileLink("summary.md")).toBeHidden();
     await page.getByRole("link", { name: "Trash" }).click();
     await expect(page.getByRole("row", { name: /summary\.md/ })).toContainText("Archive");
     await page.getByRole("button", { name: "Restore summary.md" }).click();
     await expect(page.getByText('Restored "summary.md"')).toBeVisible();
     await myDrive();
     await page.getByRole("link", { name: "Archive", exact: true }).click();
-    await expect(fileButton("summary.md")).toBeVisible();
+    await expect(fileLink("summary.md")).toBeVisible();
   });
 
   await test.step("trash again, delete forever: the space comes back", async () => {

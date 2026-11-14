@@ -67,12 +67,12 @@ test("activity: one row per action with its actor; a refused action writes none"
       mimeType: "text/plain",
       buffer: Buffer.from("hello"),
     });
-    await expect(owner.getByRole("button", { name: "a.txt", exact: true })).toBeVisible();
+    await expect(owner.getByRole("link", { name: "a.txt", exact: true })).toBeVisible();
   });
 
   await test.step("rename; a refused rename (name taken) writes nothing", async () => {
     await rename(owner, "a.txt", "b.txt");
-    await expect(owner.getByRole("button", { name: "b.txt", exact: true })).toBeVisible();
+    await expect(owner.getByRole("link", { name: "b.txt", exact: true })).toBeVisible();
     await rename(owner, "b.txt", "docs");
     await expect(
       owner.getByText('A file or folder named "docs" already exists here.'),
@@ -105,7 +105,7 @@ test("activity: one row per action with its actor; a refused action writes none"
     );
     await editor.goto(`/drive/folders/${await idOf("Docs")}`);
     await rename(editor, "b.txt", "c.txt");
-    await expect(editor.getByRole("button", { name: "c.txt", exact: true })).toBeVisible();
+    await expect(editor.getByRole("link", { name: "c.txt", exact: true })).toBeVisible();
   });
 
   await test.step("one row per action, in order, with its actor", async () => {

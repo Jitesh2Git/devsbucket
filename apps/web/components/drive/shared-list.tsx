@@ -3,13 +3,13 @@
 import type { SharedItem } from "@devsbucket/db/shared-with-me";
 import type { TransferOffer } from "@devsbucket/db/transfers";
 import { roleLabel } from "@devsbucket/shared/sharing";
-import { Download, File, Folder, LogOut, MoreHorizontal, Users } from "lucide-react";
-import Link from "next/link";
+import { Download, LogOut, MoreHorizontal, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
 import { leaveSharedItem } from "@/app/drive/shared-actions";
 import FilePreview, { downloadUrl, type PreviewFile } from "@/components/drive/file-preview";
+import ItemName from "@/components/drive/item-name";
 import MuteMenuItem from "@/components/drive/mute-menu-item";
 import OwnershipOfferActions from "@/components/drive/ownership-offer-actions";
 import LocalDate from "@/components/local-date";
@@ -122,24 +122,7 @@ const SharedList = ({ items, offers, opened }: SharedListProps) => {
           {items.map((item) => (
             <TableRow key={item.id}>
               <TableCell className="max-w-0">
-                {item.type === "folder" ? (
-                  <Link
-                    href={`/drive/folders/${item.id}`}
-                    className="flex items-center gap-2 font-medium hover:underline"
-                  >
-                    <Folder className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{item.name}</span>
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setPreviewing(item)}
-                    className="flex w-full items-center gap-2 text-left hover:underline"
-                  >
-                    <File className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{item.name}</span>
-                  </button>
-                )}
+                <ItemName item={item} onPreview={() => setPreviewing(item)} />
               </TableCell>
               <TableCell className="max-w-0 truncate text-muted-foreground">
                 {item.ownerName}

@@ -21,7 +21,7 @@ test("trash: undo, Trash view, trashed folder link, restore with rename, delete 
     const chooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: "Upload", exact: true }).click();
     await (await chooser).setFiles({ name, mimeType: "text/plain", buffer: Buffer.from(text) });
-    await expect(page.getByRole("button", { name, exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
   };
   const moveToTrash = async (name: string) => {
     await page.getByRole("button", { name: `Actions for ${name}`, exact: true }).click();
@@ -65,7 +65,7 @@ test("trash: undo, Trash view, trashed folder link, restore with rename, delete 
     await expect(page.getByText('"Projects" is in the trash')).toBeVisible();
     await page.getByRole("button", { name: "Restore" }).click();
     await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "plan.md", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "plan.md", exact: true })).toBeVisible();
   });
 
   await test.step("restoring into a taken name renames it, visibly", async () => {

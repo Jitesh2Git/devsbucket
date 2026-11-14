@@ -56,7 +56,7 @@ test("roles: a Viewer opens but can't change, an Editor can, no role sees 'You n
     await owner.getByRole("link", { name: "Team" }).click();
     await expect(owner.getByRole("heading", { name: "Team" })).toBeVisible();
     await upload(owner, "plan.txt", "0123456789");
-    await expect(owner.getByRole("button", { name: "plan.txt", exact: true })).toBeVisible();
+    await expect(owner.getByRole("link", { name: "plan.txt", exact: true })).toBeVisible();
     folderId = owner.url().split("/").at(-1) ?? "";
     fileId =
       (
@@ -80,7 +80,7 @@ test("roles: a Viewer opens but can't change, an Editor can, no role sees 'You n
   await test.step("a Viewer opens and downloads, and sees nothing that changes", async () => {
     await grant("viewer");
     await member.goto(`/drive/folders/${folderId}`);
-    await expect(member.getByRole("button", { name: "plan.txt", exact: true })).toBeVisible();
+    await expect(member.getByRole("link", { name: "plan.txt", exact: true })).toBeVisible();
     await expect(member.getByText("Your role: Viewer")).toBeVisible();
     const download = await member.request.get(`/api/items/${fileId}/download`, {
       maxRedirects: 0,
@@ -103,11 +103,11 @@ test("roles: a Viewer opens but can't change, an Editor can, no role sees 'You n
     await openMenu(member, "plan.txt", "Rename");
     await member.getByRole("dialog").getByLabel("New name").fill("roadmap.txt");
     await member.getByRole("dialog").getByRole("button", { name: "Rename" }).click();
-    await expect(member.getByRole("button", { name: "roadmap.txt", exact: true })).toBeVisible();
+    await expect(member.getByRole("link", { name: "roadmap.txt", exact: true })).toBeVisible();
 
     const adaBefore = await storageUsed(adaEmail);
     await upload(member, "bob.txt", "12345");
-    await expect(member.getByRole("button", { name: "bob.txt", exact: true })).toBeVisible();
+    await expect(member.getByRole("link", { name: "bob.txt", exact: true })).toBeVisible();
     expect(await storageUsed(adaEmail)).toBe(adaBefore + 5);
     expect(await storageUsed(bobEmail)).toBe(0);
     const [row] = await query<{ owner: string; creator: string }>(

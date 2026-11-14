@@ -34,7 +34,7 @@ test("ownership transfer: offer, quota refusal, accept, cancel, decline", async 
     const chooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: "Upload", exact: true }).click();
     await (await chooser).setFiles({ name, mimeType: "text/plain", buffer: Buffer.from(text) });
-    await expect(page.getByRole("button", { name, exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
   };
   const shareWithBob = async (role: "Editor" | "Viewer") => {
     await dialog.getByPlaceholder("Email of someone with an account").fill(bobEmail);

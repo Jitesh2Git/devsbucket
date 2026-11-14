@@ -4,14 +4,14 @@ import type { ListItemsPage } from "@devsbucket/db/items";
 import { formatBytes } from "@devsbucket/shared/bytes";
 import type { Cursor } from "@devsbucket/shared/item";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { File, Folder, FolderOpen } from "lucide-react";
-import Link from "next/link";
+import { FolderOpen } from "lucide-react";
 import { useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
 import { loadItems } from "@/app/drive/actions";
 import { restoreItem, trashItem } from "@/app/drive/trash-actions";
 import FilePreview, { type PreviewFile } from "@/components/drive/file-preview";
 import ItemMenu, { type ItemActions } from "@/components/drive/item-menu";
+import ItemName from "@/components/drive/item-name";
 import MoveDialog, { type Crumb } from "@/components/drive/move-dialog";
 import RenameDialog, { type ItemRef } from "@/components/drive/rename-dialog";
 import ShareDialog, { type ShareTarget } from "@/components/drive/share-dialog";
@@ -150,24 +150,7 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
           {rows.map((item) => (
             <TableRow key={item.id}>
               <TableCell className="max-w-0">
-                {item.type === "folder" ? (
-                  <Link
-                    href={`/drive/folders/${item.id}`}
-                    className="flex items-center gap-2 font-medium hover:underline"
-                  >
-                    <Folder className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{item.name}</span>
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setPreviewing(item)}
-                    className="flex w-full items-center gap-2 text-left hover:underline"
-                  >
-                    <File className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{item.name}</span>
-                  </button>
-                )}
+                <ItemName item={item} onPreview={() => setPreviewing(item)} />
               </TableCell>
               <TableCell className="text-right text-muted-foreground">
                 {item.size === null ? "—" : formatBytes(item.size)}

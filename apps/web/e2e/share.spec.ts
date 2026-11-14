@@ -54,7 +54,7 @@ test("sharing: add people, inherited access, settings, change and remove", async
       mimeType: "text/plain",
       buffer: Buffer.from("plan"),
     });
-    await expect(owner.getByRole("button", { name: "plan.txt", exact: true })).toBeVisible();
+    await expect(owner.getByRole("link", { name: "plan.txt", exact: true })).toBeVisible();
   });
 
   await test.step("only people with an account, and not the owner", async () => {
