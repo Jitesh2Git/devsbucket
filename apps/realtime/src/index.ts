@@ -5,6 +5,7 @@ import { itemPlace, linkVisitors, listenForEvents } from "@devsbucket/db/events"
 import {
   type ActivityEvent,
   accessChangedFor,
+  type ChannelEvent,
   changedFolders,
   clientMessageSchema,
   type ServerMessage,
@@ -105,7 +106,7 @@ const connected = (socket: WebSocket, userId: string) => {
 
 // A change: the folders whose listing changed, and the people whose access
 // did. Someone who lost access to a folder stops getting its events.
-const onEvent = async (event: ActivityEvent) => {
+const onActivity = async (event: ActivityEvent) => {
   const folders = changedFolders(event);
   if (folders) {
     const place = await itemPlace(event.itemId);
@@ -137,6 +138,16 @@ const onEvent = async (event: ActivityEvent) => {
       send(client, { type: "access-changed" });
     }
   }
+};
+
+const onEvent = async (event: ChannelEvent) => {
+  if (event.kind === "notification") {
+    for (const client of byUser.get(event.userId) ?? []) {
+      send(client, { type: "notification" });
+    }
+    return;
+  }
+  await onActivity(event);
 };
 
 const server = createServer((request, response) => {

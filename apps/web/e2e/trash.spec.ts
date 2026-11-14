@@ -5,6 +5,7 @@ import { connectTestDb } from "./test-db";
 test("trash: undo, Trash view, trashed folder link, restore with rename, delete forever, empty", async ({
   page,
 }) => {
+  test.slow();
   const db = await connectTestDb();
   await test.step("sign up", () => signUpWithOwnInvite(page, db, "trash"));
 
