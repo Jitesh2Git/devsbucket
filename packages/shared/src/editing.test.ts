@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decodeEditableText, editorPath, isEditableName } from "./editing.ts";
+import { createTextFileSchema, decodeEditableText, editorPath, isEditableName } from "./editing.ts";
 
 const bytes = (...values: number[]) => new Uint8Array(values);
 const utf8 = (text: string) => new TextEncoder().encode(text);
@@ -38,5 +38,23 @@ describe("decodeEditableText", () => {
 describe("editorPath", () => {
   it("keeps the name last, so the extension picks the language", () => {
     expect(editorPath("abc", "app.ts")).toBe("abc/app.ts");
+  });
+});
+
+describe("createTextFileSchema", () => {
+  const parse = (name: string) => createTextFileSchema.safeParse({ parentId: null, name });
+
+  it("takes text file names, trimmed", () => {
+    expect(parse("  notes.md ").data?.name).toBe("notes.md");
+    expect(parse("Dockerfile").success).toBe(true);
+    expect(parse(".env").success).toBe(true);
+  });
+
+  it("refuses names the editor can't open", () => {
+    expect(parse("photo.png").error?.issues[0]?.message).toBe(
+      "Use a text or code file extension, like .md, .ts or .py",
+    );
+    expect(parse("notes").success).toBe(false);
+    expect(parse("").success).toBe(false);
   });
 });

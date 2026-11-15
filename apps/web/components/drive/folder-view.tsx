@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 import DriveBreadcrumbs from "@/components/drive/drive-breadcrumbs";
 import DropZone from "@/components/drive/drop-zone";
 import ItemList from "@/components/drive/item-list";
+import NewFileDialog from "@/components/drive/new-file-dialog";
 import NewFolderDialog from "@/components/drive/new-folder-dialog";
 import OwnershipOfferActions from "@/components/drive/ownership-offer-actions";
 import ShareButton from "@/components/drive/share-button";
@@ -70,6 +71,7 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
         <div className="flex shrink-0 gap-2">
           {current && actions.share && <ShareButton folder={current} />}
           {canUpload && <UploadButton parentId={folderId} />}
+          {canUpload && <NewFileDialog parentId={folderId} />}
           {can(access, "create_folder") && <NewFolderDialog parentId={folderId} />}
         </div>
       </div>

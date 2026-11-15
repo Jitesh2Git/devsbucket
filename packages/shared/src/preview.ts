@@ -23,22 +23,66 @@ const INLINE_TYPES: Record<string, { kind: Exclude<PreviewKind, "text">; type: s
   ".pdf": { kind: "pdf", type: "application/pdf" },
 };
 
-// Text files a developer drive meets every day. Anything else with a text/*
-// type counts too; the server still checks the content has no NUL bytes.
+// Text and code files: they preview as text, open in the editor and can be
+// made with "New file". To add one, put its extension (lowercase, no dot)
+// on a line below; to stop one opening in the editor, remove it. Anything
+// else with a text/* type counts too, and the server still checks the
+// content is UTF-8 with no NUL bytes, so a binary file never opens as text.
 const TEXT_EXTENSIONS = new Set(
   [
-    "txt md markdown csv tsv log json jsonc yaml yml toml ini cfg conf env xml svg html htm css scss",
-    "js mjs cjs jsx ts mts cts tsx vue svelte astro py rb php java kt kts go rs c h cpp hpp cc cs",
-    "swift m sh bash zsh fish ps1 bat sql graphql gql prisma proto dockerfile makefile gitignore",
-    "editorconfig lock tex rst diff patch",
+    // Notes, docs and data
+    "txt md markdown mdx rst adoc tex csv tsv log json jsonc json5 ndjson yaml yml toml ini",
+    "cfg conf env properties xml xsd xsl svg plist http srt vtt",
+    // Web
+    "html htm css scss sass less styl js mjs cjs jsx ts mts cts tsx vue svelte astro",
+    "ejs hbs handlebars pug njk twig liquid mustache",
+    // Languages
+    "py pyi rb php java kt kts scala groovy gradle go rs c h cpp hpp cc cxx cs fs swift m mm",
+    "dart lua zig nim r jl ex exs erl hrl hs elm clj cljs edn ml mli pl pm sol asm s",
+    // Shell, build and infrastructure
+    "sh bash zsh fish ps1 psm1 bat cmd mk cmake dockerfile makefile tf tfvars hcl nix",
+    // Queries and schemas
+    "sql graphql gql prisma proto",
+    // Repo tooling
+    "gitignore gitattributes editorconfig lock diff patch mod sum",
   ]
     .join(" ")
     .split(" ")
     .map((ext) => `.${ext}`),
 );
 
-// Files with no extension that are text by name.
-const TEXT_NAMES = new Set(["dockerfile", "makefile", "license", "readme", "procfile"]);
+// Files with no extension that are text by name (lowercase).
+const TEXT_NAMES = new Set([
+  "dockerfile",
+  "containerfile",
+  "makefile",
+  "gnumakefile",
+  "justfile",
+  "procfile",
+  "gemfile",
+  "rakefile",
+  "podfile",
+  "brewfile",
+  "vagrantfile",
+  "jenkinsfile",
+  "caddyfile",
+  "pipfile",
+  "license",
+  "licence",
+  "readme",
+  "changelog",
+  "authors",
+  "contributing",
+  "codeowners",
+  "notice",
+  "copying",
+]);
+
+// Config dotfiles whose last part isn't a known extension: ".env.local",
+// ".env.production", and the "rc" and "ignore" files (".prettierrc",
+// ".npmrc", ".dockerignore"). Binary ones are still caught by the NUL check.
+const isConfigDotfile = (lower: string) =>
+  lower.startsWith(".env.") || /^\.[a-z0-9_.-]*(rc|ignore)$/.test(lower);
 
 const extensionOf = (name: string) => {
   const lower = name.toLowerCase();
@@ -59,6 +103,7 @@ export const previewKind = (name: string, mimeType: string | null): PreviewKind 
   if (
     TEXT_EXTENSIONS.has(extension) ||
     TEXT_NAMES.has(name.toLowerCase()) ||
+    isConfigDotfile(name.toLowerCase()) ||
     mimeType?.startsWith("text/")
   ) {
     return "text";
