@@ -1,6 +1,6 @@
 # Phase 4 plan: Live editing
 
-Planned 2026-11-14, at the end of Phase 3 (`v0.3.0`). Checklist and progress: `docs/PROGRESS.md`. Decision made for this phase: `docs/decisions/0013-live-editing.md`.
+Planned 2026-11-14, at the end of Phase 3 (`v0.3.0`). Checklist and progress: `docs/PROGRESS.md`. Decisions made for this phase: `docs/decisions/0013-live-editing.md`, `0014-large-files-soft-limit.md` (added in step 5).
 
 ## Goal
 
@@ -25,7 +25,7 @@ Versions on 2026-11-14 (check again in each step): `@hocuspocus/server` and `@ho
 ### What can be edited (decision 0013)
 
 - A file is **editable** when `previewKind()` says `text` (extension, name or `text/*`, as today) and its content is UTF-8 without NUL bytes (`TextDecoder` with `fatal: true`). Checked on the server when the document is first loaded; a file that fails opens read-only with "This file isn't UTF-8 text, so it can't be edited" and keeps preview and download.
-- **No size limit** (LOCKED.md "Live editing"): any text file up to the 100 MB upload limit opens in the editor. Step 4 measures how a 10 MB and a 100 MB file behave (load time, memory in realtime and the browser); if it's unusable, a limit comes back to the user as a new decision, not silently.
+- **No size limit** (LOCKED.md "Live editing"): any text file up to the 100 MB upload limit opens in the editor. Step 4 measures how a 10 MB and a 100 MB file behave (load time, memory in realtime and the browser); if it's unusable, a limit comes back to the user as a new decision, not silently. Result (decision 0014): no hard limit; over 10 MB the page asks first and says it's loading a large file.
 - A **trashed** file opens read-only with the trashed banner; trashing it while people edit closes their connections (they reload into the banner).
 - When the **owner's storage is full** the file opens read-only with "<owner>'s storage is full". This is the hard stop LOCKED.md asks for every limit.
 
@@ -181,7 +181,7 @@ Each is one branch and PR.
 - **Step 1:** does Drizzle 0.45 (or a newer one) have a `bytea` column, or do we keep a `customType`; `uuid[]` with Drizzle (`uuid().array()`).
 - **Step 2:** Monaco with Next.js 16 and Turbopack: bundling `monaco-editor` (workers: `MonacoEnvironment.getWorker` with `new Worker(new URL(…, import.meta.url))`), what that adds to the page's JavaScript, and whether `@monaco-editor/react` is still worth it or we use `monaco-editor` directly (y-monaco needs the editor instance either way). Answered: Turbopack bundles it with no config, ~1.3 MB gzipped on the file page only, and `monaco-editor` directly (details in PROGRESS.md).
 - **Step 4:** how big files behave with no size limit (load from storage into Yjs, memory in realtime, Monaco in the browser); whether a realtime test in Vitest is worth it next to e2e; what Hocuspocus's `timeout` does to idle tabs and whether we ping. Answered: the server is fine up to 100 MB (1.4 s, ~630 MB while open; PROGRESS.md); realtime gets unit tests for `collabMode` and the rest is covered by step 5's e2e; Hocuspocus closes a connection after 60 s with no messages, and the provider's awareness keeps it alive, so no ping.
-- **Step 5:** one WebSocket per tab for both events and collab (`HocuspocusProviderWebsocket` can share a socket between documents, but not with our events protocol) or two; two is simpler. Cursor label styling with y-monaco's classes.
+- **Step 5:** one WebSocket per tab for both events and collab (`HocuspocusProviderWebsocket` can share a socket between documents, but not with our events protocol) or two; two is simpler. Cursor label styling with y-monaco's classes. Answered: two sockets (the provider builds its own from `url`); labels via a `<style>` block per remote client; large files ask first (decision 0014).
 - **Step 6:** what happens to a version when `PutObject` fails (retry on the next save, or a worker retry like deletes); where the 5-minute timer lives across a realtime restart (it's lost; the next change starts it again, and `collab_states` keeps the text).
 - **Step 7:** restoring through a stateless message vs `openDirectConnection` from a job (restore when nobody has the file open still needs the document loaded).
 - **Step 10:** reuse the folder batching for "once per file per hour", or a simpler "skip if one was sent for this file in the last hour".

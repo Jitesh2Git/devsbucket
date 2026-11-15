@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { createTextFileSchema, decodeEditableText, editorPath, isEditableName } from "./editing.ts";
+import {
+  createTextFileSchema,
+  cursorColor,
+  decodeEditableText,
+  editorPath,
+  isEditableName,
+} from "./editing.ts";
 
 const bytes = (...values: number[]) => new Uint8Array(values);
 const utf8 = (text: string) => new TextEncoder().encode(text);
@@ -56,5 +62,18 @@ describe("createTextFileSchema", () => {
     );
     expect(parse("notes").success).toBe(false);
     expect(parse("").success).toBe(false);
+  });
+});
+
+describe("cursorColor", () => {
+  it("is the same for the same person, and a hex color", () => {
+    const id = "01a1df50-716b-7ea9-8ec9-97bb07d2ac31";
+    expect(cursorColor(id)).toBe(cursorColor(id));
+    expect(cursorColor(id)).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it("spreads people over several colors", () => {
+    const colors = new Set(Array.from({ length: 40 }, (_, i) => cursorColor(`user-${i}`)));
+    expect(colors.size).toBeGreaterThan(4);
   });
 });
