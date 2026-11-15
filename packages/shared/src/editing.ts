@@ -30,12 +30,12 @@ export const COLLAB_TEXT = "content";
 // a 100 MB file takes ~10 s and ~1 GB in the browser (decision 0014).
 export const LARGE_EDIT_BYTES = 10 * 1024 * 1024;
 
-// Versions (decision 0015): the newest 50 automatic ones per file are kept,
-// with version 1 and every named and restore version.
-export const MAX_AUTO_VERSIONS = 50;
+// Versions (decisions 0015, 0016): the newest 5 automatic ones per file are
+// kept, with version 1 and every named and restore version.
+export const MAX_AUTO_VERSIONS = 5;
 
-// Browser → realtime, as a Hocuspocus stateless message: save the live text
-// as a named version.
+// Browser → realtime, as Hocuspocus stateless messages: save the live text
+// as a named version, or bring an old version back for everyone.
 export const collabRequestSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("save-version"),
@@ -45,6 +45,7 @@ export const collabRequestSchema = z.discriminatedUnion("type", [
       .min(1, "Write what changed")
       .max(200, "Keep it under 200 characters"),
   }),
+  z.object({ type: z.literal("restore-version"), versionId: itemIdSchema }),
 ]);
 
 export type CollabRequest = z.infer<typeof collabRequestSchema>;
@@ -54,12 +55,15 @@ export const versionMessageFormSchema = z.object({
   message: collabRequestSchema.options[0].shape.message,
 });
 
+export const versionRefSchema = z.object({ itemId: itemIdSchema, versionId: itemIdSchema });
+
 export type VersionMessageFormInput = z.infer<typeof versionMessageFormSchema>;
 
-// Realtime → browser: the answer to a save, and "the versions changed" to
-// everyone with the file open (an open history panel refetches, step 7).
+// Realtime → browser: the answer to a save or a restore, and "the versions
+// changed" to everyone with the file open (an open history panel refetches).
 export type CollabReply =
   | { type: "version-saved"; number: number }
+  | { type: "version-restored"; number: number; from: number }
   | { type: "version-unchanged"; number: number }
   | { type: "version-error"; error: string }
   | { type: "versions-changed" };

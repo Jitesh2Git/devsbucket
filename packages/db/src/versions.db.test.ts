@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { MAX_AUTO_VERSIONS } from "@devsbucket/shared/editing";
 import { and, asc, eq, TransactionRollbackError } from "drizzle-orm";
 import { afterAll, describe, expect, it } from "vitest";
 import { db, type Executor, pool } from "./client.ts";
@@ -6,7 +7,7 @@ import { activities } from "./schema/activities.ts";
 import { users } from "./schema/auth.ts";
 import { itemVersions } from "./schema/collab.ts";
 import { items } from "./schema/items.ts";
-import { saveVersion } from "./versions.ts";
+import { getVersion, listVersions, saveVersion } from "./versions.ts";
 
 const withRollback = async (fn: (tx: Executor) => Promise<void>) => {
   try {
@@ -110,23 +111,64 @@ describe("saveVersion", () => {
       expect(await actionsOn(tx, file)).toEqual(["version_saved"]);
     }));
 
-  it("keeps the newest 50 automatic versions, version 1 and named ones", () =>
+  it("keeps the newest automatic versions (MAX_AUTO_VERSIONS), version 1 and named ones", () =>
     withRollback(async (tx) => {
       const { ada, file } = await setUp(tx);
       await saveVersion(
         { ...auto(file, "named", [ada]), kind: "named", message: "keep", savedBy: ada },
         tx,
       );
-      for (let i = 0; i < 55; i++) {
+      for (let i = 0; i < MAX_AUTO_VERSIONS + 3; i++) {
         await saveVersion(auto(file, `text ${i}`, [ada]), tx);
       }
       const versions = await versionsOf(tx, file);
       const autos = versions.filter((v) => v.kind === "auto" && v.number > 1);
-      expect(autos).toHaveLength(50);
-      expect(autos[0]?.content).toBe("text 5");
+      expect(autos).toHaveLength(MAX_AUTO_VERSIONS);
+      expect(autos[0]?.content).toBe("text 3");
       expect(versions[0]).toEqual({ number: 1, kind: "auto", content: "hello" });
       expect(versions.some((v) => v.kind === "named")).toBe(true);
-      expect(versions.at(-1)?.number).toBe(57);
+      expect(versions.at(-1)?.number).toBe(MAX_AUTO_VERSIONS + 5);
+    }));
+
+  it("restores a version as a new one, logged as version_restored", () =>
+    withRollback(async (tx) => {
+      const { ada, file } = await setUp(tx);
+      await saveVersion(auto(file, "second", [ada]), tx);
+      const [first] = await tx
+        .select({ id: itemVersions.id })
+        .from(itemVersions)
+        .where(and(eq(itemVersions.itemId, file), eq(itemVersions.number, 1)));
+      const result = await saveVersion(
+        {
+          ...auto(file, "hello", []),
+          kind: "restore",
+          savedBy: ada,
+          restoredFrom: { id: first?.id ?? "", number: 1 },
+        },
+        tx,
+      );
+      expect(result).toEqual({ saved: true, number: 3 });
+      expect(await actionsOn(tx, file)).toEqual(["edited", "version_restored"]);
+      const [latest] = await listVersions(file, tx);
+      expect(latest).toMatchObject({ number: 3, kind: "restore", restoredFromNumber: 1 });
+    }));
+
+  it("lists versions newest first, with names, and reads one only for its file", () =>
+    withRollback(async (tx) => {
+      const { ada, file } = await setUp(tx);
+      const gone = randomUUID();
+      await saveVersion(auto(file, "edited", [ada, gone]), tx);
+      await saveVersion(
+        { ...auto(file, "named", [ada]), kind: "named", message: "Done", savedBy: ada },
+        tx,
+      );
+      const versions = await listVersions(file, tx);
+      expect(versions.map((v) => v.number)).toEqual([3, 2, 1]);
+      expect(versions[0]).toMatchObject({ kind: "named", message: "Done", savedBy: "ada" });
+      expect(versions[1]?.authors).toEqual(["ada", "Deleted user"]);
+      const id = versions[1]?.id ?? "";
+      expect((await getVersion(file, id, tx))?.content).toBe("edited");
+      expect(await getVersion(randomUUID(), id, tx)).toBeNull();
     }));
 
   it("does nothing for a file that no longer exists", () =>

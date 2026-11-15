@@ -33,7 +33,7 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 - **Names:** unique per folder, ignoring case; uploads and restores rename visibly (`notes (1).md`), typed names get an error (decision 0007).
 - **Trash:** 30 days, then deleted forever. Trashed files count against the quota until then (decision 0007).
 - **Live editing:** no size limit; UTF-8 text files only (decision 0013). Over 10 MB the page warns first and opens the editor only when asked (decision 0014).
-- **Versions:** don't count against the quota. The newest 50 automatic versions per file are kept; named and restore versions, and version 1, are kept (decision 0015).
+- **Versions:** don't count against the quota. The newest 5 automatic versions per file are kept; named and restore versions, and version 1, are kept (decisions 0015, 0016).
 - **R2, whole app:** uploads stop at 9 GB. Operation counters warn at 70% of the free tier and block at 90%.
 
 ## Roles
