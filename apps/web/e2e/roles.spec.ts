@@ -86,7 +86,7 @@ test("roles: a Viewer opens but can't change, an Editor can, no role sees 'You n
       maxRedirects: 0,
     });
     expect(download.status()).toBe(302);
-    for (const button of ["Upload", "New folder", "Share"]) {
+    for (const button of ["Upload", "New file", "New folder", "Share"]) {
       await expect(member.getByRole("button", { name: button, exact: true })).toHaveCount(0);
     }
     await member.getByRole("button", { name: "Actions for plan.txt", exact: true }).click();

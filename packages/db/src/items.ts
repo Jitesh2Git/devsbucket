@@ -144,6 +144,56 @@ export const createFolder = async (values: {
   }
 };
 
+// A new, empty text file ("New file", Phase 4), or "name-taken". `store`
+// writes its empty object while the transaction is still open: if storage
+// fails, the row is rolled back, so there's never a file without an object.
+// Size 0, so nothing is taken from the quota.
+export const createTextFile = async (
+  values: {
+    ownerId: string;
+    parentId: string | null;
+    createdBy: string;
+    name: string;
+    storageKeyFor: (itemId: string) => string;
+  },
+  store: (storageKey: string) => Promise<void>,
+  executor: Executor = db,
+) => {
+  const { storageKeyFor, ...file } = values;
+  try {
+    return await executor.transaction(async (tx) => {
+      // The id is needed for the storage key, so ask Postgres for one first.
+      const { rows } = await tx.execute<{ id: string }>(sql`select uuidv7() as id`);
+      const id = rows[0]?.id;
+      if (!id) {
+        throw new Error("uuidv7() returned no row");
+      }
+      const storageKey = storageKeyFor(id);
+      await tx.insert(items).values({
+        ...file,
+        id,
+        type: "file",
+        mimeType: "text/plain",
+        size: 0,
+        storageKey,
+      });
+      await logActivity(tx, {
+        itemId: id,
+        actorId: file.createdBy,
+        action: "created",
+        metadata: {},
+      });
+      await store(storageKey);
+      return { ok: true, id } as const;
+    });
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      return { ok: false, reason: "name-taken" } as const;
+    }
+    throw error;
+  }
+};
+
 // Every name in a folder that starts like `name` without its extension: all
 // that nextAvailableName needs to pick "notes (1).md", without reading a
 // whole folder. Trashed items don't count; pending uploads do.

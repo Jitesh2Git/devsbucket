@@ -120,8 +120,8 @@ Checked in scratch on 2026-11-14 with Hocuspocus 4.8.0: it runs next to the exis
 
 ### New text file
 
-- "New file" next to "New folder" in a folder (needs `upload`): a dialog with the name (default `untitled.md`, typed names get the usual unique-name error, decision 0007) → server action creates the item (`status: ready`, size 0, `storageKey: items/<id>`), puts an empty object, logs `created` (with `{ type: "file" }` added to its metadata), then navigates to `/drive/files/<id>`.
-- The name must be editable text (`previewKind` = text); otherwise "Use a text file extension, like .md or .txt".
+- "New file" next to "New folder" in a folder (needs `upload`): a dialog with the name (placeholder `notes.md`, typed names get the usual unique-name error, decision 0007) → server action creates the item (`status: ready`, size 0, `storageKey: items/<id>`) and puts an empty object in the same transaction, logs `created`, then navigates to `/drive/files/<id>`.
+- The name must be editable text (`previewKind` = text); otherwise "Use a text or code file extension, like .md, .ts or .py".
 
 ### Activity (decision 0010, 0013)
 

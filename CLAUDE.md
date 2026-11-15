@@ -34,6 +34,7 @@ Project skills for this loop (`.claude/skills/`, excluded from Biome so it can't
 ## Machine (as of 2026-11-12)
 
 - Installed: Node 24.21 LTS, pnpm 12.18.0 (via corepack, pinned by `packageManager` in the root `package.json`), Docker 29.9.3. Docker Desktop must be running for Compose.
+- Node comes from nvm, which also has 18, 22 and 23 installed, and a shell may start on the wrong one (it did on 2026-11-15). The repo's `.nvmrc` says 24: check `node -v` and run `nvm use` before working. Under Node 18, vitest fails (`node:util` has no `styleText`) and `pnpm install` skips native bindings.
 - Also installed: DBeaver Community 26.2 (Homebrew), Playwright's Chromium (in `~/Library/Caches/ms-playwright`, installed with `pnpm --filter web exec playwright install chromium`; reinstall after a Playwright upgrade).
 - VS Code's GitHub Actions extension can falsely flag `uses:` versions as "not found" when it isn't signed in to GitHub. GitHub's own run is the source of truth.
 - Not installed: GitHub CLI (`gh`). The user creates GitHub repos on github.com.

@@ -17,6 +17,40 @@ describe("previewKind", () => {
     expect(previewKind("notes", "text/plain")).toBe("text");
   });
 
+  it("shows code from many languages as text", () => {
+    for (const name of ["main.dart", "init.lua", "build.zig", "app.ex", "Main.hs", "go.mod"]) {
+      expect(previewKind(name, null), name).toBe("text");
+    }
+    for (const name of ["Gemfile", "Jenkinsfile", "CHANGELOG", "CODEOWNERS"]) {
+      expect(previewKind(name, null), name).toBe("text");
+    }
+  });
+
+  // One or two from each group of TEXT_EXTENSIONS and from TEXT_NAMES: a
+  // group dropped by mistake fails here. Add a line when you change the list.
+  it.each([
+    ["notes, docs and data", ["post.mdx", "app.properties", "api.http", "subs.vtt"]],
+    ["web", ["styles.less", "page.pug", "view.ejs", "Card.svelte"]],
+    ["languages", ["Main.scala", "Token.sol", "script.jl", "core.clj"]],
+    ["shell, build and infrastructure", ["main.tf", "flake.nix", "run.cmd", "rules.mk"]],
+    ["queries and schemas", ["schema.prisma", "query.graphql"]],
+    ["repo tooling", [".gitattributes", "go.sum", "pnpm-lock.lock"]],
+    ["names", ["Containerfile", "Justfile", "Pipfile", "AUTHORS"]],
+  ])("text: %s", (_group, names) => {
+    for (const name of names) {
+      expect(previewKind(name, null), name).toBe("text");
+    }
+  });
+
+  it("shows config dotfiles as text", () => {
+    for (const name of [".env.local", ".env.Production", ".prettierrc", ".npmrc", ".nvmrc"]) {
+      expect(previewKind(name, null), name).toBe("text");
+    }
+    expect(previewKind(".dockerignore", null)).toBe("text");
+    expect(previewKind(".DS_Store", null)).toBeNull();
+    expect(previewKind(".env.png", null)).toBe("image");
+  });
+
   it("shows SVG and HTML as text, never rendered", () => {
     expect(previewKind("logo.svg", "image/svg+xml")).toBe("text");
     expect(previewKind("index.html", "text/html")).toBe("text");
