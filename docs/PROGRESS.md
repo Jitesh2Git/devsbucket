@@ -340,11 +340,11 @@ Full plan: `docs/plans/phase-3.md` (design, data model, `item_access()`, realtim
 - [ ] Phase 6: realtime behind Caddy (`wss://` on the same site, `WEB_URL` the public address, `NEXT_PUBLIC_REALTIME_URL` at build time); events while realtime's database connection is down are lost (browsers refetch on reconnect); the worker and realtime as containers.
 - [ ] Local e2e runs are sensitive to machine load (a busy VS Code extension, Spotlight, XProtect): waits are 10 s locally and the long tests use `test.slow()`; CI is the reference.
 
-## Phase 4: Live editing
+## Phase 4: Live editing (done, `v0.4.0`)
 
 Full plan: `docs/plans/phase-4.md` (design, data model, Hocuspocus in realtime, versions, step table). Decisions: 0013 (live editing: storage, versions and limits), 0014 (large files open in the editor only when asked, added in step 5), 0015 (simpler versions, no editing notifications, before step 6), 0016 (5 automatic versions per file, step 7).
 
-**Done when:** two users in two browsers edit the same file and see each other's text and cursors live; a Viewer sees both but can't type; leaving saves a version and the download has the new content; a named version can be saved, compared with any other and restored for everyone; `.md` files show a live preview; "New file" creates and opens an empty file. Authz, version saving and thinning have tests, e2e covers two-browser editing, and CI is green.
+**Done when:** two users in two browsers edit the same file and see each other's text and cursors live; a Viewer sees both but can't type; leaving saves a version and the download has the new content; a named version can be saved, compared with any other and restored for everyone; `.md` files show a live preview; "New file" creates and opens an empty file. Authz and version saving (with the cap on automatic versions) have tests, e2e covers two-browser editing, and CI is green.
 
 - [x] 0. **Plan:** `docs/plans/phase-4.md`, decision 0013, LOCKED.md and diagrams 3, 6 and 9 updated
   - Note: choices agreed on 2026-11-14: no size limit for editing (step 4 measures 10 MB and 100 MB files); Yjs state and version texts in Postgres; automatic versions every 5 minutes and on last leave, thinned to one a day after 30 days, named and restore versions kept forever, versions count against the owner's quota; a "New file" button joins Phase 4; Tiptap notes and making a copy stay in Phase 5.
@@ -415,7 +415,19 @@ Full plan: `docs/plans/phase-4.md` (design, data model, Hocuspocus in realtime, 
   - Gotcha (CI, step 7's PR): a closing Radix dialog stays in the page for its exit animation and keeps the rest of the page hidden from the accessibility tree; `expect(dialog).toBeHidden()` already passes then, and `getByRole("code")` found the diff's two editors (a strict-mode violation fails at once, without retrying). `version-history.spec.ts` waits with `toHaveCount(1)` instead, which retries until only the live editor is left.
   - Gotcha: Monaco auto-closes brackets and quotes when a test types key by key; `keyboard.insertText` puts the text in as one paste.
 - Dropped before step 6 (decision 0015): the planned "quota everywhere" and "editing notifications" steps.
-- [ ] 9. **Tests + review:** two-browser e2e, docs check, tag `v0.4.0`
+- [x] 9. **Tests + review:** two-browser e2e, docs check, tag `v0.4.0`
+  - Note: the two-browser e2e flows were written with each step (`live-editing`, `versions`, `version-history`, `markdown-preview`, `editor`, `new-file` specs: 27 in all), so this step is one branch, `chore/phase-4-review`: CLAUDE.md (a "Live editing" convention, Monaco and dialog tips under Tests, e2e in CI mode locally), diagrams 6 and 9 brought up to decisions 0015 and 0016, the plan's open questions for steps 6 and 7 answered, one stale comment in `packages/storage/src/objects.ts`, and the follow-ups below. After it's merged, the annotated tag `v0.4.0` goes on its merge commit on `main`.
+
+### Follow-ups from Phase 4
+
+- [ ] A share link to a text file opens the preview on Shared with me (with "Open in editor"), not the editor.
+- [ ] A trashed text file's page is "not found" instead of read-only with the trashed banner (the plan's idea).
+- [ ] History and Save version are hidden while the file is read-only, so an Editor can't look at history while the owner's drive is full.
+- [ ] A file's size in listings only changes when a version is saved (when everyone leaves, or Save version), not while people type.
+- [ ] The Markdown view (Editor / Split / Preview) isn't remembered between visits; relative images in Markdown aren't shown; an outside https image tells its host the viewer's IP.
+- [ ] Realtime prints a stack trace for every refusal (`[onAuthenticate] Error: no-access`): Hocuspocus logs errors thrown in hooks. Harmless, noisy.
+- [ ] Phase 5: the activity panel reads `edited`, `version_saved`, `version_restored`; Tiptap notes and making a copy.
+- [ ] Phase 6: `/collab` behind Caddy (same `wss://` site as the events socket); realtime holds ~6× a big file's size in memory while it's open (100 MB → ~630 MB) on the 12 GB VM.
 
 ## Later phases (summary)
 
