@@ -11,11 +11,13 @@ import {
   type ServerMessage,
 } from "@devsbucket/shared/realtime";
 import { type WebSocket, WebSocketServer } from "ws";
+import { handleCollab, recheckCollab, stopCollab } from "./collab.ts";
 import { log } from "./log.ts";
 
 // The live-events server (decision 0010): browsers keep one WebSocket open;
 // Postgres tells this server about every change (LISTEN); it tells the
-// browsers that care. Phase 4 adds Hocuspocus (live editing) here.
+// browsers that care. Live editing (Hocuspocus, collab.ts) shares the
+// server on /collab.
 
 const port = Number(process.env.PORT ?? 3001);
 const webUrl = process.env.WEB_URL;
@@ -138,6 +140,13 @@ const onActivity = async (event: ActivityEvent) => {
       send(client, { type: "access-changed" });
     }
   }
+  // Live editing: the people whose access changed, or everyone after the
+  // trash, a move or a delete (the files in a folder change with it).
+  if (["trashed", "moved", "deleted_forever"].includes(event.action)) {
+    await recheckCollab();
+  } else if (people.size > 0) {
+    await recheckCollab(people);
+  }
 };
 
 const onEvent = async (event: ChannelEvent) => {
@@ -173,7 +182,10 @@ server.on("upgrade", async (request, socket, head) => {
     refuse("401 Unauthorized");
     return;
   }
-  wss.handleUpgrade(request, socket, head, (ws) => connected(ws, userId));
+  const path = new URL(request.url ?? "/", "http://realtime").pathname;
+  wss.handleUpgrade(request, socket, head, (ws) =>
+    path === "/collab" ? handleCollab(ws, request, userId) : connected(ws, userId),
+  );
 });
 
 // A browser that vanished (sleep, lost network) never says goodbye: ping
@@ -222,6 +234,7 @@ const shutdown = async () => {
   log("stopping");
   stopping = true;
   clearInterval(heartbeat);
+  await stopCollab();
   for (const client of wss.clients) client.close(1001, "Server stopping");
   server.close();
   listener?.stop();

@@ -64,3 +64,13 @@ export const releaseStorage = async (userId: string, bytes: number, tx: Executor
     .set({ storageUsed: sql`greatest(${users.storageUsed} - ${bytes}, 0)` })
     .where(eq(users.id, userId));
 };
+
+// True when the user's drive is full: their files open read-only in the
+// editor (decision 0013), the hard stop for the quota.
+export const isStorageFull = async (userId: string, tx: Executor = db) => {
+  const [user] = await tx
+    .select({ used: users.storageUsed, quota: users.storageQuota })
+    .from(users)
+    .where(eq(users.id, userId));
+  return user ? user.used >= user.quota : false;
+};

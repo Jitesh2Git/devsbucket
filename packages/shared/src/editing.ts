@@ -22,6 +22,10 @@ export const decodeEditableText = (bytes: Uint8Array): string | null => {
   }
 };
 
+// The name of the shared text in a file's live Yjs document, the same in
+// realtime (Hocuspocus) and in the browser (y-monaco, step 5).
+export const COLLAB_TEXT = "content";
+
 // The editor model's path: the id keeps two files with the same name
 // apart, and the name lets Monaco pick the language from the extension.
 export const editorPath = (fileId: string, name: string) => `${fileId}/${name}`;

@@ -1,5 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
-import { E2E_PORT, E2E_REALTIME_PORT, testDatabaseUrl, testEnv } from "./e2e/env";
+import { E2E_PORT, E2E_REALTIME_PORT, testEnv } from "./e2e/env";
 
 // Locally, read DATABASE_URL and the auth secrets from .env.local.
 // In CI they come from the environment instead.
@@ -56,7 +56,8 @@ export default defineConfig({
       timeout: 60_000,
       env: {
         ...process.env,
-        DATABASE_URL: testDatabaseUrl(),
+        // The test database and bucket (live editing reads files).
+        ...testEnv(),
         WEB_URL: baseURL,
         PORT: String(E2E_REALTIME_PORT),
       },
