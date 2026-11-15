@@ -8,6 +8,7 @@ import {
   type CollabRequest,
   cursorColor,
   editorPath,
+  isMarkdownName,
   LARGE_EDIT_BYTES,
 } from "@devsbucket/shared/editing";
 import { HocuspocusProvider } from "@hocuspocus/provider";
@@ -28,6 +29,8 @@ import {
 } from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
 import { versionsQueryKey } from "@/lib/query-keys";
+import { cn } from "@/lib/utils";
+import MarkdownPreview from "./markdown-preview";
 import monaco from "./monaco";
 import SaveVersionDialog from "./save-version-dialog";
 import VersionHistoryDialog from "./version-history-dialog";
@@ -41,6 +44,10 @@ type LiveEditorProps = {
 };
 
 type Peer = { clientId: number; name: string; color: string };
+
+// Markdown files: the editor, both side by side, or the preview alone.
+const VIEWS = ["Editor", "Split", "Preview"] as const;
+type View = (typeof VIEWS)[number];
 
 type State =
   | { kind: "connecting" }
@@ -97,6 +104,10 @@ const LiveSession = ({
   const theme = resolvedTheme === "dark" ? "vs-dark" : "vs";
   const [state, setState] = useState<State>({ kind: "connecting" });
   const [peers, setPeers] = useState<Peer[]>([]);
+  const markdown = isMarkdownName(file.name);
+  // Viewers start on the preview: they can't type anyway.
+  const [view, setView] = useState<View>(canEdit ? "Split" : "Preview");
+  const [previewText, setPreviewText] = useState("");
   // The latest callback, without reconnecting when the parent re-renders.
   const accessChanged = useRef(onAccessChanged);
   accessChanged.current = onAccessChanged;
@@ -219,9 +230,24 @@ const LiveSession = ({
       provider.awareness,
     );
 
+    // The preview follows the live text, at most every 150 ms while people
+    // type (rendering on every keystroke would slow big files down).
+    let previewTimer: ReturnType<typeof setTimeout> | undefined;
+    const updatePreview = () => {
+      if (previewTimer) return;
+      previewTimer = setTimeout(() => {
+        previewTimer = undefined;
+        setPreviewText(doc.getText(COLLAB_TEXT).toString());
+      }, 150);
+    };
+    if (isMarkdownName(file.name)) {
+      doc.getText(COLLAB_TEXT).observe(updatePreview);
+    }
+
     return () => {
       providerRef.current = null;
       docRef.current = null;
+      clearTimeout(previewTimer);
       binding.destroy();
       provider.destroy();
       editor.dispose();
@@ -292,6 +318,24 @@ const LiveSession = ({
               ))}
             </ul>
           )}
+          {markdown && (
+            <fieldset className="flex rounded-md border p-0.5">
+              <legend className="sr-only">View</legend>
+              {VIEWS.map((option) => (
+                <Button
+                  key={option}
+                  variant={view === option ? "secondary" : "ghost"}
+                  size="sm"
+                  aria-pressed={view === option}
+                  className="h-7"
+                  onClick={() => setView(option)}
+                >
+                  {option}
+                </Button>
+              ))}
+            </fieldset>
+          )}
+
           {state.kind === "live" && !state.readOnly && (
             <>
               <VersionHistoryDialog
@@ -304,19 +348,40 @@ const LiveSession = ({
           )}
         </div>
       </div>
-      <div className="relative h-[calc(100vh-14rem)] min-h-80 overflow-hidden rounded-md border">
-        <div ref={container} className="h-full" />
-        {state.kind === "connecting" && (
-          // Visual only: the status line above already says "Connecting…".
-          <div
-            aria-hidden
-            className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background text-sm text-muted-foreground"
+      <div
+        className={cn(
+          "grid h-[calc(100vh-14rem)] min-h-80 gap-2",
+          markdown && view === "Split" && "md:grid-cols-2",
+        )}
+      >
+        {/* Hidden, not removed, in Preview: the editor keeps its connection. */}
+        <div
+          className={cn(
+            "relative min-h-0 overflow-hidden rounded-md border",
+            markdown && view === "Preview" && "hidden",
+          )}
+        >
+          <div ref={container} className="h-full" />
+          {state.kind === "connecting" && (
+            // Visual only: the status line above already says "Connecting…".
+            <div
+              aria-hidden
+              className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background text-sm text-muted-foreground"
+            >
+              <Spinner />
+              {file.size > LARGE_EDIT_BYTES && (
+                <p>Loading a large file ({formatBytes(file.size)}). This can take a while.</p>
+              )}
+            </div>
+          )}
+        </div>
+        {markdown && view !== "Editor" && (
+          <section
+            aria-label="Preview"
+            className="min-h-0 overflow-y-auto rounded-md border px-6 py-4"
           >
-            <Spinner />
-            {file.size > LARGE_EDIT_BYTES && (
-              <p>Loading a large file ({formatBytes(file.size)}). This can take a while.</p>
-            )}
-          </div>
+            <MarkdownPreview text={previewText} />
+          </section>
         )}
       </div>
       <style>{peerCss(peers)}</style>

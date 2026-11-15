@@ -5,6 +5,7 @@ import {
   decodeEditableText,
   editorPath,
   isEditableName,
+  isMarkdownName,
 } from "./editing.ts";
 
 const bytes = (...values: number[]) => new Uint8Array(values);
@@ -75,5 +76,18 @@ describe("cursorColor", () => {
   it("spreads people over several colors", () => {
     const colors = new Set(Array.from({ length: 40 }, (_, i) => cursorColor(`user-${i}`)));
     expect(colors.size).toBeGreaterThan(4);
+  });
+});
+
+describe("isMarkdownName", () => {
+  it("is true for .md and .markdown, in any case", () => {
+    expect(isMarkdownName("README.md")).toBe(true);
+    expect(isMarkdownName("notes.MARKDOWN")).toBe(true);
+  });
+
+  it("is false for anything else", () => {
+    expect(isMarkdownName("app.ts")).toBe(false);
+    expect(isMarkdownName("md")).toBe(false);
+    expect(isMarkdownName("page.mdx")).toBe(false);
   });
 });

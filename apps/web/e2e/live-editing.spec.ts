@@ -27,14 +27,14 @@ test("live editing: two people, a Viewer can't type, promoted mid-session, saved
     const chooser = ada.waitForEvent("filechooser");
     await ada.getByRole("button", { name: "Upload", exact: true }).click();
     await (await chooser).setFiles({
-      name: "plan.md",
-      mimeType: "text/markdown",
+      name: "plan.txt",
+      mimeType: "text/plain",
       buffer: Buffer.from("# Plan\n"),
     });
-    await expect(ada.getByRole("link", { name: "plan.md", exact: true })).toBeVisible();
+    await expect(ada.getByRole("link", { name: "plan.txt", exact: true })).toBeVisible();
     const { rows } = await db.query<{ id: string }>(
       `select i.id from items i join users u on u.id = i.owner_id
-       where u.email = $1 and i.name = 'plan.md'`,
+       where u.email = $1 and i.name = 'plan.txt'`,
       [adaEmail],
     );
     const id = rows[0]?.id ?? "";
