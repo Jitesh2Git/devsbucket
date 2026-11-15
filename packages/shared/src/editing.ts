@@ -30,6 +30,40 @@ export const COLLAB_TEXT = "content";
 // a 100 MB file takes ~10 s and ~1 GB in the browser (decision 0014).
 export const LARGE_EDIT_BYTES = 10 * 1024 * 1024;
 
+// Versions (decision 0015): the newest 50 automatic ones per file are kept,
+// with version 1 and every named and restore version.
+export const MAX_AUTO_VERSIONS = 50;
+
+// Browser → realtime, as a Hocuspocus stateless message: save the live text
+// as a named version.
+export const collabRequestSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("save-version"),
+    message: z
+      .string()
+      .trim()
+      .min(1, "Write what changed")
+      .max(200, "Keep it under 200 characters"),
+  }),
+]);
+
+export type CollabRequest = z.infer<typeof collabRequestSchema>;
+
+// The "Save version" form.
+export const versionMessageFormSchema = z.object({
+  message: collabRequestSchema.options[0].shape.message,
+});
+
+export type VersionMessageFormInput = z.infer<typeof versionMessageFormSchema>;
+
+// Realtime → browser: the answer to a save, and "the versions changed" to
+// everyone with the file open (an open history panel refetches, step 7).
+export type CollabReply =
+  | { type: "version-saved"; number: number }
+  | { type: "version-unchanged"; number: number }
+  | { type: "version-error"; error: string }
+  | { type: "versions-changed" };
+
 // Why realtime refuses a file's live document. Hocuspocus sends an error's
 // `reason` to the browser, which says what happened.
 export type CollabRefusal = "no-access" | "not-text";
