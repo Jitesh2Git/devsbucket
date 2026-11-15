@@ -1,6 +1,6 @@
 # 0013: Live editing: storage, versions and limits
 
-Date: 2026-11-14 · Status: accepted (large files: see 0014)
+Date: 2026-11-14 · Status: accepted (large files: see 0014; saving, keeping, quota and notifications replaced by 0015)
 
 ## Context
 

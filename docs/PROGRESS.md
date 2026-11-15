@@ -342,7 +342,7 @@ Full plan: `docs/plans/phase-3.md` (design, data model, `item_access()`, realtim
 
 ## Phase 4: Live editing
 
-Full plan: `docs/plans/phase-4.md` (design, data model, Hocuspocus in realtime, versions, step table). Decisions: 0013 (live editing: storage, versions and limits), 0014 (large files open in the editor only when asked, added in step 5).
+Full plan: `docs/plans/phase-4.md` (design, data model, Hocuspocus in realtime, versions, step table). Decisions: 0013 (live editing: storage, versions and limits), 0014 (large files open in the editor only when asked, added in step 5), 0015 (simpler versions, no editing notifications, before step 6).
 
 **Done when:** two users in two browsers edit the same file and see each other's text and cursors live; a Viewer sees both but can't type; leaving saves a version and the download has the new content; a named version can be saved, compared with any other and restored for everyone; `.md` files show a live preview; "New file" creates and opens an empty file. Authz, version saving and thinning have tests, e2e covers two-browser editing, and CI is green.
 
@@ -391,12 +391,19 @@ Full plan: `docs/plans/phase-4.md` (design, data model, Hocuspocus in realtime, 
   - Gotcha: y-monaco 0.1.6 (the latest) imports `monaco-editor/esm/vs/editor/editor.api.js`, which monaco-editor 0.57's package `exports` turns into a path that doesn't exist; `turbopack.resolveAlias` in `next.config.ts` points it at `monaco-editor/editor/editor.api.js` (the same file, so one Monaco).
   - Gotcha: shadcn's `Spinner` has `role="status"` too, so `getByRole("status")` found two elements while connecting; the loading overlay is `aria-hidden` (the status line already says "Connecting…").
   - Gotcha: the browser pane runs hidden pages throttled, so timings there are meaningless; big-file numbers come from headless Chromium (Playwright). Realtime still prints a stack for each refusal (`[onLoadDocument] Error: not-text … reason: 'not-text'`), which is expected in e2e output.
-- [ ] 6. **Versions:** 5-minute and last-leave versions, named versions, object rewrite, quota, `edited` / `version_saved`
+- [x] 6. **Versions:** a version when the last person leaves and by hand with a message, version 1, newest 50 automatic kept, file rewritten in storage, `edited` / `version_saved`; editing notification types and `versions_size` removed (decision 0015)
+  - Note: decision 0015 (agreed before the step): a version when the last person leaves (only if someone changed the text) and named versions with a message; no 5-minute timer; the newest 50 automatic versions per file kept, plus version 1 and named ones; versions don't count against the quota; no editing notifications. The planned steps 9 (quota everywhere) and 10 (editing notifications) are dropped; the final review is now step 9.
+  - Note: `saveVersion` (`@devsbucket/db/versions`) in one transaction: locks the file row, writes version 1 from the stored text first if the file has none (`firstText`, read from storage only then), skips equal text (but still logs `edited` for an automatic save), inserts the next number, sets `items.size` and moves the owner's used storage by the difference with `addStorage` (`@devsbucket/db/usage`, no quota check: typed text is never refused; a full drive makes files read-only), logs `edited` per author or `version_saved`, and deletes automatic versions beyond `MAX_AUTO_VERSIONS` (50, never version 1). 6 database tests.
+  - Note: realtime (`collab.ts`): `onChange` collects the session's authors per document; `beforeUnloadDocument` (awaited, after the final store) saves the automatic version and catches its own errors (a throw there keeps the document loaded); `onStateless` handles `{ type: "save-version", message }` (`collabRequestSchema` in `@devsbucket/shared/editing`), checks the connection isn't read-only and `collabMode` is still "edit", and answers `version-saved` / `version-unchanged` / `version-error` (`CollabReply`). After a saved version, `putObject` rewrites the file (downloads and previews follow; a storage failure is logged, and the next save writes it again) and `broadcastStateless` sends `versions-changed` for step 7's history panel.
+  - Note: browser: `save-version-dialog.tsx` ("Save version", Editors and Owners only, message 1–200 characters, toasts "Saved as version N" / "Nothing changed since version N"); `live-editor.tsx` sends the stateless request and waits up to 10 s for the answer. `changedFolders` refreshes the folder listing after `edited`, `version_saved` and `version_restored` (the size changes).
+  - Note: migration 0014 drops `items.versions_size` and recreates the notification checks without `file_edited` / `version_restored`, with two hand-added `DELETE`s first (generated migrations can be edited before they're applied).
+  - Note: e2e `versions.spec.ts` (message required, version 2 named, unchanged says so, download has the text, leaving saves version 3 and updates the download; without the storage rewrite it fails) and a Viewer has no "Save version" in `live-editing.spec.ts`.
+  - Gotcha: `onStoreDocument`'s `clientsCount` is taken when the change happens, not when the debounced save runs, so it can't say "the last person left"; `beforeUnloadDocument` can.
+  - Gotcha: drizzle-kit only writes the schema change: a `notification_prefs` row of a removed type (someone switched it off) makes the new check fail ("violated by some row", proved in scratch), hence the `DELETE`s.
 - [ ] 7. **History, diff, restore:** history panel, Monaco diff editor for any two versions, restore for everyone
 - [ ] 8. **Markdown preview:** split view, `react-markdown` + `remark-gfm`, no raw HTML
-- [ ] 9. **Quota everywhere:** `versions_size` in delete forever, trash, transfer, remove user; `thin-versions` job
-- [ ] 10. **Editing notifications:** `file_edited` (once per file per hour), `version_restored`
-- [ ] 11. **Tests + review:** two-browser e2e, docs check, tag `v0.4.0`
+- Dropped before step 6 (decision 0015): the planned "quota everywhere" and "editing notifications" steps.
+- [ ] 9. **Tests + review:** two-browser e2e, docs check, tag `v0.4.0`
 
 ## Later phases (summary)
 

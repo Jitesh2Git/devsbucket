@@ -4,6 +4,7 @@ import { formatBytes } from "@devsbucket/shared/bytes";
 import {
   COLLAB_TEXT,
   type CollabRefusal,
+  type CollabReply,
   cursorColor,
   editorPath,
   LARGE_EDIT_BYTES,
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
 import monaco from "./monaco";
+import SaveVersionDialog from "./save-version-dialog";
 
 type LiveEditorProps = {
   file: { id: string; name: string; size: number };
@@ -95,6 +97,29 @@ const LiveSession = ({
   const accessChanged = useRef(onAccessChanged);
   accessChanged.current = onAccessChanged;
 
+  // For "Save version": the connection, and the save waiting for its answer.
+  const providerRef = useRef<HocuspocusProvider | null>(null);
+  const pendingSave = useRef<((answer: CollabReply) => void) | null>(null);
+
+  const saveVersion = (message: string) =>
+    new Promise<CollabReply>((resolve) => {
+      const provider = providerRef.current;
+      if (!provider) {
+        resolve({ type: "version-error", error: "Not connected. Try again." });
+        return;
+      }
+      // No answer (the connection dropped): say so instead of waiting forever.
+      const timer = setTimeout(() => {
+        pendingSave.current = null;
+        resolve({ type: "version-error", error: "No answer from the server. Try again." });
+      }, 10_000);
+      pendingSave.current = (answer) => {
+        clearTimeout(timer);
+        resolve(answer);
+      };
+      provider.sendStateless(JSON.stringify({ type: "save-version", message }));
+    });
+
   useEffect(() => {
     const url = process.env.NEXT_PUBLIC_REALTIME_URL;
     if (!container.current || !url) {
@@ -149,6 +174,15 @@ const LiveSession = ({
       onClose: ({ event }) => {
         if (event.code === ACCESS_CHANGED) accessChanged.current();
       },
+      // Realtime's answer to "Save version" ("versions-changed" is for the
+      // history panel, step 7).
+      onStateless: ({ payload }) => {
+        const answer = JSON.parse(payload) as CollabReply;
+        if (answer.type !== "versions-changed") {
+          pendingSave.current?.(answer);
+          pendingSave.current = null;
+        }
+      },
       onAwarenessChange: ({ states }) =>
         setPeers(
           states
@@ -160,6 +194,7 @@ const LiveSession = ({
             })),
         ),
     });
+    providerRef.current = provider;
     provider.awareness?.setLocalStateField("user", {
       name: user.name,
       color: cursorColor(user.id),
@@ -172,6 +207,7 @@ const LiveSession = ({
     );
 
     return () => {
+      providerRef.current = null;
       binding.destroy();
       provider.destroy();
       editor.dispose();
@@ -224,23 +260,26 @@ const LiveSession = ({
                   ? "Saving…"
                   : "All changes saved"}
         </span>
-        {peers.length > 0 && (
-          <ul aria-label="Also here" className="flex flex-wrap gap-1.5">
-            {peers.map((peer) => (
-              <li
-                key={peer.clientId}
-                className="flex items-center gap-1 rounded-full border px-2 py-0.5"
-              >
-                <span
-                  aria-hidden
-                  className="size-2 rounded-full"
-                  style={{ backgroundColor: peer.color }}
-                />
-                {peer.name}
-              </li>
-            ))}
-          </ul>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {peers.length > 0 && (
+            <ul aria-label="Also here" className="flex flex-wrap gap-1.5">
+              {peers.map((peer) => (
+                <li
+                  key={peer.clientId}
+                  className="flex items-center gap-1 rounded-full border px-2 py-0.5"
+                >
+                  <span
+                    aria-hidden
+                    className="size-2 rounded-full"
+                    style={{ backgroundColor: peer.color }}
+                  />
+                  {peer.name}
+                </li>
+              ))}
+            </ul>
+          )}
+          {state.kind === "live" && !state.readOnly && <SaveVersionDialog save={saveVersion} />}
+        </div>
       </div>
       <div className="relative h-[calc(100vh-14rem)] min-h-80 overflow-hidden rounded-md border">
         <div ref={container} className="h-full" />

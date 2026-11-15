@@ -33,7 +33,7 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 - **Names:** unique per folder, ignoring case; uploads and restores rename visibly (`notes (1).md`), typed names get an error (decision 0007).
 - **Trash:** 30 days, then deleted forever. Trashed files count against the quota until then (decision 0007).
 - **Live editing:** no size limit; UTF-8 text files only (decision 0013). Over 10 MB the page warns first and opens the editor only when asked (decision 0014).
-- **Versions:** count against the owner's quota. Automatic ones are kept 30 days, then one per file per day; named and restore versions forever (decision 0013).
+- **Versions:** don't count against the quota. The newest 50 automatic versions per file are kept; named and restore versions, and version 1, are kept (decision 0015).
 - **R2, whole app:** uploads stop at 9 GB. Operation counters warn at 70% of the free tier and block at 90%.
 
 ## Roles
@@ -51,14 +51,14 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 
 - **Monaco** edits every text file (UTF-8, no size limit), with live cursors, on its own file page. Markdown files get a live preview. Editors can create an empty text file (decision 0013).
 - **Hocuspocus** runs inside `realtime` on `/collab`; Viewer connections are read-only. The live Yjs state and every version's text live in Postgres; the file's object is rewritten at each version (decision 0013).
-- **Versions** are saved automatically every 5 minutes while the text changes and when the last person leaves, or manually with a message, and when an old one is restored.
+- **Versions** are saved automatically when the last person leaves the file (if the text changed), manually with a message, and when an old one is restored (decision 0015).
 - **Diff view:** the Monaco diff editor, for any two versions. Tiptap notes are converted to Markdown for the diff.
 
 ## Notifications
 
 - **Never sent** to the person who did the action. Each type can be turned off, and any item can be muted. They're deleted after 90 days.
 - **Sharing:** shared with you, access changed, access removed (always on), access requested, request approved or denied, ownership offered (decision 0009), ownership transferred.
-- **Content** (to the Owner, batched): files added to your folder, file edited (at most once per file per hour), moved to trash or restored, old version restored.
+- **Content** (to the Owner, batched): files added to your folder, moved to trash or restored. Editing sends none (decision 0015).
 - **System:** storage at 80% and 95%, storage full (always on), trash emptying in 3 days, invite used, and for admins only, R2 at 70% and 90%.
 
 ## Activity

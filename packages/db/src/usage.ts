@@ -74,3 +74,13 @@ export const isStorageFull = async (userId: string, tx: Executor = db) => {
     .where(eq(users.id, userId));
   return user ? user.used >= user.quota : false;
 };
+
+// Changes a user's used storage by `bytes` (negative frees some) without
+// checking the quota: text that's already been typed is never refused
+// (decision 0015). A drive that ends up full makes files read-only.
+export const addStorage = async (userId: string, bytes: number, tx: Executor = db) => {
+  await tx
+    .update(users)
+    .set({ storageUsed: sql`greatest(${users.storageUsed} + ${bytes}, 0)` })
+    .where(eq(users.id, userId));
+};

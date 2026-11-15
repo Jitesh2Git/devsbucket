@@ -50,6 +50,7 @@ test("live editing: two people, a Viewer can't type, promoted mid-session, saved
     await Promise.all([ada.goto(`/drive/files/${fileId}`), bob.goto(`/drive/files/${fileId}`)]);
     await expect(ada.getByRole("status")).toHaveText("All changes saved");
     await expect(bob.getByRole("status")).toHaveText("Read-only: you can view this file");
+    await expect(bob.getByRole("button", { name: "Save version" })).toHaveCount(0);
     await expect(editor(bob)).toContainText("# Plan");
     // Each sees the other in "Also here".
     await expect(ada.getByRole("list", { name: "Also here" })).toContainText("E2E live-bob");
