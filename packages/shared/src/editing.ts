@@ -113,3 +113,6 @@ export const createTextFileSchema = z.object({
   parentId: itemIdSchema.nullable(),
   name: textFileNameSchema,
 });
+
+// Markdown files get a live preview next to the editor (decision 0003).
+export const isMarkdownName = (name: string) => /\.(md|markdown)$/i.test(name);
