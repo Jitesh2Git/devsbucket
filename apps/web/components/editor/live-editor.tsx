@@ -5,11 +5,13 @@ import {
   COLLAB_TEXT,
   type CollabRefusal,
   type CollabReply,
+  type CollabRequest,
   cursorColor,
   editorPath,
   LARGE_EDIT_BYTES,
 } from "@devsbucket/shared/editing";
 import { HocuspocusProvider } from "@hocuspocus/provider";
+import { useQueryClient } from "@tanstack/react-query";
 import { FileText, FileX, RotateCw, SquarePen } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
@@ -25,8 +27,10 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Spinner } from "@/components/ui/spinner";
+import { versionsQueryKey } from "@/lib/query-keys";
 import monaco from "./monaco";
 import SaveVersionDialog from "./save-version-dialog";
+import VersionHistoryDialog from "./version-history-dialog";
 
 type LiveEditorProps = {
   file: { id: string; name: string; size: number };
@@ -97,11 +101,14 @@ const LiveSession = ({
   const accessChanged = useRef(onAccessChanged);
   accessChanged.current = onAccessChanged;
 
-  // For "Save version": the connection, and the save waiting for its answer.
+  const queryClient = useQueryClient();
+  // For "Save version" and "Restore": the connection, the live text, and
+  // the request waiting for its answer.
   const providerRef = useRef<HocuspocusProvider | null>(null);
+  const docRef = useRef<Y.Doc | null>(null);
   const pendingSave = useRef<((answer: CollabReply) => void) | null>(null);
 
-  const saveVersion = (message: string) =>
+  const ask = (request: CollabRequest) =>
     new Promise<CollabReply>((resolve) => {
       const provider = providerRef.current;
       if (!provider) {
@@ -117,8 +124,11 @@ const LiveSession = ({
         clearTimeout(timer);
         resolve(answer);
       };
-      provider.sendStateless(JSON.stringify({ type: "save-version", message }));
+      provider.sendStateless(JSON.stringify(request));
     });
+  const saveVersion = (message: string) => ask({ type: "save-version", message });
+  const restoreVersion = (versionId: string) => ask({ type: "restore-version", versionId });
+  const currentText = () => docRef.current?.getText(COLLAB_TEXT).toString() ?? "";
 
   useEffect(() => {
     const url = process.env.NEXT_PUBLIC_REALTIME_URL;
@@ -174,11 +184,13 @@ const LiveSession = ({
       onClose: ({ event }) => {
         if (event.code === ACCESS_CHANGED) accessChanged.current();
       },
-      // Realtime's answer to "Save version" ("versions-changed" is for the
-      // history panel, step 7).
+      // Realtime's answer to "Save version" or "Restore", or "the versions
+      // changed" (someone saved one): the history refetches.
       onStateless: ({ payload }) => {
         const answer = JSON.parse(payload) as CollabReply;
-        if (answer.type !== "versions-changed") {
+        if (answer.type === "versions-changed") {
+          void queryClient.invalidateQueries({ queryKey: versionsQueryKey(file.id) });
+        } else {
           pendingSave.current?.(answer);
           pendingSave.current = null;
         }
@@ -195,6 +207,7 @@ const LiveSession = ({
         ),
     });
     providerRef.current = provider;
+    docRef.current = doc;
     provider.awareness?.setLocalStateField("user", {
       name: user.name,
       color: cursorColor(user.id),
@@ -208,13 +221,14 @@ const LiveSession = ({
 
     return () => {
       providerRef.current = null;
+      docRef.current = null;
       binding.destroy();
       provider.destroy();
       editor.dispose();
       model.dispose();
       doc.destroy();
     };
-  }, [file.id, file.name, user.id, user.name]);
+  }, [file.id, file.name, user.id, user.name, queryClient]);
 
   // The theme is global to Monaco, so it changes without a new editor.
   useEffect(() => {
@@ -278,7 +292,16 @@ const LiveSession = ({
               ))}
             </ul>
           )}
-          {state.kind === "live" && !state.readOnly && <SaveVersionDialog save={saveVersion} />}
+          {state.kind === "live" && !state.readOnly && (
+            <>
+              <VersionHistoryDialog
+                file={file}
+                currentText={currentText}
+                restore={restoreVersion}
+              />
+              <SaveVersionDialog save={saveVersion} />
+            </>
+          )}
         </div>
       </div>
       <div className="relative h-[calc(100vh-14rem)] min-h-80 overflow-hidden rounded-md border">

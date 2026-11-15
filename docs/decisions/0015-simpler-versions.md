@@ -1,6 +1,6 @@
 # 0015: Simpler versions, no editing notifications
 
-Date: 2026-11-15 · Status: accepted
+Date: 2026-11-15 · Status: accepted (the number kept: see 0016)
 
 ## Context
 

@@ -3,11 +3,12 @@ import { getAccess } from "@devsbucket/db/access";
 import { getCollabState, saveCollabState } from "@devsbucket/db/collab";
 import { getItem } from "@devsbucket/db/items";
 import { isStorageFull } from "@devsbucket/db/usage";
-import { saveVersion } from "@devsbucket/db/versions";
+import { getVersion, saveVersion } from "@devsbucket/db/versions";
 import {
   COLLAB_TEXT,
   type CollabRefusal,
   type CollabReply,
+  type CollabRequest,
   collabRequestSchema,
   decodeEditableText,
 } from "@devsbucket/shared/editing";
@@ -59,7 +60,10 @@ const storedText = async (itemId: string) => {
 const saveFromDocument = async (
   documentName: string,
   document: Document,
-  version: { kind: "auto" } | { kind: "named"; message: string; savedBy: string },
+  version:
+    | { kind: "auto" }
+    | { kind: "named"; message: string; savedBy: string }
+    | { kind: "restore"; restoredFrom: { id: string; number: number }; savedBy: string },
 ) => {
   const text = document.getText(COLLAB_TEXT).toString();
   const result = await saveVersion({
@@ -79,6 +83,49 @@ const saveFromDocument = async (
     document.broadcastStateless(reply({ type: "versions-changed" }));
   }
   return result;
+};
+
+// What "Save version" and "Restore" do, once the request is checked.
+const handleRequest = async (
+  documentName: string,
+  document: Document,
+  request: CollabRequest,
+  userId: string,
+): Promise<CollabReply> => {
+  if (request.type === "save-version") {
+    const result = await saveFromDocument(documentName, document, {
+      kind: "named",
+      message: request.message,
+      savedBy: userId,
+    });
+    if (result.number === null) {
+      return { type: "version-error", error: "This file no longer exists." };
+    }
+    return { type: result.saved ? "version-saved" : "version-unchanged", number: result.number };
+  }
+  // Restore: the old text replaces the live text for everyone (one Yjs
+  // transaction, so every editor updates at once), then it's saved as a new
+  // version; the current text stays in the history.
+  const version = await getVersion(documentName, request.versionId);
+  if (!version) {
+    return { type: "version-error", error: "That version no longer exists." };
+  }
+  const text = document.getText(COLLAB_TEXT);
+  document.transact(() => {
+    text.delete(0, text.length);
+    text.insert(0, version.content);
+  });
+  const result = await saveFromDocument(documentName, document, {
+    kind: "restore",
+    restoredFrom: { id: version.id, number: version.number },
+    savedBy: userId,
+  });
+  if (result.number === null) {
+    return { type: "version-error", error: "This file no longer exists." };
+  }
+  return result.saved
+    ? { type: "version-restored", number: result.number, from: version.number }
+    : { type: "version-unchanged", number: result.number };
 };
 
 export const hocuspocus = new Hocuspocus<Context>({
@@ -142,7 +189,8 @@ export const hocuspocus = new Hocuspocus<Context>({
     }
   },
 
-  // "Save version" from the editor: checked like any action (decision 0013).
+  // "Save version" and "Restore" from the editor: checked like any action
+  // (decision 0013).
   onStateless: async ({ connection, documentName, document, payload }) => {
     let request: unknown;
     try {
@@ -158,22 +206,13 @@ export const hocuspocus = new Hocuspocus<Context>({
     }
     const { userId } = connection.context as Context;
     if (connection.readOnly || (await modeFor(userId, documentName)) !== "edit") {
-      const error = "You can't save versions of this file.";
+      const error = "You can't change versions of this file.";
       connection.sendStateless(reply({ type: "version-error", error }));
       return;
     }
     try {
-      const result = await saveFromDocument(documentName, document, {
-        kind: "named",
-        message: parsed.data.message,
-        savedBy: userId,
-      });
       connection.sendStateless(
-        reply(
-          result.number === null
-            ? { type: "version-error", error: "This file no longer exists." }
-            : { type: result.saved ? "version-saved" : "version-unchanged", number: result.number },
-        ),
+        reply(await handleRequest(documentName, document, parsed.data, userId)),
       );
     } catch (error) {
       log(`couldn't save a version of ${documentName}: ${error}`);

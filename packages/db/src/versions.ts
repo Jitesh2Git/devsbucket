@@ -2,9 +2,10 @@
 // realtime when the last person leaves (automatic) or when someone saves a
 // named version. Each holds the full text.
 import { MAX_AUTO_VERSIONS } from "@devsbucket/shared/editing";
-import { desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { logActivity } from "./activity.ts";
 import { db, type Executor } from "./client.ts";
+import { users } from "./schema/auth.ts";
 import { itemVersions } from "./schema/collab.ts";
 import { items } from "./schema/items.ts";
 import { addStorage } from "./usage.ts";
@@ -18,10 +19,13 @@ type SaveVersion = {
   // The file's text before the first edit, read only when it has no
   // versions yet: it becomes version 1.
   firstText: () => Promise<string>;
-  kind: "auto" | "named";
+  kind: "auto" | "named" | "restore";
   // Named versions only.
   message?: string;
+  // Named and restore versions: who did it.
   savedBy?: string;
+  // Restore versions: the version brought back.
+  restoredFrom?: { id: string; number: number };
   // Who changed the text in this editing session.
   authors: string[];
 };
@@ -58,10 +62,19 @@ export const saveVersion = async (input: SaveVersion, executor: Executor = db) =
       latest = { number: 1, content };
     }
 
+    // "edited" is logged for authors who still have an account (one removed
+    // mid-session would break the activity's foreign key and the save).
+    const editors =
+      kind === "auto" && authors.length > 0
+        ? (await tx.select({ id: users.id }).from(users).where(inArray(users.id, authors))).map(
+            (user) => user.id,
+          )
+        : [];
+
     if (latest.content === text) {
       // Nothing new to keep; an editing session still counts as edited.
       if (kind === "auto") {
-        for (const actorId of authors) {
+        for (const actorId of editors) {
           await logActivity(tx, {
             itemId,
             actorId,
@@ -83,7 +96,8 @@ export const saveVersion = async (input: SaveVersion, executor: Executor = db) =
       content: text,
       size,
       authors,
-      createdBy: kind === "named" ? input.savedBy : null,
+      restoredFrom: input.restoredFrom?.id ?? null,
+      createdBy: kind === "auto" ? null : input.savedBy,
     });
     // The file in storage becomes this text, so its size and its owner's
     // used storage follow. Versions themselves aren't counted.
@@ -97,8 +111,15 @@ export const saveVersion = async (input: SaveVersion, executor: Executor = db) =
         action: "version_saved",
         metadata: { versionNumber: number, message: input.message ?? "" },
       });
+    } else if (kind === "restore") {
+      await logActivity(tx, {
+        itemId,
+        actorId: input.savedBy ?? null,
+        action: "version_restored",
+        metadata: { versionNumber: number, from: input.restoredFrom?.number ?? 0 },
+      });
     } else {
-      for (const actorId of authors) {
+      for (const actorId of editors) {
         await logActivity(tx, {
           itemId,
           actorId,
@@ -121,3 +142,43 @@ export const saveVersion = async (input: SaveVersion, executor: Executor = db) =
     `);
     return { saved: true, number } as const;
   });
+
+// A file's versions for the history panel, newest first, without their
+// text, with the names of the people who changed it (a removed account
+// shows as "Deleted user") and of who saved or restored it.
+export const listVersions = async (itemId: string, tx: Executor = db) => {
+  const rows = await tx
+    .select({
+      id: itemVersions.id,
+      number: itemVersions.number,
+      kind: itemVersions.kind,
+      message: itemVersions.message,
+      size: itemVersions.size,
+      createdAt: itemVersions.createdAt,
+      restoredFromNumber: sql<number | null>`(
+        select r.number from ${itemVersions} r where r.id = ${itemVersions.restoredFrom}
+      )`,
+      savedBy: users.name,
+      authors: sql<string[]>`array(
+        select coalesce(u.name, 'Deleted user')
+        from unnest(${itemVersions.authors}) as a(id)
+        left join ${users} u on u.id = a.id
+      )`,
+    })
+    .from(itemVersions)
+    .leftJoin(users, eq(users.id, itemVersions.createdBy))
+    .where(eq(itemVersions.itemId, itemId))
+    .orderBy(desc(itemVersions.number));
+  return rows;
+};
+
+export type VersionSummary = Awaited<ReturnType<typeof listVersions>>[number];
+
+// One version's text, if it belongs to this file.
+export const getVersion = async (itemId: string, versionId: string, tx: Executor = db) => {
+  const [version] = await tx
+    .select({ id: itemVersions.id, number: itemVersions.number, content: itemVersions.content })
+    .from(itemVersions)
+    .where(and(eq(itemVersions.itemId, itemId), eq(itemVersions.id, versionId)));
+  return version ?? null;
+};

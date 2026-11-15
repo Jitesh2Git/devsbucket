@@ -17,3 +17,8 @@ export const unreadQueryKey = ["notifications", "unread"] as const;
 
 // Whether the user muted an item (its menu's Mute notifications).
 export const muteQueryKey = (itemId: string) => ["mute", itemId] as const;
+
+// A file's version history, and one version's text.
+export const versionsQueryKey = (fileId: string) => ["versions", fileId] as const;
+export const versionTextQueryKey = (fileId: string, versionId: string) =>
+  ["versions", fileId, versionId] as const;
