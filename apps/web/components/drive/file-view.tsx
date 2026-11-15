@@ -1,11 +1,11 @@
+import { can } from "@devsbucket/authz/can";
 import { getBreadcrumbs } from "@devsbucket/db/items";
 import type { Access } from "@devsbucket/shared/access";
-import { decodeEditableText, editorPath, isEditableName } from "@devsbucket/shared/editing";
+import { isEditableName } from "@devsbucket/shared/editing";
 import { roleLabel } from "@devsbucket/shared/sharing";
-import { getObject, itemKey } from "@devsbucket/storage/objects";
 import { Download, FileX } from "lucide-react";
 import DriveBreadcrumbs from "@/components/drive/drive-breadcrumbs";
-import CodeEditorLazy from "@/components/editor/code-editor-lazy";
+import LiveEditorLazy from "@/components/editor/live-editor-lazy";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -17,31 +17,15 @@ import {
 
 type FileViewProps = {
   file: { id: string; name: string; mimeType: string | null; size: number | null };
-  userId: string;
+  user: { id: string; name: string };
   access: Access;
 };
 
-// The whole file as text, or why it can't be shown in the editor. Step 5
-// replaces this with the live document from realtime.
-const readText = async (file: FileViewProps["file"]) => {
-  if (!isEditableName(file.name, file.mimeType)) {
-    return { text: null, reason: "This type of file can't be opened in the editor." } as const;
-  }
-  const bytes = file.size ? await getObject(itemKey(file.id)) : new Uint8Array();
-  const text = decodeEditableText(bytes);
-  if (text === null) {
-    return { text: null, reason: "This file isn't UTF-8 text, so it can't be edited." } as const;
-  }
-  return { text, reason: null } as const;
-};
-
-// A file's page (Phase 4): breadcrumbs, Download and the editor, read-only
-// for now. The caller has already checked that the user may view it.
-const FileView = async ({ file, userId, access }: FileViewProps) => {
-  const [breadcrumbs, content] = await Promise.all([
-    getBreadcrumbs(file.id, userId),
-    readText(file),
-  ]);
+// A file's page (Phase 4): breadcrumbs, Download and the live editor. The
+// caller has already checked that the user may view it; realtime checks
+// again (and reads the file) when the editor connects.
+const FileView = async ({ file, user, access }: FileViewProps) => {
+  const breadcrumbs = await getBreadcrumbs(file.id, user.id);
 
   return (
     <div className="flex flex-col gap-4">
@@ -63,20 +47,24 @@ const FileView = async ({ file, userId, access }: FileViewProps) => {
           </a>
         </Button>
       </div>
-      {content.text === null ? (
+      {isEditableName(file.name, file.mimeType) ? (
+        <LiveEditorLazy
+          file={{ id: file.id, name: file.name, size: file.size ?? 0 }}
+          user={user}
+          canEdit={can(access, "edit")}
+        />
+      ) : (
         <Empty className="border border-dashed">
           <EmptyHeader>
             <EmptyMedia variant="icon">
               <FileX />
             </EmptyMedia>
             <EmptyTitle>Can't open this file here</EmptyTitle>
-            <EmptyDescription>{content.reason} Download it to open it.</EmptyDescription>
+            <EmptyDescription>
+              This type of file can't be opened in the editor. Download it to open it.
+            </EmptyDescription>
           </EmptyHeader>
         </Empty>
-      ) : (
-        <div className="h-[calc(100vh-12rem)] min-h-80 overflow-hidden rounded-md border">
-          <CodeEditorLazy path={editorPath(file.id, file.name)} value={content.text} readOnly />
-        </div>
       )}
     </div>
   );

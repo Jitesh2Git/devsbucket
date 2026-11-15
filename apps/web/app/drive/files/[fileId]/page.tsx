@@ -19,7 +19,9 @@ const FileContent = async ({ params }: { params: Promise<{ fileId: string }> }) 
   if (found.denied) {
     notFound();
   }
-  return <FileView file={found.item} userId={user.id} access={found.access} />;
+  return (
+    <FileView file={found.item} user={{ id: user.id, name: user.name }} access={found.access} />
+  );
 };
 
 const FilePage = ({ params }: PageProps<"/drive/files/[fileId]">) => {

@@ -3,7 +3,7 @@ import { getAccess } from "@devsbucket/db/access";
 import { getCollabState, saveCollabState } from "@devsbucket/db/collab";
 import { getItem } from "@devsbucket/db/items";
 import { isStorageFull } from "@devsbucket/db/usage";
-import { COLLAB_TEXT, decodeEditableText } from "@devsbucket/shared/editing";
+import { COLLAB_TEXT, type CollabRefusal, decodeEditableText } from "@devsbucket/shared/editing";
 import { itemIdSchema } from "@devsbucket/shared/item";
 import { getObject, itemKey } from "@devsbucket/storage/objects";
 import { Hocuspocus } from "@hocuspocus/server";
@@ -18,6 +18,10 @@ import { collabMode } from "./mode.ts";
 // session. The document's name is the file's id.
 
 type Context = { userId: string };
+
+// An error Hocuspocus turns into "permission denied" with this reason, so
+// the browser can say why.
+const refuse = (reason: CollabRefusal) => Object.assign(new Error(reason), { reason });
 
 const modeFor = async (userId: string, itemId: string) => {
   if (!itemIdSchema.safeParse(itemId).success) {
@@ -41,7 +45,7 @@ export const hocuspocus = new Hocuspocus<Context>({
   onAuthenticate: async ({ context, documentName, connectionConfig }) => {
     const mode = await modeFor(context.userId, documentName);
     if (!mode) {
-      throw new Error("No access");
+      throw refuse("no-access");
     }
     connectionConfig.readOnly = mode === "read-only";
   },
@@ -57,7 +61,7 @@ export const hocuspocus = new Hocuspocus<Context>({
     const bytes = file?.size ? await getObject(itemKey(documentName)) : new Uint8Array();
     const text = decodeEditableText(bytes);
     if (text === null) {
-      throw new Error("Not UTF-8 text");
+      throw refuse("not-text");
     }
     document.getText(COLLAB_TEXT).insert(0, text);
   },
