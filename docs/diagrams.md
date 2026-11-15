@@ -144,7 +144,7 @@ Value sets used below:
 
 - `Item.type`: folder, file, note
 - `Item.status`: pending, ready
-- `ItemVersion.kind`: auto, named, restore. `Item.versionsSize` is the bytes of a file's versions, counted in its owner's quota; `CollabState` is the live Yjs document (decision 0013).
+- `ItemVersion.kind`: auto, named, restore. `CollabState` is the live Yjs document; the newest 5 automatic versions per file are kept, with version 1, named and restore ones, outside the quota (decisions 0015, 0016; decision 0013).
 - `Item.trashedAt` is set on a trashed item and everything inside it; `trashRoot` marks the one the user trashed (decision 0007). Total stored bytes is `sum(User.storageUsed)`, not a counter.
 - `Item.editorsCanShare` arrives with sharing in Phase 3; off on a folder means off for everything inside (decision 0008). There's no download setting: Viewers can always download (decision 0012).
 - `ShareLink`: one active link per item; `ShareLinkVisit` records who opened it, and gives them the link's role while it's active (decision 0008).
@@ -394,7 +394,7 @@ sequenceDiagram
   participant RT as realtime: Hocuspocus
   participant DB as Postgres
   participant R2 as Cloudflare R2
-  A->>RT: connect WSS with session token and itemId
+  A->>RT: connect WSS /collab with the session cookie, document = file id
   RT->>DB: verify session, resolve role
   alt Viewer
     RT-->>A: read-only connection
@@ -412,9 +412,10 @@ sequenceDiagram
   loop debounced while editing
     RT->>DB: store collab state
   end
-  loop every 5 minutes while the text changes, and when the last person leaves
-    RT->>DB: insert version (full text), update size and quota, write activity
+  opt the last person leaves (text changed), Save version, or Restore
+    RT->>DB: insert version (full text, newest 5 automatic kept), update size, write activity
     RT->>R2: rewrite the file's object
+    RT-->>A: versions-changed (history refetches)
   end
 ```
 

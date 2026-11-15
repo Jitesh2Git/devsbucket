@@ -34,8 +34,8 @@ export const presignPut = async (input: { key: string; contentType: string; size
   return url;
 };
 
-// Writes an object from the server (a new empty file now; saved versions
-// in step 6). Uploads from the browser use presignPut instead.
+// Writes an object from the server: a new empty file, or the text of a
+// saved version (realtime). Uploads from the browser use presignPut instead.
 export const putObject = async (input: { key: string; body: Uint8Array; contentType: string }) => {
   await countOps({ classA: 1 });
   await s3.send(
