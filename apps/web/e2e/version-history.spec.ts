@@ -66,6 +66,9 @@ test("version history: list, compare, restore for everyone", async ({ browser })
     await dialog.getByRole("button", { name: "Restore version 2" }).click();
     await ada.getByRole("alertdialog").getByRole("button", { name: "Restore" }).click();
     await expect(ada.getByText("Restored version 2 as version 4")).toBeVisible();
+    // The dialog closes with an animation; until then it hides the page's
+    // editor from the accessibility tree and getByRole("code") finds the diff.
+    await expect(dialog).toBeHidden();
     await expect(ada.getByRole("code")).not.toContainText("two");
     await expect(bob.getByRole("code")).toContainText("one");
     await expect(bob.getByRole("code")).not.toContainText("two");
