@@ -426,11 +426,26 @@ Full plan: `docs/plans/phase-4.md` (design, data model, Hocuspocus in realtime, 
 - [ ] A file's size in listings only changes when a version is saved (when everyone leaves, or Save version), not while people type.
 - [ ] The Markdown view (Editor / Split / Preview) isn't remembered between visits; relative images in Markdown aren't shown; an outside https image tells its host the viewer's IP.
 - [ ] Realtime prints a stack trace for every refusal (`[onAuthenticate] Error: no-access`): Hocuspocus logs errors thrown in hooks. Harmless, noisy.
-- [ ] Phase 5: the activity panel reads `edited`, `version_saved`, `version_restored`; Tiptap notes and making a copy.
+- [ ] Phase 5: the activity panel reads `edited`, `version_saved`, `version_restored` (step 2); making a copy (step 3). Tiptap notes dropped (decision 0017).
 - [ ] Phase 6: `/collab` behind Caddy (same `wss://` site as the events socket); realtime holds ~6× a big file's size in memory while it's open (100 MB → ~630 MB) on the 12 GB VM.
+
+## Phase 5: Drive extras (in progress)
+
+Full plan: `docs/plans/phase-5.md` (design, step table, tests). Decision: 0017 (no Tiptap notes and no stars; search by name; the simplest shape of Recent, the activity panel, making a copy and ZIP download).
+
+**Done when:** opening a file puts it at the top of Recent; Cmd+K finds a file in a folder shared with you by part of its name (and with a typo) and opens it; a file's activity dialog shows its rename, edits and download with who and when, and a Viewer has no Activity item; "Make a copy" puts `notes (copy).md` next to `notes.md` (or at the top of a Viewer's My Drive) and the quota moves; "Download as ZIP" on a folder gives a ZIP of its tree, and a folder over the cap says so. Each feature has tests and e2e, and CI is green.
+
+- [x] 0. **Plan:** `docs/plans/phase-5.md`, decision 0017, LOCKED.md ("Drive extras", no Tiptap) and diagrams 1, 3, 6 and 9 updated
+  - Note: choices agreed on 2026-11-16: keep Cmd+K search (names only, `pg_trgm`), Recent (files opened, last 50), the activity panel (a dialog with the item's own rows), Make a copy (files, same folder or the top of My Drive) and ZIP download (a folder, streamed by the web app, 1 GB / 1,000 files); drop Tiptap notes (Markdown files are the notes) and stars. Order: small to big.
+- [ ] 1. **Recent:** `item_views`, recorded on the file page and preview, `/drive/recent`; drops the `note` item type
+- [ ] 2. **Activity panel:** `listActivity`, `activityText` for every action, Activity dialog (Owner and Editors)
+- [ ] 3. **Make a copy:** `copy` in `can()`, `copied` activity, `copyObject`, `copyFile` with quota and limits
+- [ ] 4. **ZIP download:** tree query, `checkZip`, streaming route, caps
+- [ ] 5. **Cmd+K search:** `pg_trgm` index, `searchItems`, command palette with Recent
+- [ ] 6. **Review:** CLAUDE.md, diagrams, follow-ups, tag `v0.5.0`
 
 ## Later phases (summary)
 
 4. **Live editing:** see Phase 4 above
-5. **Notes and extras:** Tiptap notes, Cmd+K search, starred and recent, activity panel, ZIP download
+5. **Drive extras:** see Phase 5 above (Tiptap notes and stars dropped, decision 0017)
 6. **Prod:** Oracle VM, Caddy, DuckDNS, R2, backups, deploy pipeline
