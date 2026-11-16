@@ -4,6 +4,7 @@ import type { Access } from "@devsbucket/shared/access";
 import { isEditableName } from "@devsbucket/shared/editing";
 import { roleLabel } from "@devsbucket/shared/sharing";
 import { Download, FileX } from "lucide-react";
+import ActivityButton from "@/components/drive/activity-button";
 import DriveBreadcrumbs from "@/components/drive/drive-breadcrumbs";
 import RecordView from "@/components/drive/record-view";
 import LiveEditorLazy from "@/components/editor/live-editor-lazy";
@@ -42,13 +43,18 @@ const FileView = async ({ file, user, access }: FileViewProps) => {
             </span>
           )}
         </div>
-        <Button asChild variant="outline" className="shrink-0">
-          {/* The same route as the preview's Download (downloadUrl is client-only). */}
-          <a href={`/api/items/${file.id}/download`}>
-            <Download />
-            Download
-          </a>
-        </Button>
+        <div className="flex shrink-0 gap-2">
+          {can(access, "view_activity") && (
+            <ActivityButton item={{ id: file.id, name: file.name }} />
+          )}
+          <Button asChild variant="outline" className="shrink-0">
+            {/* The same route as the preview's Download (downloadUrl is client-only). */}
+            <a href={`/api/items/${file.id}/download`}>
+              <Download />
+              Download
+            </a>
+          </Button>
+        </div>
       </div>
       {isEditableName(file.name, file.mimeType) ? (
         <LiveEditorLazy

@@ -1,7 +1,16 @@
 "use client";
 
 import type { ListedItem } from "@devsbucket/db/items";
-import { Download, Eye, FolderInput, MoreHorizontal, Pencil, Trash2, UserPlus } from "lucide-react";
+import {
+  ActivityIcon,
+  Download,
+  Eye,
+  FolderInput,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  UserPlus,
+} from "lucide-react";
 import { useRef } from "react";
 import { downloadUrl } from "@/components/drive/file-preview";
 import MuteMenuItem from "@/components/drive/mute-menu-item";
@@ -15,7 +24,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // What the user's role allows on a row (from can(), on the server).
-export type ItemActions = { share: boolean; rename: boolean; move: boolean; trash: boolean };
+export type ItemActions = {
+  share: boolean;
+  rename: boolean;
+  move: boolean;
+  trash: boolean;
+  activity: boolean;
+};
 
 type ItemMenuProps = {
   item: Pick<ListedItem, "id" | "name" | "type">;
@@ -24,6 +39,7 @@ type ItemMenuProps = {
   onRename: () => void;
   onMove: () => void;
   onShare: () => void;
+  onActivity: () => void;
   onTrash: () => void;
 };
 
@@ -36,6 +52,7 @@ const ItemMenu = ({
   onRename,
   onMove,
   onShare,
+  onActivity,
   onTrash,
 }: ItemMenuProps) => {
   // Dialogs open once the menu has fully closed. Opened sooner, the closing
@@ -96,6 +113,12 @@ const ItemMenu = ({
           <DropdownMenuItem onSelect={openDialog(onMove)}>
             <FolderInput />
             Move
+          </DropdownMenuItem>
+        )}
+        {actions.activity && (
+          <DropdownMenuItem onSelect={openDialog(onActivity)}>
+            <ActivityIcon />
+            Activity
           </DropdownMenuItem>
         )}
         <MuteMenuItem item={item} />
