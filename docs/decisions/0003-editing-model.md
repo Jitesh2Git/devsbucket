@@ -1,6 +1,6 @@
 # 0003: Monaco for every text file, Tiptap for rich notes
 
-Date: 2026-11-11 · Status: accepted
+Date: 2026-11-11 · Status: accepted (Tiptap notes dropped: see 0017)
 
 ## Context
 

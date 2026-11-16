@@ -33,7 +33,7 @@ flowchart TB
     a8a["Database"] ~~~ a8b["Postgres 18 in Docker"]
     a9a["ORM and migrations"] ~~~ a9b["Drizzle + drizzle-kit"]
     a10a["Permissions"] ~~~ a10b["Shared authz package: Owner, Editor, Viewer, inherited from folders"]
-    a11a["Live editing"] ~~~ a11b["Yjs + Hocuspocus, Monaco for all text files, Tiptap for rich notes"]
+    a11a["Live editing"] ~~~ a11b["Yjs + Hocuspocus, Monaco for all text files (Markdown files are the notes)"]
     a12a["Versions and diffs"] ~~~ a12b["Automatic and manual snapshots, Monaco diff editor"]
     a13a["Live events"] ~~~ a13b["WebSockets in the realtime server, driven by Postgres LISTEN/NOTIFY"]
     a14a["Background jobs"] ~~~ a14b["pg-boss worker"]
@@ -84,7 +84,8 @@ flowchart LR
   web -->|"create presigned URLs"| r2
   user -->|"upload/download with presigned URL"| r2
   rt -->|"save file content at each version"| r2
-  worker -->|"cleanup, zip, purge trash"| r2
+  worker -->|"cleanup, purge trash"| r2
+  web -->|"stream folder ZIPs"| r2
   worker -->|"nightly pg_dump"| oos
   web -->|"GitHub login"| gh
   gh -->|"SSH deploy"| caddy
@@ -142,7 +143,8 @@ flowchart TD
 The User, Session and Account tables come from Better Auth. The User table has extra fields added.
 Value sets used below:
 
-- `Item.type`: folder, file, note
+- `Item.type`: folder, file (no `note`: Tiptap notes were dropped, decision 0017)
+- `ItemView`: one row per person per file opened, the newest 100 kept per person; powers Recent and the empty search box (decision 0017).
 - `Item.status`: pending, ready
 - `ItemVersion.kind`: auto, named, restore. `CollabState` is the live Yjs document; the newest 5 automatic versions per file are kept, with version 1, named and restore ones, outside the quota (decisions 0015, 0016; decision 0013).
 - `Item.trashedAt` is set on a trashed item and everything inside it; `trashRoot` marks the one the user trashed (decision 0007). Total stored bytes is `sum(User.storageUsed)`, not a counter.
@@ -301,10 +303,6 @@ classDiagram
     +metadata
     +createdAt
   }
-  class Star {
-    +userId
-    +itemId
-  }
   class UsageCounter {
     +month
     +classAOps
@@ -331,8 +329,6 @@ classDiagram
   User "1" --> "*" NotificationPref
   User "1" --> "*" ItemMute
   Item "1" --> "*" Activity
-  User "1" --> "*" Star
-  Item "1" --> "*" Star
 ```
 
 ## 7. Permission check (used by web and realtime)
@@ -384,7 +380,7 @@ sequenceDiagram
   end
 ```
 
-## 9. Live editing (Monaco or Tiptap)
+## 9. Live editing (Monaco)
 
 ```mermaid
 sequenceDiagram

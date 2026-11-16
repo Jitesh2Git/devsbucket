@@ -18,7 +18,7 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 | Auth         | Better Auth: email/password and GitHub login. Sign-ups are invite-only. No email for now, so an admin resets passwords (decision 0011). GitHub linking rules: see decision 0005.            |
 | Database     | Postgres 18 in Docker (prod too), Drizzle ORM + drizzle-kit                                                                                                                                 |
 | Files        | Cloudflare R2, private bucket, presigned URLs, browser uploads directly. Local dev uses Garage (S3-compatible) in Docker; see decision 0004.                                                |
-| Live editing | Yjs + Hocuspocus. Monaco (y-monaco) edits every text file. Tiptap handles rich notes only.                                                                                                  |
+| Live editing | Yjs + Hocuspocus. Monaco (y-monaco) edits every text file. No Tiptap: Markdown files with a live preview are the notes (decision 0017).                                                     |
 | Live events  | WebSockets in `realtime`, triggered by Postgres LISTEN/NOTIFY                                                                                                                               |
 | Jobs         | pg-boss in `worker`                                                                                                                                                                         |
 | Backups      | Nightly encrypted `pg_dump` to Oracle Object Storage                                                                                                                                        |
@@ -52,7 +52,16 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 - **Monaco** edits every text file (UTF-8, no size limit), with live cursors, on its own file page. Markdown files get a live preview. Editors can create an empty text file (decision 0013).
 - **Hocuspocus** runs inside `realtime` on `/collab`; Viewer connections are read-only. The live Yjs state and every version's text live in Postgres; the file's object is rewritten at each version (decision 0013).
 - **Versions** are saved automatically when the last person leaves the file (if the text changed), manually with a message, and when an old one is restored (decision 0015).
-- **Diff view:** the Monaco diff editor, for any two versions. Tiptap notes are converted to Markdown for the diff.
+- **Diff view:** the Monaco diff editor, for any two versions.
+
+## Drive extras (Phase 5, decision 0017)
+
+- **Search:** Cmd+K (Ctrl+K) searches the names of every file and folder you can open (your drive and what's shared with you), not their contents. Typo-tolerant through Postgres `pg_trgm`.
+- **Recent:** the files you opened (editor or preview), newest first, the last 50 you still have access to.
+- **Activity panel:** an item's own activity log, for the Owner and Editors (`view_activity`).
+- **Make a copy:** files only, any role (decision 0012); the copy goes next to the original if you may upload there, otherwise to the top of your My Drive, and counts against the quota of the drive it lands in. Its versions aren't copied.
+- **ZIP download:** a whole folder, any role, streamed by the web app straight from storage; up to 1 GB and 1,000 files per ZIP.
+- **Not planned:** stars, Tiptap notes, searching file contents.
 
 ## Notifications
 
