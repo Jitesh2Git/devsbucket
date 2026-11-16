@@ -7,6 +7,7 @@ export * from "./alert-states.ts";
 export * from "./auth.ts";
 export * from "./collab.ts";
 export * from "./invites.ts";
+export * from "./item-views.ts";
 export * from "./items.ts";
 export * from "./notification-settings.ts";
 export * from "./notifications.ts";

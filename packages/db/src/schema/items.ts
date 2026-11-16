@@ -1,5 +1,6 @@
-// My Drive: folders, files (and Phase 5 notes) in one table, each pointing to
-// its parent like a file system. Plan: docs/plans/phase-2.md, decision 0007.
+// My Drive: folders and files in one table, each pointing to its parent like
+// a file system. Plan: docs/plans/phase-2.md, decision 0007. (No notes:
+// Tiptap was dropped in decision 0017.)
 import { sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
@@ -15,7 +16,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "./auth.ts";
 
-export const itemTypes = ["folder", "file", "note"] as const;
+export const itemTypes = ["folder", "file"] as const;
 export const itemStatuses = ["pending", "ready"] as const;
 
 export const items = pgTable(
@@ -54,7 +55,7 @@ export const items = pgTable(
     editorsCanShare: boolean().notNull().default(true),
   },
   (table) => [
-    check("items_type_check", sql`${table.type} in ('folder', 'file', 'note')`),
+    check("items_type_check", sql`${table.type} in ('folder', 'file')`),
     check("items_status_check", sql`${table.status} in ('pending', 'ready')`),
     check("items_name_length_check", sql`char_length(${table.name}) between 1 and 255`),
     check("items_not_own_parent_check", sql`${table.parentId} <> ${table.id}`),

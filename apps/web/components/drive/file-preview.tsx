@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Download, SquarePen } from "lucide-react";
 import Link from "next/link";
 import { loadTextPreview } from "@/app/drive/preview-actions";
+import RecordView from "@/components/drive/record-view";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -108,6 +109,7 @@ const FilePreview = ({ file, onClose }: { file: PreviewFile | null; onClose: () 
                 {file.size === null ? "" : formatBytes(file.size)}
               </DialogDescription>
             </DialogHeader>
+            <RecordView itemId={file.id} />
             <PreviewBody file={file} />
             <DialogFooter>
               {previewKind(file.name, file.mimeType) === "text" && (

@@ -35,7 +35,7 @@ export const accessRoots = (userId: string) => sql`
 export const listSharedWithMe = async (userId: string, tx: Executor = db) => {
   const result = await tx.execute<{
     id: string;
-    type: "folder" | "file" | "note";
+    type: "folder" | "file";
     name: string;
     mime_type: string | null;
     size: string | null;

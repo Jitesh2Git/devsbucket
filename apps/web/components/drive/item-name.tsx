@@ -3,7 +3,7 @@ import { File, Folder } from "lucide-react";
 import Link from "next/link";
 
 type ItemNameProps = {
-  item: { id: string; type: "folder" | "file" | "note"; name: string; mimeType: string | null };
+  item: { id: string; type: "folder" | "file"; name: string; mimeType: string | null };
   onPreview: () => void;
 };
 
