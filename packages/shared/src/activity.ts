@@ -45,7 +45,7 @@ export type ActivityMetadata = {
   trashed: Record<string, never>;
   restored: { name: string; movedToTop: boolean };
   // Logged on the folder it was in (the item itself is gone).
-  deleted_forever: { name: string; type: "folder" | "file" | "note" };
+  deleted_forever: { name: string; type: "folder" | "file" };
   downloaded: Record<string, never>;
   // The person given, changed or removed (step 5).
   shared: { userId: string; role: "editor" | "viewer" };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Bell, HardDrive, Trash2, Users } from "lucide-react";
+import { Bell, Clock, HardDrive, Trash2, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
@@ -11,6 +11,7 @@ import { unreadQueryKey } from "@/lib/query-keys";
 
 const LINKS = [
   { href: "/drive", label: "My Drive", icon: HardDrive },
+  { href: "/drive/recent", label: "Recent", icon: Clock },
   { href: "/drive/shared", label: "Shared with me", icon: Users },
   { href: "/drive/notifications", label: "Notifications", icon: Bell },
   { href: "/drive/trash", label: "Trash", icon: Trash2 },

@@ -8,7 +8,7 @@ import { isEditableName } from "@devsbucket/shared/editing";
 export type CollabMode = "edit" | "read-only" | null;
 
 type File = {
-  type: "folder" | "file" | "note";
+  type: "folder" | "file";
   status: "pending" | "ready";
   trashedAt: Date | null;
   name: string;

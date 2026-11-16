@@ -5,6 +5,7 @@ import { isEditableName } from "@devsbucket/shared/editing";
 import { roleLabel } from "@devsbucket/shared/sharing";
 import { Download, FileX } from "lucide-react";
 import DriveBreadcrumbs from "@/components/drive/drive-breadcrumbs";
+import RecordView from "@/components/drive/record-view";
 import LiveEditorLazy from "@/components/editor/live-editor-lazy";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,6 +30,8 @@ const FileView = async ({ file, user, access }: FileViewProps) => {
 
   return (
     <div className="flex flex-col gap-4">
+      <RecordView itemId={file.id} />
+
       <div className="flex items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <DriveBreadcrumbs root={breadcrumbs.root} folders={breadcrumbs.folders} />
