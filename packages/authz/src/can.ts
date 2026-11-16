@@ -6,6 +6,7 @@
 export const actions = [
   "view",
   "download",
+  "copy", // a file, into the same folder or your own drive (Phase 5)
   "upload", // into a folder
   "create_folder", // inside a folder
   "rename",
@@ -43,10 +44,12 @@ const isEditor = (access: AuthzAccess) => access.role === "owner" || access.role
 // Owner: everything. Editor: everything a Viewer can, plus changing
 // content, editing text files, restoring, activity, version history and
 // sharing (unless the Owner turned it off).
-// Viewer: view and download (decision 0012: a preview sends the bytes anyway).
+// Viewer: view, download and make a copy (decision 0012: a preview sends the
+// bytes anyway).
 const rules: Record<Action, (access: AuthzAccess) => boolean> = {
   view: (access) => access.role !== null,
   download: (access) => access.role !== null,
+  copy: (access) => access.role !== null,
   upload: isEditor,
   create_folder: isEditor,
   rename: isEditor,

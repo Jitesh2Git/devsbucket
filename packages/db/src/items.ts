@@ -1,4 +1,4 @@
-import { type Cursor, nextAvailableName, splitExtension } from "@devsbucket/shared/item";
+import { type Cursor, copyName, nextAvailableName, splitExtension } from "@devsbucket/shared/item";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { logActivity } from "./activity.ts";
 import { db, type Executor } from "./client.ts";
@@ -192,6 +192,75 @@ export const createTextFile = async (
     }
     throw error;
   }
+};
+
+// "Make a copy" (Phase 5, decision 0017): a new ready file with the
+// source's type and size, named "notes (copy).md" (or the next free name),
+// in `parentId` of `ownerId`'s drive. In one transaction: the size taken
+// from the owner's quota, the row, `copied` on the new item, and `copy`,
+// which copies the object in storage while the transaction is still open,
+// so a storage failure rolls everything back. "quota" when it doesn't fit.
+export const copyFile = async (
+  values: {
+    source: { id: string; name: string; mimeType: string | null; size: number | null };
+    ownerId: string;
+    parentId: string | null;
+    createdBy: string;
+    storageKeyFor: (itemId: string) => string;
+  },
+  copy: (storageKey: string) => Promise<void>,
+  executor: Executor = db,
+) => {
+  const { source, storageKeyFor, ...place } = values;
+  const size = source.size ?? 0;
+  const wanted = copyName(source.name);
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await executor.transaction(async (tx) => {
+        const reserved = await reserveStorage(place.ownerId, size, tx);
+        if (!reserved.ok) {
+          return {
+            ok: false,
+            reason: "quota",
+            used: reserved.used,
+            quota: reserved.quota,
+          } as const;
+        }
+        const name = nextAvailableName(wanted, await takenNames(tx, { ...place, name: wanted }), {
+          keepExtension: true,
+        });
+        // The id is needed for the storage key, so ask Postgres for one first.
+        const { rows } = await tx.execute<{ id: string }>(sql`select uuidv7() as id`);
+        const id = rows[0]?.id;
+        if (!id) {
+          throw new Error("uuidv7() returned no row");
+        }
+        const storageKey = storageKeyFor(id);
+        await tx.insert(items).values({
+          ...place,
+          id,
+          name,
+          type: "file",
+          mimeType: source.mimeType,
+          size,
+          storageKey,
+        });
+        await logActivity(tx, {
+          itemId: id,
+          actorId: place.createdBy,
+          action: "copied",
+          metadata: { fromId: source.id, fromName: source.name },
+        });
+        await copy(storageKey);
+        return { ok: true, id, name } as const;
+      });
+    } catch (error) {
+      if (!isUniqueViolation(error)) {
+        throw error;
+      }
+    }
+  }
+  throw new Error("No free name after 3 attempts");
 };
 
 // Every name in a folder that starts like `name` without its extension: all

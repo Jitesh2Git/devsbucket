@@ -70,6 +70,15 @@ export const splitExtension = (name: string): [string, string] => {
   return [name.slice(0, dot), name.slice(dot)];
 };
 
+// "Make a copy" (Phase 5): "notes.md" -> "notes (copy).md", "Makefile" ->
+// "Makefile (copy)", ".env" -> ".env (copy)". nextAvailableName then turns a
+// taken one into "notes (copy) (1).md".
+export const copyName = (name: string) => {
+  const [base, extension] = splitExtension(name);
+  const suffix = ` (copy)${extension}`;
+  return base.slice(0, Math.max(1, MAX_NAME_LENGTH - suffix.length)) + suffix;
+};
+
 // The first free name in a folder, for uploads and restores (decision 0007):
 // "notes.md" -> "notes (1).md" -> "notes (2).md"; folders: "src" -> "src (1)".
 // `taken` is every name already in the folder; case doesn't matter, like the

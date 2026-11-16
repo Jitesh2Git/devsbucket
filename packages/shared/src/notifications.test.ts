@@ -36,6 +36,20 @@ describe("planNotifications", () => {
     ).toEqual([
       { recipientId: "ada", type: "files_added", itemId: "team", payload: { name: "plan.txt" } },
     ]);
+    // A copy made in someone else's folder counts as a file added (Phase 5).
+    expect(
+      planNotifications(
+        {
+          action: "copied",
+          actorId: "bob",
+          itemId: "plan",
+          metadata: { fromId: "notes", fromName: "notes.txt" },
+        },
+        plan,
+      ),
+    ).toEqual([
+      { recipientId: "ada", type: "files_added", itemId: "team", payload: { name: "plan.txt" } },
+    ]);
   });
 
   it("never tells the person who acted", () => {

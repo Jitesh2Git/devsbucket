@@ -147,7 +147,9 @@ export const planNotifications = (
         return to(m.toUserId, "ownership_offered");
       case "ownership_transferred":
         return to(m.fromUserId, "ownership_transferred");
+      // A copy that lands in someone else's folder is a file added to it.
       case "uploaded":
+      case "copied":
         return content("files_added");
       case "trashed":
         return content("trashed");

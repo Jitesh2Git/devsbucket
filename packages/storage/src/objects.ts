@@ -1,4 +1,5 @@
 import {
+  CopyObjectCommand,
   DeleteObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
@@ -132,4 +133,17 @@ export const deleteObjects = async (keys: string[]) => {
     }
   }
   return failed;
+};
+
+// "Make a copy" (Phase 5): the new item's object, copied inside storage
+// (the bytes never come through the server). One class A operation.
+export const copyObject = async (input: { from: string; to: string }) => {
+  await countOps({ classA: 1 });
+  await s3.send(
+    new CopyObjectCommand({
+      Bucket: bucket,
+      CopySource: `${bucket}/${input.from}`,
+      Key: input.to,
+    }),
+  );
 };

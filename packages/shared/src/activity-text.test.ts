@@ -39,6 +39,7 @@ const examples: { [A in LoggedAction]: ActivityMetadata[A] } = {
   edited: { versionNumber: 3 },
   version_saved: { versionNumber: 4, message: "Fix intro" },
   version_restored: { versionNumber: 5, from: 2 },
+  copied: { fromId: DOCS, fromName: "notes.md" },
 };
 
 const line = <A extends LoggedAction>(action: A, actorId: string | null = ADA) =>

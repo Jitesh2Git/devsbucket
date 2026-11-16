@@ -46,6 +46,7 @@ export const changedFolders = (event: ActivityEvent): "parent" | (string | null)
   switch (event.action) {
     case "created":
     case "uploaded":
+    case "copied":
     // A saved version changes the file's size and modified time.
     case "edited":
     case "version_saved":

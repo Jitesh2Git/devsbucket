@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
 import { leaveSharedItem } from "@/app/drive/shared-actions";
+import CopyMenuItem from "@/components/drive/copy-menu-item";
 import FilePreview, { downloadUrl, type PreviewFile } from "@/components/drive/file-preview";
 import ItemName from "@/components/drive/item-name";
 import MuteMenuItem from "@/components/drive/mute-menu-item";
@@ -147,6 +148,7 @@ const SharedList = ({ items, offers, opened }: SharedListProps) => {
                             Download
                           </a>
                         </DropdownMenuItem>
+                        <CopyMenuItem item={item} />
                         <DropdownMenuSeparator />
                       </>
                     )}
