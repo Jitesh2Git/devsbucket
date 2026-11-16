@@ -42,6 +42,7 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
     rename: can(access, "rename"),
     move: can(access, "move"),
     trash: can(access, "trash"),
+    activity: can(access, "view_activity"),
   };
   // In someone else's tree, moves stay below the top-most shared folder.
   const moveRoot = breadcrumbs.root === "shared" ? (breadcrumbs.folders[0] ?? null) : null;

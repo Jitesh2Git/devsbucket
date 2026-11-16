@@ -9,6 +9,7 @@ import { useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
 import { loadItems } from "@/app/drive/actions";
 import { restoreItem, trashItem } from "@/app/drive/trash-actions";
+import ActivityDialog, { type ActivityTarget } from "@/components/drive/activity-dialog";
 import FilePreview, { type PreviewFile } from "@/components/drive/file-preview";
 import ItemMenu, { type ItemActions } from "@/components/drive/item-menu";
 import ItemName from "@/components/drive/item-name";
@@ -105,6 +106,7 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
   const [renaming, setRenaming] = useState<ItemRef | null>(null);
   const [moving, setMoving] = useState<ItemRef | null>(null);
   const [sharing, setSharing] = useState<ShareTarget | null>(null);
+  const [viewingActivity, setViewingActivity] = useState<ActivityTarget | null>(null);
   // Leaving the page only hides it (Activity): close any dialog, so a video
   // doesn't keep playing out of sight and nothing is open on return.
   useLayoutEffect(
@@ -113,6 +115,7 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
       setRenaming(null);
       setMoving(null);
       setSharing(null);
+      setViewingActivity(null);
     },
     [],
   );
@@ -166,6 +169,7 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
                   onRename={() => setRenaming(item)}
                   onMove={() => setMoving(item)}
                   onShare={() => setSharing(item)}
+                  onActivity={() => setViewingActivity(item)}
                   onTrash={() => moveToTrash(item)}
                 />
               </TableCell>
@@ -197,6 +201,7 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
         onClose={() => setMoving(null)}
       />
       <ShareDialog item={sharing} onClose={() => setSharing(null)} />
+      <ActivityDialog item={viewingActivity} onClose={() => setViewingActivity(null)} />
     </div>
   );
 };
