@@ -29,6 +29,8 @@ export const activityActions = [
   "edited",
   "version_saved",
   "version_restored",
+  // Phase 5 (decision 0017).
+  "copied",
 ] as const;
 
 export type ActivityAction = (typeof activityActions)[number];
@@ -75,6 +77,8 @@ export type ActivityMetadata = {
   version_saved: { versionNumber: number; message: string };
   // The new version's number, and the number of the one restored.
   version_restored: { versionNumber: number; from: number };
+  // Logged on the new copy (Phase 5): the file it was made from.
+  copied: { fromId: string; fromName: string };
 };
 
 export type LoggedAction = keyof ActivityMetadata;

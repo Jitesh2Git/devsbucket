@@ -76,6 +76,8 @@ export const activityText = (line: ActivityLine, names: Record<string, string>) 
       return `saved version ${line.metadata.versionNumber}: ${quoted(line.metadata.message)}`;
     case "version_restored":
       return `restored version ${line.metadata.from} (now version ${line.metadata.versionNumber})`;
+    case "copied":
+      return `made it as a copy of ${quoted(line.metadata.fromName)}`;
     default: {
       // A new action without a line here fails the typecheck.
       const unknown: never = line;

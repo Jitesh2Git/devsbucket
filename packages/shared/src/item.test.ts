@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  copyName,
   DEFAULT_MIME_TYPE,
   itemNameSchema,
   listItemsSchema,
@@ -44,6 +45,29 @@ describe("itemNameSchema", () => {
     "back\\slash",
   ])("accepts %j", (input) => {
     expect(itemNameSchema.safeParse(input).success).toBe(true);
+  });
+});
+
+describe("copyName", () => {
+  it.each([
+    ["notes.md", "notes (copy).md"],
+    ["Makefile", "Makefile (copy)"],
+    [".env", ".env (copy)"],
+    ["archive.tar.gz", "archive.tar (copy).gz"],
+  ])("%s -> %s", (name, copy) => {
+    expect(copyName(name)).toBe(copy);
+  });
+
+  it("stays within the name limit, keeping the extension", () => {
+    const copy = copyName(`${"a".repeat(MAX_NAME_LENGTH - 3)}.md`);
+    expect(copy).toHaveLength(MAX_NAME_LENGTH);
+    expect(copy.endsWith(" (copy).md")).toBe(true);
+  });
+
+  it("then gets a number when the copy's name is taken", () => {
+    expect(
+      nextAvailableName(copyName("notes.md"), ["notes (copy).md"], { keepExtension: true }),
+    ).toBe("notes (copy) (1).md");
   });
 });
 

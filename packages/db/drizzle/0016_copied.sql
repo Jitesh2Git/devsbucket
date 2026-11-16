@@ -1,0 +1,2 @@
+ALTER TABLE "activities" DROP CONSTRAINT "activities_action_check";--> statement-breakpoint
+ALTER TABLE "activities" ADD CONSTRAINT "activities_action_check" CHECK ("activities"."action" in ('created', 'uploaded', 'renamed', 'moved', 'trashed', 'restored', 'deleted_forever', 'downloaded', 'shared', 'access_changed', 'access_removed', 'link_created', 'link_disabled', 'link_changed', 'link_opened', 'access_requested', 'access_approved', 'access_denied', 'ownership_offered', 'ownership_transferred', 'settings_changed', 'edited', 'version_saved', 'version_restored', 'copied'));

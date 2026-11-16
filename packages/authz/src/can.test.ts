@@ -14,6 +14,7 @@ const access = (role: Column, settings: Partial<AuthzAccess> = {}): AuthzAccess 
 const grid: Record<Action, Record<Column, boolean>> = {
   view: { owner: true, editor: true, viewer: true, none: false },
   download: { owner: true, editor: true, viewer: true, none: false },
+  copy: { owner: true, editor: true, viewer: true, none: false },
   upload: { owner: true, editor: true, viewer: false, none: false },
   create_folder: { owner: true, editor: true, viewer: false, none: false },
   rename: { owner: true, editor: true, viewer: false, none: false },

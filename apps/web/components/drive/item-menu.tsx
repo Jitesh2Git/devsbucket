@@ -12,6 +12,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { useRef } from "react";
+import CopyMenuItem from "@/components/drive/copy-menu-item";
 import { downloadUrl } from "@/components/drive/file-preview";
 import MuteMenuItem from "@/components/drive/mute-menu-item";
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,7 @@ const ItemMenu = ({
                 Download
               </a>
             </DropdownMenuItem>
+            <CopyMenuItem item={item} />
             <DropdownMenuSeparator />
           </>
         )}
