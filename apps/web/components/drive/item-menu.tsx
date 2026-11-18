@@ -5,6 +5,7 @@ import {
   ActivityIcon,
   Download,
   Eye,
+  FolderDown,
   FolderInput,
   MoreHorizontal,
   Pencil,
@@ -23,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { downloadFolderZip } from "@/lib/zip-download";
 
 // What the user's role allows on a row (from can(), on the server).
 export type ItemActions = {
@@ -99,6 +101,17 @@ const ItemMenu = ({
             <DropdownMenuSeparator />
           </>
         )}
+
+        {!isFile && (
+          <>
+            <DropdownMenuItem onSelect={() => downloadFolderZip(item)}>
+              <FolderDown />
+              Download as ZIP
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+
         {actions.share && (
           <DropdownMenuItem onSelect={openDialog(onShare)}>
             <UserPlus />

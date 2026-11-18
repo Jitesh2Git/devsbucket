@@ -147,3 +147,14 @@ export const copyObject = async (input: { from: string; to: string }) => {
     }),
   );
 };
+
+// An object's bytes as a stream, read as they're sent on (the ZIP download,
+// Phase 5): a whole file is never held in memory. One class B operation.
+export const getObjectStream = async (key: string) => {
+  await countOps({ classB: 1 });
+  const object = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+  if (!object.Body) {
+    throw new Error("Storage returned no body");
+  }
+  return object.Body.transformToWebStream();
+};

@@ -48,7 +48,8 @@ export type ActivityMetadata = {
   restored: { name: string; movedToTop: boolean };
   // Logged on the folder it was in (the item itself is gone).
   deleted_forever: { name: string; type: "folder" | "file" };
-  downloaded: Record<string, never>;
+  // files: a folder downloaded as a ZIP with that many files (Phase 5).
+  downloaded: { files?: number };
   // The person given, changed or removed (step 5).
   shared: { userId: string; role: "editor" | "viewer" };
   access_changed: { userId: string; from: "editor" | "viewer"; to: "editor" | "viewer" };

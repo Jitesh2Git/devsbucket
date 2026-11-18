@@ -3,7 +3,7 @@
 import type { SharedItem } from "@devsbucket/db/shared-with-me";
 import type { TransferOffer } from "@devsbucket/db/transfers";
 import { roleLabel } from "@devsbucket/shared/sharing";
-import { Download, LogOut, MoreHorizontal, Users } from "lucide-react";
+import { Download, FolderDown, LogOut, MoreHorizontal, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
@@ -37,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { downloadFolderZip } from "@/lib/zip-download";
 
 type SharedListProps = {
   items: SharedItem[];
@@ -149,6 +150,15 @@ const SharedList = ({ items, offers, opened }: SharedListProps) => {
                           </a>
                         </DropdownMenuItem>
                         <CopyMenuItem item={item} />
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    {item.type === "folder" && (
+                      <>
+                        <DropdownMenuItem onSelect={() => downloadFolderZip(item)}>
+                          <FolderDown />
+                          Download as ZIP
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                       </>
                     )}

@@ -39,7 +39,9 @@ export const activityText = (line: ActivityLine, names: Record<string, string>) 
     case "deleted_forever":
       return `deleted ${quoted(line.metadata.name)} forever`;
     case "downloaded":
-      return "downloaded it";
+      return line.metadata.files === undefined
+        ? "downloaded it"
+        : `downloaded it as a ZIP (${line.metadata.files} ${line.metadata.files === 1 ? "file" : "files"})`;
     case "shared":
       return `shared it with ${person(line.metadata.userId)} as ${as(line.metadata.role)}`;
     case "access_changed":

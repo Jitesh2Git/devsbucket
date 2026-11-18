@@ -10,6 +10,9 @@ import {
   quotaMessage,
   trashDaysLeft,
   uploadLimitError,
+  ZIP_MAX_BYTES,
+  ZIP_MAX_FILES,
+  zipLimitError,
 } from "./limits.ts";
 
 const noOps = { classA: 0, classB: 0 };
@@ -69,6 +72,25 @@ describe("uploadLimitError", () => {
         ops: { classA: FREE_OPS.classA, classB: 0 },
       }),
     ).toBe("Files can be up to 100 MB.");
+  });
+});
+
+describe("zipLimitError", () => {
+  it("allows a folder up to the caps", () => {
+    expect(zipLimitError({ files: ZIP_MAX_FILES, bytes: ZIP_MAX_BYTES, ops: noOps })).toBeNull();
+  });
+
+  it("refuses an empty folder, one over a cap, and blocked operations", () => {
+    expect(zipLimitError({ files: 0, bytes: 0, ops: noOps })).toBe(
+      "This folder has no files to download.",
+    );
+    expect(zipLimitError({ files: ZIP_MAX_FILES + 1, bytes: 10, ops: noOps })).toMatch(
+      /^This folder is too big to download as a ZIP \(1001 files, 10 B\)/,
+    );
+    expect(zipLimitError({ files: 1, bytes: ZIP_MAX_BYTES + 1, ops: noOps })).toMatch(/too big/);
+    expect(
+      zipLimitError({ files: 1, bytes: 1, ops: { classA: 0, classB: FREE_OPS.classB } }),
+    ).toMatch(/paused until next month/);
   });
 });
 
