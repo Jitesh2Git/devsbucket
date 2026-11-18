@@ -56,11 +56,11 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 
 ## Drive extras (Phase 5, decision 0017)
 
-- **Search:** Cmd+K (Ctrl+K) searches the names of every file and folder you can open (your drive and what's shared with you), not their contents. Typo-tolerant through Postgres `pg_trgm`.
+- **Search:** Cmd+K (Ctrl+K) searches the names of every file and folder you can open (your drive and what's shared with you), not their contents. Typo-tolerant through Postgres `pg_trgm` (a missing or extra letter matches; swapped letters don't).
 - **Recent:** the files you opened (editor or preview), newest first, the last 50 you still have access to.
 - **Activity panel:** an item's own activity log, for the Owner and Editors (`view_activity`).
 - **Make a copy:** files only, any role (decision 0012); the copy goes next to the original if you may upload there, otherwise to the top of your My Drive, and counts against the quota of the drive it lands in. Its versions aren't copied.
-- **ZIP download:** a whole folder, any role, streamed by the web app straight from storage; up to 1 GB and 1,000 files per ZIP.
+- **ZIP download:** a whole folder, any role, streamed by the web app straight from storage, not compressed (CPU on the 2-core VM matters more than bandwidth); up to 1 GB and 1,000 files per ZIP.
 - **Not planned:** stars, Tiptap notes, searching file contents.
 
 ## Notifications
