@@ -79,6 +79,10 @@ export const items = pgTable(
       .where(sql`${table.parentId} is null and ${table.trashedAt} is null`),
     // Trash view.
     index("items_trash_idx").on(table.ownerId, table.trashedAt).where(sql`${table.trashRoot}`),
+    // Search by name (Phase 5, decision 0017): trigrams of the lowercased
+    // name, for `like '%…%'` and similarity. Needs the pg_trgm extension
+    // (created by the migration that adds this index).
+    index("items_name_trgm_idx").using("gin", sql`lower(${table.name}) gin_trgm_ops`),
     // Worker: abandoned uploads.
     index("items_pending_idx")
       .on(table.status, table.createdAt)
