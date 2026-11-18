@@ -63,6 +63,10 @@ describe("activityText", () => {
       "created a share link for Viewers, until 2026-12-01",
     );
     expect(activityText(line("version_saved"), names)).toBe('saved version 4: "Fix intro"');
+    expect(activityText(line("downloaded"), names)).toBe("downloaded it");
+    expect(
+      activityText({ action: "downloaded", actorId: ADA, metadata: { files: 3 } }, names),
+    ).toBe("downloaded it as a ZIP (3 files)");
   });
 
   it("says when a name is missing, and when someone removed their own access", () => {

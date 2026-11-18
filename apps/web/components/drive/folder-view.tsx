@@ -11,6 +11,7 @@ import NewFolderDialog from "@/components/drive/new-folder-dialog";
 import OwnershipOfferActions from "@/components/drive/ownership-offer-actions";
 import ShareButton from "@/components/drive/share-button";
 import UploadButton from "@/components/drive/upload-button";
+import ZipDownloadButton from "@/components/drive/zip-download-button";
 
 type FolderViewProps = {
   // null = the top level of My Drive.
@@ -70,6 +71,7 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
           )}
         </div>
         <div className="flex shrink-0 gap-2">
+          {current && can(access, "download") && <ZipDownloadButton folder={current} />}
           {current && actions.share && <ShareButton folder={current} />}
           {canUpload && <UploadButton parentId={folderId} />}
           {canUpload && <NewFileDialog parentId={folderId} />}

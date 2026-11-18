@@ -58,6 +58,25 @@ export const uploadLimitError = (input: {
   return null;
 };
 
+// ZIP download of a folder (Phase 5, decision 0017): streamed by the web
+// app, one storage read per file, so it's capped.
+export const ZIP_MAX_FILES = 1000;
+export const ZIP_MAX_BYTES = 1 * GiB;
+
+// Why a folder can't be downloaded as a ZIP, or null when it can.
+export const zipLimitError = (input: { files: number; bytes: number; ops: OpsCount }) => {
+  if (input.files === 0) {
+    return "This folder has no files to download.";
+  }
+  if (input.files > ZIP_MAX_FILES || input.bytes > ZIP_MAX_BYTES) {
+    return `This folder is too big to download as a ZIP (${input.files} files, ${formatBytes(input.bytes)}). The limit is ${ZIP_MAX_FILES} files and ${formatBytes(ZIP_MAX_BYTES)}: download smaller folders.`;
+  }
+  if (opsLevel(input.ops) === "block") {
+    return "ZIP downloads are paused until next month: the app reached its storage limit for this month.";
+  }
+  return null;
+};
+
 // Multipart uploads: 10 MB parts, so a 100 MB file is at most 10 of them.
 export const PART_SIZE = 10 * MiB;
 
