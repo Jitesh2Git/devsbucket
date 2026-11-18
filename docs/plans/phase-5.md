@@ -88,8 +88,8 @@ Each is one branch and PR. Order chosen by the user: small to big.
 
 ## Open questions (to answer during the steps)
 
-- **Step 1:** record a view from the file page's server render or from a server action the client calls once (a render with a side effect runs again on refresh and for prefetches); keep 100 rows per person or fewer.
-- **Step 3:** whether a copy into someone else's folder sends the owner a "files added" notification (like an upload) or nothing (like New file).
-- **Step 4:** `client-zip` or `archiver` (measured); whether the 1 GB / 1,000 files caps fit the 2-core VM, and whether a long download blocks other requests in `next start`.
-- **Step 5:** Drizzle and `gin_trgm_ops` in the schema; how a non-text file found by search opens its preview; whether `word_similarity` at 0.4 finds the typos we expect without noise.
+- **Step 1:** record a view from the file page's server render or from a server action the client calls once (a render with a side effect runs again on refresh and for prefetches); keep 100 rows per person or fewer. Answered: a `<RecordView>` client component calls a server action from an effect (prefetches don't count; coming back to a hidden page does); 100 rows kept, 50 shown.
+- **Step 3:** whether a copy into someone else's folder sends the owner a "files added" notification (like an upload) or nothing (like New file). Answered: like an upload ("files added"); nothing when it lands in your own drive.
+- **Step 4:** `client-zip` or `archiver` (measured); whether the 1 GB / 1,000 files caps fit the 2-core VM, and whether a long download blocks other requests in `next start`. Answered: `client-zip` (no compression: 0.7 s of CPU per 200 MB against 2.2–5.5 s with deflate; memory flat at ~60 MB above the start); the stream is asynchronous I/O, so other requests keep being served, but many parallel ZIPs on the VM weren't measured (Phase 6).
+- **Step 5:** Drizzle and `gin_trgm_ops` in the schema; how a non-text file found by search opens its preview; whether `word_similarity` at 0.4 finds the typos we expect without noise. Answered: ``index(…).using("gin", sql`lower(name) gin_trgm_ops`)`` works, but the migration needs `CREATE EXTENSION pg_trgm` added by hand; the palette mounts its own preview; 0.45 (a missing or extra letter matches, swapped letters don't).
 - **Phase 6:** a long ZIP stream through Caddy (timeouts); `pg_trgm` in the prod database (same image, so it should just be there).

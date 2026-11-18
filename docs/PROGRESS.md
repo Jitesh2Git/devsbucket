@@ -429,7 +429,7 @@ Full plan: `docs/plans/phase-4.md` (design, data model, Hocuspocus in realtime, 
 - [x] Phase 5: the activity panel reads `edited`, `version_saved`, `version_restored` (step 2); making a copy (step 3). Tiptap notes dropped (decision 0017).
 - [ ] Phase 6: `/collab` behind Caddy (same `wss://` site as the events socket); realtime holds ~6× a big file's size in memory while it's open (100 MB → ~630 MB) on the 12 GB VM.
 
-## Phase 5: Drive extras (in progress)
+## Phase 5: Drive extras (done, `v0.5.0`)
 
 Full plan: `docs/plans/phase-5.md` (design, step table, tests). Decision: 0017 (no Tiptap notes and no stars; search by name; the simplest shape of Recent, the activity panel, making a copy and ZIP download).
 
@@ -470,10 +470,22 @@ Full plan: `docs/plans/phase-5.md` (design, step table, tests). Decision: 0017 (
   - Note: tests: `search.test.ts`, `search.db.test.ts` (own items ordered, never trashed or someone else's, inside a shared folder, location and owner, a typo, `%` not a wildcard), e2e `search.spec.ts` (two people: empty box, typo, private file not found, Enter opens a folder, a click opens a text file, recent files, the button, an image's preview).
   - Gotcha: the palette's two TanStack queries first shared a key shape (`["search", "recent"]` and `["search", query]`), so searching for the word "recent" would have read the recent list's cache; results use `["search", "results", query]`.
   - Gotcha: shadcn's `CommandItem` ends with a hidden check icon that also has `ml-auto`, so a second `ml-auto` element sat in the middle of the row; the name gets `flex-1` instead (seen in a headless screenshot).
-- [ ] 6. **Review:** CLAUDE.md, diagrams, follow-ups, tag `v0.5.0`
+- [x] 6. **Review:** CLAUDE.md, diagrams, follow-ups, tag `v0.5.0`
+  - Note: one branch, `chore/phase-5-review`: CLAUDE.md (a "Drive extras" convention for the five features, pnpm's one-day rule under Machine), LOCKED.md "Drive extras" made exact (which typos match, ZIPs not compressed), diagram 2 (Viewers can always download and copy, decision 0012, and ZIP; activity next to version history) and diagram 6 (the trigram index), the plan's open questions answered, and the follow-ups below. After it's merged, the annotated tag `v0.5.0` goes on its merge commit on `main`.
+  - Note: Turbo stays at 2.11.11 for now: 2.11.12 and 2.11.13 (17 and 18 November; no breaking changes, `turbo.json` changes or codemods in their notes) were less than a day old, and pnpm refuses those. The `minimumReleaseAgeExclude` entries for 2.11.11 (added when it was new) are removed: it's a week old, so they did nothing.
+
+### Follow-ups from Phase 5
+
+- [ ] Turbo 2.11.13 once it's a day old (`pnpm up -w turbo@latest`, check the changelog; a patch, no codemod).
+- [ ] Search: names only; swapped letters (`ntoes`) don't match; 20 results, no "more"; a non-text result opens a preview in the palette, not in its folder.
+- [ ] Recent: files only (not folders); "Opened" shows the date, not the time.
+- [ ] Activity panel: a folder shows its own rows only, not what happened inside it; an open dialog doesn't refresh live.
+- [ ] Make a copy: files only, into the same folder or your My Drive (no folder picker, no folder copies); a text file is copied as of its last saved version; not on the file page.
+- [ ] ZIP download: no progress in the page (the browser's download bar is the progress); not compressed; capped at 1,000 files / 1 GB; no "select several items".
+- [ ] Phase 6: a long ZIP stream through Caddy (timeouts) and several ZIPs at once on the 2-core VM; `pg_trgm` comes with the same Postgres image there.
 
 ## Later phases (summary)
 
 4. **Live editing:** see Phase 4 above
-5. **Drive extras:** see Phase 5 above (Tiptap notes and stars dropped, decision 0017)
+5. **Drive extras:** see Phase 5 above
 6. **Prod:** Oracle VM, Caddy, DuckDNS, R2, backups, deploy pipeline

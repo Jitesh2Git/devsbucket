@@ -49,9 +49,9 @@ flowchart TB
 flowchart LR
   h0["Action"] ~~~ h1["Viewer"] ~~~ h2["Editor"] ~~~ h3["Owner"]
   r1["View, preview, see live cursors"] ~~~ r1v["✓"] ~~~ r1e["✓"] ~~~ r1o["✓"]
-  r2["Download or make a copy"] ~~~ r2v["✓ unless owner turns off"] ~~~ r2e["✓"] ~~~ r2o["✓"]
+  r2["Download, download a folder as ZIP, make a copy"] ~~~ r2v["✓"] ~~~ r2e["✓"] ~~~ r2o["✓"]
   r3["Edit content, upload, create folders, rename, move"] ~~~ r3v["—"] ~~~ r3e["✓"] ~~~ r3o["✓"]
-  r4["Move to trash, restore, view version history"] ~~~ r4v["—"] ~~~ r4e["✓"] ~~~ r4o["✓"]
+  r4["Move to trash, restore, view version history and activity"] ~~~ r4v["—"] ~~~ r4e["✓"] ~~~ r4o["✓"]
   r5["Share, change access, create share links"] ~~~ r5v["—"] ~~~ r5e["✓ unless owner turns off"] ~~~ r5o["✓"]
   r6["Delete forever, transfer ownership, sharing settings"] ~~~ r6v["—"] ~~~ r6e["—"] ~~~ r6o["✓"]
 ```
@@ -145,6 +145,7 @@ Value sets used below:
 
 - `Item.type`: folder, file (no `note`: Tiptap notes were dropped, decision 0017)
 - `ItemView`: one row per person per file opened, the newest 100 kept per person; powers Recent and the empty search box (decision 0017).
+- `Item.name` has a trigram index (`pg_trgm`, on `lower(name)`) for Cmd+K search by name (decision 0017).
 - `Item.status`: pending, ready
 - `ItemVersion.kind`: auto, named, restore. `CollabState` is the live Yjs document; the newest 5 automatic versions per file are kept, with version 1, named and restore ones, outside the quota (decisions 0015, 0016; decision 0013).
 - `Item.trashedAt` is set on a trashed item and everything inside it; `trashRoot` marks the one the user trashed (decision 0007). Total stored bytes is `sum(User.storageUsed)`, not a counter.
