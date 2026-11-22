@@ -350,8 +350,12 @@ const LiveSession = ({
       </div>
       <div
         className={cn(
-          "grid h-[calc(100vh-14rem)] min-h-80 gap-2",
-          markdown && view === "Split" && "md:grid-cols-2",
+          // On a phone the sidebar sits above, so the height is a share of
+          // the screen; from md up, the screen minus the header and toolbar.
+          "grid h-[70dvh] min-h-80 gap-2 md:h-[calc(100vh-14rem)]",
+          // Split: two equal halves, stacked on a phone, side by side from
+          // md up. Without fixed rows a long preview squeezed the editor.
+          markdown && view === "Split" && "grid-rows-2 md:grid-cols-2 md:grid-rows-1",
         )}
       >
         {/* Hidden, not removed, in Preview: the editor keeps its connection. */}
@@ -376,9 +380,12 @@ const LiveSession = ({
           )}
         </div>
         {markdown && view !== "Editor" && (
+          // `relative`: footnotes add an sr-only (absolutely placed) heading,
+          // which otherwise is placed against the page, past the end of the
+          // text, and stretches the whole page.
           <section
             aria-label="Preview"
-            className="min-h-0 overflow-y-auto rounded-md border px-6 py-4"
+            className="relative min-h-0 overflow-y-auto rounded-md border px-6 py-4"
           >
             <MarkdownPreview text={previewText} />
           </section>

@@ -12,9 +12,15 @@ const ActivityButton = ({ item }: { item: ActivityTarget }) => {
   useLayoutEffect(() => () => setOpen(false), []);
   return (
     <>
-      <Button variant="outline" className="shrink-0" onClick={() => setOpen(true)}>
+      {/* Icon only on a phone, so the file name has room. */}
+      <Button
+        variant="outline"
+        className="shrink-0"
+        aria-label="Activity"
+        onClick={() => setOpen(true)}
+      >
         <ActivityIcon />
-        Activity
+        <span className="hidden sm:inline">Activity</span>
       </Button>
       <ActivityDialog item={open ? item : null} onClose={() => setOpen(false)} />
     </>

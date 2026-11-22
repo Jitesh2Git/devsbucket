@@ -160,8 +160,13 @@ const VersionHistoryDialog = ({ file, currentText, restore }: VersionHistoryDial
             No versions yet. One is saved when everyone leaves the file, or with Save version.
           </p>
         ) : (
-          <div className="grid min-h-0 flex-1 gap-4 md:grid-cols-[16rem_1fr]">
-            <ul aria-label="Versions" className="flex min-h-0 flex-col gap-1 overflow-y-auto">
+          // On a phone the list is a short scrolling strip and the comparison
+          // takes the rest; from md up they sit side by side.
+          <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-4 md:grid-cols-[16rem_1fr] md:grid-rows-1">
+            <ul
+              aria-label="Versions"
+              className="flex min-h-0 flex-col gap-1 overflow-y-auto max-md:max-h-36"
+            >
               {versions.map((version) => (
                 <li key={version.id}>
                   <button
