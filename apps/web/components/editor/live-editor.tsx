@@ -30,6 +30,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { versionsQueryKey } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
+import { codeFontFamily, followCodeFont } from "./code-font";
 import MarkdownPreview from "./markdown-preview";
 import monaco from "./monaco";
 import SaveVersionDialog from "./save-version-dialog";
@@ -160,6 +161,7 @@ const LiveSession = ({
       scrollBeyondLastLine: false,
       automaticLayout: true,
       fontSize: 13,
+      fontFamily: codeFontFamily(),
       // Room for a name label above a cursor on the first line.
       padding: { top: 18 },
     });
@@ -244,7 +246,11 @@ const LiveSession = ({
       doc.getText(COLLAB_TEXT).observe(updatePreview);
     }
 
+    // The theme's code font, also when it changes while the file is open.
+    const stopFont = followCodeFont((fontFamily) => editor.updateOptions({ fontFamily }));
+
     return () => {
+      stopFont();
       providerRef.current = null;
       docRef.current = null;
       clearTimeout(previewTimer);

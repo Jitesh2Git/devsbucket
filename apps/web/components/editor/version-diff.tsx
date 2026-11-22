@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { codeFontFamily, followCodeFont } from "./code-font";
 import monaco from "./monaco";
 
 type VersionDiffProps = {
@@ -29,13 +30,17 @@ const VersionDiff = ({ path, original, modified }: VersionDiffProps) => {
       minimap: { enabled: false },
       scrollBeyondLastLine: false,
       fontSize: 13,
+      fontFamily: codeFontFamily(),
       // Side by side when there's room (Monaco's default needs 900 px,
       // more than the history dialog has), one column on narrow screens.
       useInlineViewWhenSpaceIsLimited: true,
       renderSideBySideInlineBreakpoint: 600,
     });
     diff.setModel({ original: left, modified: right });
+    // The theme's code font, also when it changes while the dialog is open.
+    const stopFont = followCodeFont((fontFamily) => diff.updateOptions({ fontFamily }));
     return () => {
+      stopFont();
       diff.dispose();
       left.dispose();
       right.dispose();

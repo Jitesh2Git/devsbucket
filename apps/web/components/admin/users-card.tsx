@@ -195,7 +195,7 @@ const UsersCard = ({ users, me }: UsersCardProps) => {
                         <MoreHorizontal />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-max">
                       {canAdmin(me, "reset_password", user) && (
                         <DropdownMenuItem onSelect={() => show({ kind: "reset", user })}>
                           Reset password

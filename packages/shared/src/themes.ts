@@ -4,7 +4,8 @@
 // - To add a theme, copy one entry in THEMES, give it a new `id` and `name`,
 //   and change its `accent` (the main colour) and `greys` (backgrounds,
 //   text, borders). `light` / `dark` override single colours when the
-//   generated ones aren't quite right.
+//   generated ones aren't quite right. `listed: false` keeps a theme off the
+//   Themes page's list (the Default one, which Reset brings back).
 // - To add a font, add it to FONTS here and load it in apps/web/lib/fonts.ts
 //   with the same CSS variable.
 // - DEFAULT_THEME_SETTINGS is what everyone gets until they pick their own.
@@ -34,8 +35,11 @@ export type Theme = {
   id: string;
   name: string;
   note: string;
-  // Body font; headings use it too unless someone picks another.
+  // Body font; headings use it too unless the theme or someone picks another.
   font: FontId;
+  headingFont?: FontId;
+  // Shown as a card on the Themes page (default true).
+  listed?: boolean;
   accent: {
     hue: number;
     chroma: number;
@@ -89,6 +93,19 @@ export const GREYS = {
 export type GreysId = keyof typeof GREYS;
 
 export const THEMES: Theme[] = [
+  // The app's own look (chosen 2026-11-22): a blue accent on cool zinc
+  // greys, Sora with IBM Plex Sans headings. Not in the list; Reset on the
+  // Themes page brings it back.
+  {
+    id: "default",
+    name: "Default",
+    note: "Blue on cool zinc greys. Sora, with IBM Plex Sans headings.",
+    font: "sora",
+    headingFont: "ibm-plex-sans",
+    listed: false,
+    accent: { hue: 250, chroma: 0.19, light: 0.56, dark: 0.7 },
+    greys: { hue: 286, chroma: 0.006 },
+  },
   {
     id: "neutral",
     name: "Neutral",
@@ -263,16 +280,15 @@ export type ThemeSettings = {
   sidebar: "plain" | "tinted" | "contrast";
 };
 
-// Everyone's starting point (chosen 2026-11-22): Nord with a blue accent on
-// zinc greys, Sora, IBM Plex Sans headings, Fira Code.
+// Everyone's starting point: the Default theme as it is, with Fira Code.
 export const DEFAULT_THEME_SETTINGS: ThemeSettings = {
-  theme: "nord",
-  accentHue: 250,
-  greys: "zinc",
-  fontSans: "sora",
-  fontHeading: "ibm-plex-sans",
+  theme: "default",
+  accentHue: null,
+  greys: null,
+  fontSans: null,
+  fontHeading: null,
   fontMono: "fira-code",
-  size: "m",
+  size: "s",
   radius: 0.75,
   density: "normal",
   surface: "flat",

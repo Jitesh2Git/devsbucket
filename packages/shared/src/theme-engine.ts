@@ -150,7 +150,10 @@ export function buildTheme(
     `var(${(fonts.find((f) => f.id === (id ?? fallback)) ?? fonts[0])?.variable})`;
   const body = settings.fontSans ?? theme.font;
   vars["--app-font-sans"] = font(body, theme.font);
-  vars["--app-font-heading"] = font(settings.fontHeading, body);
+  vars["--app-font-heading"] = font(
+    settings.fontHeading ?? (settings.fontSans === null ? (theme.headingFont ?? null) : null),
+    body,
+  );
   vars["--app-font-mono"] = font(settings.fontMono, "geist-mono");
   vars["--app-font-size"] = { s: "15px", m: "16px", l: "17px" }[settings.size] ?? "16px";
   vars["--radius"] = `${settings.radius}rem`;

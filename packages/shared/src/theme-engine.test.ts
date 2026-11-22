@@ -30,6 +30,15 @@ describe("buildTheme", () => {
     });
   });
 
+  it("gives the Default theme IBM Plex Sans headings, until a text font is picked", () => {
+    expect(build({}).vars["--app-font-heading"]).toBe("var(--font-ibm-plex-sans)");
+    // A new text font is used for headings too, unless a heading font is picked.
+    expect(build({ fontSans: "inter" }).vars["--app-font-heading"]).toBe("var(--font-inter)");
+    expect(build({ fontSans: "inter", fontHeading: "outfit" }).vars["--app-font-heading"]).toBe(
+      "var(--font-outfit)",
+    );
+  });
+
   it("uses a theme's own colours and font when nothing is chosen on top", () => {
     const { vars } = build({
       theme: "nord",
