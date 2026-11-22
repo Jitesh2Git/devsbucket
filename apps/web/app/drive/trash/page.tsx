@@ -27,7 +27,7 @@ const TrashPage = () => {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Trash</h1>
+        <h1 className="min-w-0 truncate text-2xl font-semibold tracking-tight">Trash</h1>
         <ViewToggle />
       </div>
       <Suspense>

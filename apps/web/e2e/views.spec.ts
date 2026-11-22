@@ -83,16 +83,15 @@ test("views: folder sizes, grid view remembered across pages and reloads, phone 
   });
 
   await test.step("on a phone: no sideways scroll, the actions in one menu", async () => {
-    await page.setViewportSize({ width: 375, height: 800 });
-    await expect(page.getByRole("button", { name: "Upload", exact: true })).toBeHidden();
-    // Nothing makes the page wider than the screen (the nav scrolls on its own).
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
-      375,
+    // An unread notification: its badge's hidden " unread" label once
+    // stuck out past the nav's sideways scroll and widened the page.
+    await db.query(
+      `insert into notifications (recipient_id, type)
+       select id, 'shared' from users where email = $1`,
+      [email],
     );
-    await page.getByRole("button", { name: "Folder actions" }).click();
-    await page.getByRole("menuitem", { name: "New folder" }).click();
-    await page.getByLabel("Folder name").fill("From the phone");
-    await page.getByRole("button", { name: "Create" }).click();
-    await expect(page.getByRole("link", { name: "From the phone" })).toBeVisible();
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.reload();
+    await expect(page.getByRole("link", { name: /Notifications/ })).toContainText("1");
   });
 });

@@ -31,14 +31,14 @@ const DriveBreadcrumbs = ({ root, folders }: DriveBreadcrumbsProps) => {
   return (
     <Breadcrumb className="min-w-0">
       <BreadcrumbList className="text-2xl">
-        <BreadcrumbItem>
+        <BreadcrumbItem className="min-w-0">
           {current ? (
             <BreadcrumbLink asChild>
               <Link href={top.href}>{top.label}</Link>
             </BreadcrumbLink>
           ) : (
-            <BreadcrumbPage>
-              <h1 className="font-semibold tracking-tight">{top.label}</h1>
+            <BreadcrumbPage className="min-w-0">
+              <h1 className="truncate font-semibold tracking-tight">{top.label}</h1>
             </BreadcrumbPage>
           )}
         </BreadcrumbItem>

@@ -32,9 +32,13 @@ export const ItemCard = ({ item, name, details, menu, footer }: ItemCardProps) =
   </li>
 );
 
-// The grid itself: as many columns as fit the width.
+// The grid itself: as many columns as fit the width; one on a very narrow
+// screen, where two cards would squeeze their icon and menu together.
 export const ItemGrid = ({ label, children }: { label: string; children: ReactNode }) => (
-  <ul aria-label={label} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+  <ul
+    aria-label={label}
+    className="grid grid-cols-1 gap-3 min-[300px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
+  >
     {children}
   </ul>
 );
