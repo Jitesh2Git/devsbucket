@@ -94,4 +94,38 @@ test("views: folder sizes, grid view remembered across pages and reloads, phone 
     await page.reload();
     await expect(page.getByRole("link", { name: /Notifications/ })).toContainText("1");
   });
+
+  await test.step("deep folders: one line, the middle folded into a menu", async () => {
+    // From the phone folder: A > B > C > D, then open D.
+    const { rows } = await db.query<{ id: string }>(
+      `with owner as (select id from users where email = $1),
+       a as (insert into items (owner_id, type, name) select id, 'folder', 'Level A' from owner returning id, owner_id),
+       b as (insert into items (owner_id, parent_id, type, name) select owner_id, id, 'folder', 'Level B' from a returning id, owner_id),
+       c as (insert into items (owner_id, parent_id, type, name) select owner_id, id, 'folder', 'Level C' from b returning id, owner_id)
+       insert into items (owner_id, parent_id, type, name) select owner_id, id, 'folder', 'Level D' from c returning id`,
+      [email],
+    );
+    await page.goto(`/drive/folders/${rows[0]?.id}`);
+    const crumbs = page.getByRole("navigation", { name: "breadcrumb" });
+    await expect(crumbs.getByRole("heading", { name: "Level D" })).toBeVisible();
+    // On a phone: "… › Level D", everything above in the menu.
+    await expect(crumbs.getByRole("link", { name: "My Drive" })).toHaveCount(0);
+    await expect(crumbs.getByRole("link", { name: "Level C" })).toHaveCount(0);
+    await crumbs.getByRole("button", { name: "More folders" }).click();
+    await expect(page.getByRole("menuitem")).toHaveText([
+      "My Drive",
+      "Level A",
+      "Level B",
+      "Level C",
+    ]);
+    await page.keyboard.press("Escape");
+    // Wider: "My Drive › … › Level C › Level D", A and B in the menu.
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect(crumbs.getByRole("link", { name: "Level C" })).toBeVisible();
+    await expect(crumbs.getByRole("link", { name: "Level A" })).toHaveCount(0);
+    await crumbs.getByRole("button", { name: "More folders" }).click();
+    await expect(page.getByRole("menuitem")).toHaveText(["Level A", "Level B"]);
+    await page.getByRole("menuitem", { name: "Level A" }).click();
+    await expect(page.getByRole("heading", { name: "Level A" })).toBeVisible();
+  });
 });

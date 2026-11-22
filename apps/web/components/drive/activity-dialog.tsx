@@ -109,6 +109,10 @@ const ActivityDialog = ({
               <DialogDescription className="truncate">{item.name}</DialogDescription>
             </DialogHeader>
             <ActivityLog item={item} />
+            {/* Activity is a permanent log (LOCKED.md): nothing is dropped. */}
+            <p className="text-xs text-muted-foreground">
+              The whole history, newest first, kept for as long as the item exists.
+            </p>
           </>
         )}
       </DialogContent>
