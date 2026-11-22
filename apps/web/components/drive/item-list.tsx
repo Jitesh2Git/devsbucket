@@ -5,7 +5,7 @@ import { formatBytes } from "@devsbucket/shared/bytes";
 import type { Cursor } from "@devsbucket/shared/item";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { FolderOpen } from "lucide-react";
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { loadItems } from "@/app/drive/actions";
 import { restoreItem, trashItem } from "@/app/drive/trash-actions";
@@ -65,6 +65,22 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
   });
 
   const rows = query.data.pages.flatMap((page) => page.items);
+
+  // Infinite scroll: an empty element after the last row; when it scrolls
+  // into view, the next 50 load. Watched again after each page, so a tall
+  // window keeps loading until the list fills it. Not after a failed page:
+  // "Try again" retries by hand, rather than in a loop.
+  const { hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage } = query;
+  const endOfList = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const end = endOfList.current;
+    if (!end || !hasNextPage || isFetchingNextPage || isFetchNextPageError) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) void fetchNextPage();
+    });
+    observer.observe(end);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage]);
 
   const queryClient = useQueryClient();
   const refresh = () =>
@@ -177,19 +193,17 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
           ))}
         </TableBody>
       </Table>
-      {query.hasNextPage && (
-        <Button
-          variant="outline"
-          onClick={() => query.fetchNextPage()}
-          disabled={query.isFetchingNextPage}
-        >
-          {query.isFetchingNextPage && <Spinner />}
-          Load more
-        </Button>
+      {hasNextPage && !isFetchNextPageError && (
+        <div ref={endOfList} className="flex h-10 w-full items-center justify-center">
+          {isFetchingNextPage && <Spinner aria-label="Loading more" />}
+        </div>
       )}
-      {query.isFetchNextPageError && (
-        <p role="alert" className="text-sm text-destructive">
-          Couldn't load more. Try again.
+      {isFetchNextPageError && (
+        <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
+          Couldn't load more.
+          <Button variant="outline" size="sm" onClick={() => fetchNextPage()}>
+            Try again
+          </Button>
         </p>
       )}
       <FilePreview file={previewing} onClose={() => setPreviewing(null)} />

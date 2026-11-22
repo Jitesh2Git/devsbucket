@@ -491,6 +491,7 @@ UI and style fixes asked for after `v0.5.0`, on one branch (`fix/ui-polish`) wit
 - [x] **Sticky header:** `site-header.tsx` is `sticky top-0 z-40` (dialogs, menus and toasts are `z-50` and up) with a background, frosted (`bg-background/80` + `backdrop-blur`) where the browser supports `backdrop-filter`.
 - [x] **Only the list scrolls:** from `md` up the drive layout is `h-[calc(100dvh-3.5rem)]` (the header is `h-14`); the sidebar stays and the right column is `overflow-y-auto` as a fallback for other pages. A folder page fills it (`md:h-full`, top rows `shrink-0`) and only its list scrolls (`flex-1 min-h-0 overflow-y-auto`), with sticky column headings. Phones keep normal page scrolling.
   - Gotcha: shadcn's table wrapper is `overflow-x-auto`, which makes it the scroll box a sticky `thead` sticks to; from `md` up it's `overflow-visible` (names truncate, so it never scrolls sideways). With collapsed borders the line under the headings scrolled away with the rows, so it's an inset shadow on the `th` cells.
+- [x] **Infinite scroll:** a folder's next 50 rows load when an empty marker after the last row scrolls into view (`IntersectionObserver` in `item-list.tsx`), instead of a "Load more" button. The observer is set up again after each page, so a tall window keeps loading until it's full; after a failed page it stops and shows "Try again". The spinner is labelled "Loading more" (the e2e waits for it to go). Server paging (keyset, 50) is unchanged.
 
 ## Later phases (summary)
 
