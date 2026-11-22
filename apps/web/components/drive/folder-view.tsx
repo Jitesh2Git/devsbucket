@@ -48,11 +48,13 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
   // In someone else's tree, moves stay below the top-most shared folder.
   const moveRoot = breadcrumbs.root === "shared" ? (breadcrumbs.folders[0] ?? null) : null;
 
+  // From md up the page is as tall as the drive's right column: the banner,
+  // breadcrumbs and buttons stay, and only the list scrolls (drive layout).
   const page: ReactNode = (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 md:h-full">
       {current && transfer?.toUserId === userId && (
         // Offered to you (decision 0009): the banner on the item.
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm">
           <span>{transfer.fromName} wants to make you the owner of this folder.</span>
           <OwnershipOfferActions
             offer={{ id: transfer.id, itemId: current.id, name: current.name }}
@@ -60,7 +62,7 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex shrink-0 items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-3">
           <DriveBreadcrumbs root={breadcrumbs.root} folders={breadcrumbs.folders} />
           {access.role !== "owner" && access.role !== null && (
@@ -78,13 +80,21 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
           {can(access, "create_folder") && <NewFolderDialog parentId={folderId} />}
         </div>
       </div>
-      <ItemList
-        parentId={folderId}
-        firstPage={firstPage}
-        actions={actions}
-        canAdd={canUpload}
-        moveRoot={moveRoot}
-      />
+      {/* The column headings stick to the top of the list while it scrolls.
+          The table's own wrapper scrolls sideways (overflow-x-auto), which
+          would make it the headings' scroll box instead, so from md up it
+          doesn't: the name cells truncate, so the table never needs to.
+          The line under the headings is a shadow: with collapsed borders,
+          the row's own border line would scroll away with the rows. */}
+      <div className="md:min-h-0 md:flex-1 md:overflow-y-auto md:**:data-[slot=table-container]:overflow-visible md:[&_thead]:sticky md:[&_thead]:top-0 md:[&_thead]:z-10 md:[&_thead]:bg-background md:[&_th]:shadow-[inset_0_-1px_0_var(--color-border)]">
+        <ItemList
+          parentId={folderId}
+          firstPage={firstPage}
+          actions={actions}
+          canAdd={canUpload}
+          moveRoot={moveRoot}
+        />
+      </div>
     </div>
   );
 
