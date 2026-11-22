@@ -7,6 +7,7 @@ import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { logActivity } from "./activity.ts";
 import { db, type Executor } from "./client.ts";
+import { sizeOrFolderSize } from "./folder-size.ts";
 import { takenNames } from "./items.ts";
 import { users } from "./schema/auth.ts";
 import { items } from "./schema/items.ts";
@@ -66,7 +67,9 @@ export const listTrash = async (userId: string, tx: Executor = db) => {
       id: items.id,
       type: items.type,
       name: items.name,
-      size: items.size,
+      mimeType: items.mimeType,
+      // A folder's size is what was trashed with it.
+      size: sizeOrFolderSize("items"),
       ownerId: items.ownerId,
       trashedAt: items.trashedAt,
       trashedBy: items.trashedBy,

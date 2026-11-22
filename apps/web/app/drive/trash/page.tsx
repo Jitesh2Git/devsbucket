@@ -3,6 +3,7 @@ import { trashDaysLeft } from "@devsbucket/shared/limits";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import TrashList from "@/components/drive/trash-list";
+import ViewToggle from "@/components/drive/view-toggle";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Trash" };
@@ -25,7 +26,10 @@ const TrashContent = async () => {
 const TrashPage = () => {
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Trash</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-semibold tracking-tight">Trash</h1>
+        <ViewToggle />
+      </div>
       <Suspense>
         <TrashContent />
       </Suspense>

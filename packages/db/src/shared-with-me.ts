@@ -6,6 +6,7 @@ import type { GrantRole } from "@devsbucket/shared/sharing";
 import { sql } from "drizzle-orm";
 import { logActivity } from "./activity.ts";
 import { db, type Executor } from "./client.ts";
+import { sizeOrFolderSize } from "./folder-size.ts";
 import { users } from "./schema/auth.ts";
 import { items } from "./schema/items.ts";
 import { itemPermissions } from "./schema/permissions.ts";
@@ -50,7 +51,8 @@ export const listSharedWithMe = async (userId: string, tx: Executor = db) => {
         min(at) as shared_at
       from roots group by item_id
     )
-    select i.id, i.type, i.name, i.mime_type, i.size, r.role, r.shared_at,
+    select i.id, i.type, i.name, i.mime_type, r.role, r.shared_at,
+      ${sizeOrFolderSize("i")} as size,
       u.name as owner_name
     from per_item r
     join ${items} i on i.id = r.item_id

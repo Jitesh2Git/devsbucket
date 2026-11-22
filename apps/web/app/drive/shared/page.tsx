@@ -3,6 +3,7 @@ import { listOffersTo } from "@devsbucket/db/transfers";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import SharedList from "@/components/drive/shared-list";
+import ViewToggle from "@/components/drive/view-toggle";
 import { resolveFile } from "@/lib/items";
 import { requireSession } from "@/lib/session";
 
@@ -38,7 +39,10 @@ const SharedContent = async ({
 const SharedPage = ({ searchParams }: PageProps<"/drive/shared">) => {
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Shared with me</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-semibold tracking-tight">Shared with me</h1>
+        <ViewToggle />
+      </div>
       <Suspense>
         <SharedContent searchParams={searchParams} />
       </Suspense>

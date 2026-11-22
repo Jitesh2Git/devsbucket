@@ -11,6 +11,7 @@ import NewFolderDialog from "@/components/drive/new-folder-dialog";
 import OwnershipOfferActions from "@/components/drive/ownership-offer-actions";
 import ShareButton from "@/components/drive/share-button";
 import UploadButton from "@/components/drive/upload-button";
+import ViewToggle from "@/components/drive/view-toggle";
 import ZipDownloadButton from "@/components/drive/zip-download-button";
 
 type FolderViewProps = {
@@ -62,7 +63,8 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
         </div>
       )}
 
-      <div className="flex shrink-0 items-center justify-between gap-4">
+      {/* On a phone the buttons wrap under the breadcrumbs. */}
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <div className="flex min-w-0 items-center gap-3">
           <DriveBreadcrumbs root={breadcrumbs.root} folders={breadcrumbs.folders} />
           {access.role !== "owner" && access.role !== null && (
@@ -72,7 +74,8 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
             </span>
           )}
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex flex-wrap gap-2">
+          <ViewToggle />
           {current && can(access, "download") && <ZipDownloadButton folder={current} />}
           {current && actions.share && <ShareButton folder={current} />}
           {canUpload && <UploadButton parentId={folderId} />}

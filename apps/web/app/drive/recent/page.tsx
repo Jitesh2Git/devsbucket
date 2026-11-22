@@ -2,6 +2,7 @@ import { listRecent } from "@devsbucket/db/recent";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import RecentList from "@/components/drive/recent-list";
+import ViewToggle from "@/components/drive/view-toggle";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Recent" };
@@ -15,7 +16,10 @@ const RecentContent = async () => {
 const RecentPage = () => {
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Recent</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-semibold tracking-tight">Recent</h1>
+        <ViewToggle />
+      </div>
       <Suspense>
         <RecentContent />
       </Suspense>

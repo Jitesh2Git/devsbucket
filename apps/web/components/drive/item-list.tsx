@@ -11,6 +11,7 @@ import { loadItems } from "@/app/drive/actions";
 import { restoreItem, trashItem } from "@/app/drive/trash-actions";
 import ActivityDialog, { type ActivityTarget } from "@/components/drive/activity-dialog";
 import FilePreview, { type PreviewFile } from "@/components/drive/file-preview";
+import { ItemCard, ItemGrid } from "@/components/drive/item-grid";
 import ItemMenu, { type ItemActions } from "@/components/drive/item-menu";
 import ItemName from "@/components/drive/item-name";
 import MoveDialog, { type Crumb } from "@/components/drive/move-dialog";
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/table";
 import { itemsQueryKey } from "@/lib/query-keys";
 import { restoreMessage } from "@/lib/restore-message";
+import { useViewMode } from "@/lib/view-mode";
 
 type ItemListProps = {
   parentId: string | null;
@@ -65,6 +67,7 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
   });
 
   const rows = query.data.pages.flatMap((page) => page.items);
+  const view = useViewMode();
 
   // Infinite scroll: an empty element after the last row; when it scrolls
   // into view, the next 50 load. Watched again after each page, so a tall
@@ -136,6 +139,20 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
     [],
   );
 
+  // The same ⋯ menu in both views.
+  const menu = (item: (typeof rows)[number]) => (
+    <ItemMenu
+      item={item}
+      actions={actions}
+      onPreview={() => setPreviewing(item)}
+      onRename={() => setRenaming(item)}
+      onMove={() => setMoving(item)}
+      onShare={() => setSharing(item)}
+      onActivity={() => setViewingActivity(item)}
+      onTrash={() => moveToTrash(item)}
+    />
+  );
+
   if (rows.length === 0) {
     return (
       <Empty className="border border-dashed">
@@ -154,45 +171,55 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead className="w-28 text-right">Size</TableHead>
-            <TableHead className="w-36">Modified</TableHead>
-            <TableHead className="w-12">
-              <span className="sr-only">Actions</span>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell className="max-w-0">
-                <ItemName item={item} onPreview={() => setPreviewing(item)} />
-              </TableCell>
-              <TableCell className="text-right text-muted-foreground">
-                {item.size === null ? "—" : formatBytes(item.size)}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                <LocalDate value={item.updatedAt} />
-              </TableCell>
-              <TableCell>
-                <ItemMenu
-                  item={item}
-                  actions={actions}
-                  onPreview={() => setPreviewing(item)}
-                  onRename={() => setRenaming(item)}
-                  onMove={() => setMoving(item)}
-                  onShare={() => setSharing(item)}
-                  onActivity={() => setViewingActivity(item)}
-                  onTrash={() => moveToTrash(item)}
-                />
-              </TableCell>
+      {view === "grid" ? (
+        <div className="w-full">
+          <ItemGrid label="Files and folders">
+            {rows.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                name={<ItemName item={item} card onPreview={() => setPreviewing(item)} />}
+                details={
+                  <>
+                    {item.size === null ? "—" : formatBytes(item.size)} ·{" "}
+                    <LocalDate value={item.updatedAt} />
+                  </>
+                }
+                menu={menu(item)}
+              />
+            ))}
+          </ItemGrid>
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead className="w-28 text-right">Size</TableHead>
+              <TableHead className="w-36">Modified</TableHead>
+              <TableHead className="w-12">
+                <span className="sr-only">Actions</span>
+              </TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {rows.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell className="max-w-0">
+                  <ItemName item={item} onPreview={() => setPreviewing(item)} />
+                </TableCell>
+                <TableCell className="text-right text-muted-foreground">
+                  {item.size === null ? "—" : formatBytes(item.size)}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  <LocalDate value={item.updatedAt} />
+                </TableCell>
+                <TableCell>{menu(item)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
       {hasNextPage && !isFetchNextPageError && (
         <div ref={endOfList} className="flex h-10 w-full items-center justify-center">
           {isFetchingNextPage && <Spinner aria-label="Loading more" />}
