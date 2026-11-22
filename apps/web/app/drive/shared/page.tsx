@@ -38,8 +38,9 @@ const SharedContent = async ({
 
 const SharedPage = ({ searchParams }: PageProps<"/drive/shared">) => {
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-4">
+    // From md up the page fills the drive column and only the list scrolls.
+    <div className="flex flex-col gap-4 md:h-full">
+      <div className="flex shrink-0 items-center justify-between gap-4">
         <h1 className="min-w-0 truncate text-2xl font-semibold tracking-tight">Shared with me</h1>
         <ViewToggle />
       </div>

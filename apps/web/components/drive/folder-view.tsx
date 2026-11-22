@@ -9,6 +9,7 @@ import FolderActions from "@/components/drive/folder-actions";
 import ItemList from "@/components/drive/item-list";
 import OwnershipOfferActions from "@/components/drive/ownership-offer-actions";
 import ViewToggle from "@/components/drive/view-toggle";
+import { SCROLL_LIST } from "@/lib/scroll-list";
 
 type FolderViewProps = {
   // null = the top level of My Drive.
@@ -86,13 +87,8 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
           />
         </div>
       </div>
-      {/* The column headings stick to the top of the list while it scrolls.
-          The table's own wrapper scrolls sideways (overflow-x-auto), which
-          would make it the headings' scroll box instead, so from md up it
-          doesn't: the name cells truncate, so the table never needs to.
-          The line under the headings is a shadow: with collapsed borders,
-          the row's own border line would scroll away with the rows. */}
-      <div className="md:min-h-0 md:flex-1 md:overflow-y-auto md:**:data-[slot=table-container]:overflow-visible md:[&_thead]:sticky md:[&_thead]:top-0 md:[&_thead]:z-10 md:[&_thead]:bg-background md:[&_th]:shadow-[inset_0_-1px_0_var(--color-border)]">
+      {/* Only the list scrolls (SCROLL_LIST, lib/scroll-list.ts). */}
+      <div className={SCROLL_LIST}>
         <ItemList
           parentId={folderId}
           firstPage={firstPage}

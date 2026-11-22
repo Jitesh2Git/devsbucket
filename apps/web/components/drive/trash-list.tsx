@@ -37,6 +37,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { restoreMessage } from "@/lib/restore-message";
+import { SCROLL_LIST } from "@/lib/scroll-list";
 import { useViewMode } from "@/lib/view-mode";
 
 export type TrashRow = TrashedItem & { daysLeft: number };
@@ -139,8 +140,8 @@ const TrashList = ({ items, userId }: { items: TrashRow[]; userId: string }) => 
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-4">
+    <div className="flex flex-col gap-4 md:min-h-0 md:flex-1">
+      <div className="flex shrink-0 items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground">
           Items in the trash are deleted forever after 30 days.
         </p>
@@ -148,70 +149,72 @@ const TrashList = ({ items, userId }: { items: TrashRow[]; userId: string }) => 
           Empty trash
         </Button>
       </div>
-      {view === "grid" ? (
-        <ItemGrid label="Trash">
-          {items.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              name={<span className="truncate font-medium">{item.name}</span>}
-              details={
-                <>
-                  {item.size === null ? "—" : formatBytes(item.size)} ·{" "}
-                  {item.daysLeft === 1 ? "1 day left" : `${item.daysLeft} days left`}
-                </>
-              }
-              footer={buttons(item)}
-            />
-          ))}
-        </ItemGrid>
-      ) : (
-        <Table
-          // On a phone the table keeps room for the names (900 px) and
-          // scrolls sideways in its own box; from md up it fits the column.
-          className="min-w-225 md:min-w-0"
-        >
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className="w-40">Was in</TableHead>
-              <TableHead className="w-32">Trashed by</TableHead>
-              <TableHead className="w-24 text-right">Size</TableHead>
-              <TableHead className="w-28">Days left</TableHead>
-              <TableHead className="w-56">
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className={SCROLL_LIST}>
+        {view === "grid" ? (
+          <ItemGrid label="Trash">
             {items.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell className="max-w-0">
-                  <span className="flex items-center gap-2">
-                    <ItemIcon item={item} className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="truncate">{item.name}</span>
-                  </span>
-                </TableCell>
-                <TableCell className="max-w-0 truncate text-muted-foreground">
-                  {item.parentName ?? (item.ownerId === userId ? "My Drive" : "—")}
-                </TableCell>
-                <TableCell className="max-w-0 truncate text-muted-foreground">
-                  {item.trashedBy === userId ? "You" : (item.trashedByName ?? "—")}
-                </TableCell>
-                <TableCell className="text-right text-muted-foreground">
-                  {item.size === null ? "—" : formatBytes(item.size)}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {item.daysLeft === 1 ? "1 day" : `${item.daysLeft} days`}
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-1">{buttons(item)}</div>
-                </TableCell>
-              </TableRow>
+              <ItemCard
+                key={item.id}
+                item={item}
+                name={<span className="truncate font-medium">{item.name}</span>}
+                details={
+                  <>
+                    {item.size === null ? "—" : formatBytes(item.size)} ·{" "}
+                    {item.daysLeft === 1 ? "1 day left" : `${item.daysLeft} days left`}
+                  </>
+                }
+                footer={buttons(item)}
+              />
             ))}
-          </TableBody>
-        </Table>
-      )}
+          </ItemGrid>
+        ) : (
+          <Table
+            // On a phone the table keeps room for the names (900 px) and
+            // scrolls sideways in its own box; from md up it fits the column.
+            className="min-w-225 md:min-w-0"
+          >
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead className="w-40">Was in</TableHead>
+                <TableHead className="w-32">Trashed by</TableHead>
+                <TableHead className="w-24 text-right">Size</TableHead>
+                <TableHead className="w-28">Days left</TableHead>
+                <TableHead className="w-56">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="max-w-0">
+                    <span className="flex items-center gap-2">
+                      <ItemIcon item={item} className="size-4 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{item.name}</span>
+                    </span>
+                  </TableCell>
+                  <TableCell className="max-w-0 truncate text-muted-foreground">
+                    {item.parentName ?? (item.ownerId === userId ? "My Drive" : "—")}
+                  </TableCell>
+                  <TableCell className="max-w-0 truncate text-muted-foreground">
+                    {item.trashedBy === userId ? "You" : (item.trashedByName ?? "—")}
+                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {item.size === null ? "—" : formatBytes(item.size)}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {item.daysLeft === 1 ? "1 day" : `${item.daysLeft} days`}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-1">{buttons(item)}</div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
       <AlertDialog open={confirming !== null} onOpenChange={(open) => !open && setConfirming(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -39,6 +39,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SCROLL_LIST } from "@/lib/scroll-list";
 import { useViewMode } from "@/lib/view-mode";
 import { downloadFolderZip } from "@/lib/zip-download";
 
@@ -110,7 +111,7 @@ const SharedList = ({ items, offers, opened }: SharedListProps) => {
   const preview = <FilePreview file={previewing} onClose={() => setPreviewing(null)} />;
 
   const offerList = offers.length > 0 && (
-    <section className="flex flex-col gap-2 rounded-lg border p-4">
+    <section className="flex shrink-0 flex-col gap-2 rounded-lg border p-4">
       <h2 className="text-sm font-medium">Ownership offers</h2>
       <ul aria-label="Ownership offers" className="flex flex-col divide-y">
         {offers.map((offer) => (
@@ -151,64 +152,66 @@ const SharedList = ({ items, offers, opened }: SharedListProps) => {
     <>
       {offerList}
 
-      {view === "grid" ? (
-        <ItemGrid label="Shared with me">
-          {items.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              name={<ItemName item={item} card onPreview={() => setPreviewing(item)} />}
-              details={
-                <>
-                  {item.ownerName} · {item.size === null ? "—" : formatBytes(item.size)}
-                </>
-              }
-              menu={<SharedItemMenu item={item} onLeave={() => leave(item)} />}
-            />
-          ))}
-        </ItemGrid>
-      ) : (
-        <Table
-          // On a phone the table keeps room for the names (760 px) and
-          // scrolls sideways in its own box; from md up it fits the column.
-          className="min-w-190 md:min-w-0"
-        >
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className="w-40">Owner</TableHead>
-              <TableHead className="w-24">Your role</TableHead>
-              <TableHead className="w-28 text-right">Size</TableHead>
-              <TableHead className="w-36">Shared</TableHead>
-              <TableHead className="w-12">
-                <span className="sr-only">Actions</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className={SCROLL_LIST}>
+        {view === "grid" ? (
+          <ItemGrid label="Shared with me">
             {items.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell className="max-w-0">
-                  <ItemName item={item} onPreview={() => setPreviewing(item)} />
-                </TableCell>
-                <TableCell className="max-w-0 truncate text-muted-foreground">
-                  {item.ownerName}
-                </TableCell>
-                <TableCell className="text-muted-foreground">{roleLabel(item.role)}</TableCell>
-                <TableCell className="text-right text-muted-foreground">
-                  {item.size === null ? "—" : formatBytes(item.size)}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  <LocalDate value={item.sharedAt} />
-                </TableCell>
-                <TableCell>
-                  <SharedItemMenu item={item} onLeave={() => leave(item)} />
-                </TableCell>
-              </TableRow>
+              <ItemCard
+                key={item.id}
+                item={item}
+                name={<ItemName item={item} card onPreview={() => setPreviewing(item)} />}
+                details={
+                  <>
+                    {item.ownerName} · {item.size === null ? "—" : formatBytes(item.size)}
+                  </>
+                }
+                menu={<SharedItemMenu item={item} onLeave={() => leave(item)} />}
+              />
             ))}
-          </TableBody>
-        </Table>
-      )}
+          </ItemGrid>
+        ) : (
+          <Table
+            // On a phone the table keeps room for the names (760 px) and
+            // scrolls sideways in its own box; from md up it fits the column.
+            className="min-w-190 md:min-w-0"
+          >
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead className="w-40">Owner</TableHead>
+                <TableHead className="w-24">Your role</TableHead>
+                <TableHead className="w-28 text-right">Size</TableHead>
+                <TableHead className="w-36">Shared</TableHead>
+                <TableHead className="w-12">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="max-w-0">
+                    <ItemName item={item} onPreview={() => setPreviewing(item)} />
+                  </TableCell>
+                  <TableCell className="max-w-0 truncate text-muted-foreground">
+                    {item.ownerName}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{roleLabel(item.role)}</TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {item.size === null ? "—" : formatBytes(item.size)}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <LocalDate value={item.sharedAt} />
+                  </TableCell>
+                  <TableCell>
+                    <SharedItemMenu item={item} onLeave={() => leave(item)} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
       {preview}
     </>
   );
