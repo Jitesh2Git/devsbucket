@@ -15,6 +15,7 @@ export type SharingPerson = {
   userId: string;
   name: string;
   email: string;
+  username: string | null;
   // What they can do here: the higher of their grant here and above.
   role: GrantRole;
   // Their grant on this item (changeable here), if any.
@@ -31,6 +32,7 @@ export const listSharing = async (itemId: string, tx: Executor = db) => {
     owner_id: string;
     owner_name: string;
     owner_email: string;
+    owner_username: string | null;
     own_editors_can_share: boolean;
     editors_can_share: boolean;
   }>(sql`
@@ -43,6 +45,7 @@ export const listSharing = async (itemId: string, tx: Executor = db) => {
       where c.depth < 100
     )
     select u.id as owner_id, u.name as owner_name, u.email as owner_email,
+      u.username as owner_username,
       i.editors_can_share as own_editors_can_share,
       (select bool_and(editors_can_share) from chain) as editors_can_share
     from ${items} i join ${users} u on u.id = i.owner_id
@@ -56,6 +59,7 @@ export const listSharing = async (itemId: string, tx: Executor = db) => {
     user_id: string;
     name: string;
     email: string;
+    username: string | null;
     role: GrantRole;
     source_id: string;
     source_name: string;
@@ -68,7 +72,7 @@ export const listSharing = async (itemId: string, tx: Executor = db) => {
       from ${items} i join chain c on i.id = c.parent_id
       where c.depth < 100
     )
-    select p.user_id, u.name, u.email, p.role, c.id as source_id, c.name as source_name, c.depth
+    select p.user_id, u.name, u.email, u.username, p.role, c.id as source_id, c.name as source_name, c.depth
     from ${itemPermissions} p
     join chain c on c.id = p.item_id
     join ${users} u on u.id = p.user_id
@@ -81,6 +85,7 @@ export const listSharing = async (itemId: string, tx: Executor = db) => {
       userId: grant.user_id,
       name: grant.name,
       email: grant.email,
+      username: grant.username,
       role: grant.role,
       direct: null,
       inherited: null,
@@ -103,7 +108,12 @@ export const listSharing = async (itemId: string, tx: Executor = db) => {
   }
 
   return {
-    owner: { userId: item.owner_id, name: item.owner_name, email: item.owner_email },
+    owner: {
+      userId: item.owner_id,
+      name: item.owner_name,
+      email: item.owner_email,
+      username: item.owner_username,
+    },
     people: [...people.values()].sort((a, b) => a.name.localeCompare(b.name)),
     settings: {
       own: { editorsCanShare: item.own_editors_can_share },

@@ -47,7 +47,7 @@ const ExpiryMenu = ({ label, text, value, onChange, disabled }: ExpiryMenuProps)
           <ChevronDown />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="w-max">
         <DropdownMenuRadioGroup
           value={value}
           onValueChange={(next) => onChange(linkExpirySchema.parse(next))}

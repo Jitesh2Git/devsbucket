@@ -175,7 +175,7 @@ const TrashList = ({ items, userId }: { items: TrashRow[]; userId: string }) => 
           >
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
+                <TableHead className="w-56">Name</TableHead>
                 <TableHead className="w-40">Was in</TableHead>
                 <TableHead className="w-32">Trashed by</TableHead>
                 <TableHead className="w-24 text-right">Size</TableHead>

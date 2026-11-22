@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import OAuthError from "@/components/auth/oauth-error";
+import NameForm from "@/components/profile/name-form";
 import NotificationSettings from "@/components/profile/notification-settings";
 import SignInMethods from "@/components/profile/sign-in-methods";
 import UsernameForm from "@/components/profile/username-form";
@@ -42,8 +43,21 @@ const ProfileContent = async () => {
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
+              <CardTitle>Name</CardTitle>
+              <CardDescription>
+                What people see when you share with them, in activity and in an open file.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <NameForm name={name} />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
               <CardTitle>Username</CardTitle>
-              <CardDescription>How other people find you when sharing files.</CardDescription>
+              <CardDescription>
+                People can share with you by typing @username instead of your email.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <UsernameForm username={username ?? null} />

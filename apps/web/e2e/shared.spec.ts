@@ -29,7 +29,7 @@ test("shared with me: top-most list, browsing, role-aware buttons, quota, trash,
   };
   const shareWithBob = async (role: "Editor" | "Viewer") => {
     const dialog = owner.getByRole("dialog");
-    await dialog.getByPlaceholder("Email of someone with an account").fill(bobEmail);
+    await dialog.getByPlaceholder("Email or @username").fill(bobEmail);
     await dialog.getByRole("button", { name: "Role for new person" }).click();
     await owner.getByRole("menuitemradio", { name: role }).click();
     await dialog.getByRole("button", { name: "Share", exact: true }).click();

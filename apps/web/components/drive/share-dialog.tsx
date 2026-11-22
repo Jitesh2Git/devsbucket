@@ -50,7 +50,7 @@ const ShareBody = ({ item, sharing }: ShareBodyProps) => {
   const [busy, setBusy] = useState(false);
   const form = useForm<ShareFormInput>({
     resolver: zodResolver(shareFormSchema),
-    defaultValues: { email: "", role: "viewer" },
+    defaultValues: { person: "", role: "viewer" },
   });
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: sharingQueryKey(item.id) });
@@ -71,10 +71,10 @@ const ShareBody = ({ item, sharing }: ShareBodyProps) => {
   const onShare = async (values: ShareFormInput) => {
     const result = await shareWithPerson({ itemId: item.id, ...values });
     if (result.error !== null) {
-      form.setError("email", { message: result.error });
+      form.setError("person", { message: result.error });
       return;
     }
-    form.reset({ email: "", role: values.role });
+    form.reset({ person: "", role: values.role });
     toast.success(
       result.result === "added"
         ? `Shared with ${result.name}`
@@ -87,18 +87,20 @@ const ShareBody = ({ item, sharing }: ShareBodyProps) => {
     <div className="flex flex-col gap-6">
       <form onSubmit={form.handleSubmit(onShare)} className="flex items-start gap-2">
         <Controller
-          name="email"
+          name="person"
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="share-email" className="sr-only">
-                Email
+              <FieldLabel htmlFor="share-person" className="sr-only">
+                Email or username
               </FieldLabel>
               <Input
                 {...field}
-                id="share-email"
-                type="email"
-                placeholder="Email of someone with an account"
+                id="share-person"
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                placeholder="Email or @username"
                 aria-invalid={fieldState.invalid}
                 disabled={form.formState.isSubmitting}
               />
@@ -130,7 +132,10 @@ const ShareBody = ({ item, sharing }: ShareBodyProps) => {
                 {sharing.owner.name}
                 {sharing.owner.userId === sharing.me && " (you)"}
               </div>
-              <div className="truncate text-xs text-muted-foreground">{sharing.owner.email}</div>
+              <div className="truncate text-xs text-muted-foreground">
+                {sharing.owner.username && `@${sharing.owner.username} · `}
+                {sharing.owner.email}
+              </div>
             </div>
             <span className="text-sm text-muted-foreground">Owner</span>
           </li>
@@ -141,7 +146,10 @@ const ShareBody = ({ item, sharing }: ShareBodyProps) => {
                   {person.name}
                   {person.userId === sharing.me && " (you)"}
                 </div>
-                <div className="truncate text-xs text-muted-foreground">{person.email}</div>
+                <div className="truncate text-xs text-muted-foreground">
+                  {person.username && `@${person.username} · `}
+                  {person.email}
+                </div>
                 {person.direct && person.inherited && person.role !== person.direct && (
                   <div className="text-xs text-muted-foreground">
                     {roleLabel(person.role)} from {person.inherited.name}

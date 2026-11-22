@@ -25,6 +25,12 @@ export const findUserByEmail = async (email: string) => {
   return user ?? null;
 };
 
+// Usernames are stored in lowercase (usernameSchema).
+export const findUserByUsername = async (username: string) => {
+  const [user] = await db.select().from(users).where(eq(users.username, username.toLowerCase()));
+  return user ?? null;
+};
+
 // Just someone's display name (for messages like "Not enough space in
 // Ada's drive"), or null if there's no such user.
 export const getUserName = async (userId: string) => {

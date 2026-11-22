@@ -44,7 +44,7 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 - **Viewer:** can view, preview, see live cursors read-only, and download or copy (always: decision 0012).
 - **Editor:** can do everything a Viewer can, plus edit, upload, create folders, rename, move, trash, restore, see version history, and share or create share links (the owner can turn sharing off).
 - **Owner:** can do everything an Editor can, plus delete forever, transfer ownership and change sharing settings.
-- **Sharing (decision 0008):** with existing accounts by email. Share links work for signed-in users only. Items shared with you appear in a flat Shared with me list (no shortcuts). Someone signed in without access sees "You need access" and can request it.
+- **Sharing (decisions 0008, 0019):** with existing accounts, by email or @username. Share links work for signed-in users only. Items shared with you appear in a flat Shared with me list (no shortcuts). Someone signed in without access sees "You need access" and can request it.
 - **Transfer (decision 0009):** offered to someone who has access, who accepts; the whole tree moves to the top of their My Drive and the old owner keeps Editor access.
 
 ## Editing
@@ -66,7 +66,7 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 ## Look and feel (decision 0018)
 
 - **Themes:** 14 colour and font styles, listed as data in `@devsbucket/shared/themes`; anyone can pick one and change its accent, greys, fonts, text size, corners, density, surfaces, main button and sidebar on the Themes page.
-- **Default:** Nord with a blue accent (hue 250) on zinc greys; Sora, IBM Plex Sans for headings, Fira Code for code; 0.75rem corners.
+- **Default:** its own theme, not one of the 14 listed: a blue accent (hue 250) on zinc greys; Sora, IBM Plex Sans for headings, Fira Code for code; 0.75rem corners. Reset on the Themes page brings it back.
 - **Per browser:** kept in `localStorage`, like light/dark and grid/table; not on the account.
 - **Fonts:** self-hosted with `next/font`, only the default's preloaded.
 
