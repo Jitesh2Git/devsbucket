@@ -5,14 +5,10 @@ import { roleLabel } from "@devsbucket/shared/sharing";
 import type { ReactNode } from "react";
 import DriveBreadcrumbs from "@/components/drive/drive-breadcrumbs";
 import DropZone from "@/components/drive/drop-zone";
+import FolderActions from "@/components/drive/folder-actions";
 import ItemList from "@/components/drive/item-list";
-import NewFileDialog from "@/components/drive/new-file-dialog";
-import NewFolderDialog from "@/components/drive/new-folder-dialog";
 import OwnershipOfferActions from "@/components/drive/ownership-offer-actions";
-import ShareButton from "@/components/drive/share-button";
-import UploadButton from "@/components/drive/upload-button";
 import ViewToggle from "@/components/drive/view-toggle";
-import ZipDownloadButton from "@/components/drive/zip-download-button";
 
 type FolderViewProps = {
   // null = the top level of My Drive.
@@ -63,8 +59,10 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
         </div>
       )}
 
-      {/* On a phone the buttons wrap under the breadcrumbs. */}
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      {/* On a phone: the breadcrumbs, the view toggle and one ⋯ menu.
+          From md up the buttons can wrap under the breadcrumbs when the
+          column is narrow. */}
+      <div className="flex shrink-0 items-center justify-between gap-x-4 gap-y-2 md:flex-wrap">
         <div className="flex min-w-0 items-center gap-3">
           <DriveBreadcrumbs root={breadcrumbs.root} folders={breadcrumbs.folders} />
           {access.role !== "owner" && access.role !== null && (
@@ -74,13 +72,18 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
             </span>
           )}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex shrink-0 gap-2 md:shrink md:flex-wrap">
           <ViewToggle />
-          {current && can(access, "download") && <ZipDownloadButton folder={current} />}
-          {current && actions.share && <ShareButton folder={current} />}
-          {canUpload && <UploadButton parentId={folderId} />}
-          {canUpload && <NewFileDialog parentId={folderId} />}
-          {can(access, "create_folder") && <NewFolderDialog parentId={folderId} />}
+          <FolderActions
+            parentId={folderId}
+            folder={current ?? null}
+            can={{
+              upload: canUpload,
+              createFolder: can(access, "create_folder"),
+              share: actions.share,
+              download: can(access, "download"),
+            }}
+          />
         </div>
       </div>
       {/* The column headings stick to the top of the list while it scrolls.

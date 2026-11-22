@@ -4,7 +4,9 @@ import { connectTestDb } from "./test-db";
 
 // Folder sizes (what's inside, at any depth) and the Table/Grid toggle,
 // remembered per browser and shared by every list.
-test("views: folder sizes, grid view remembered across pages and reloads", async ({ page }) => {
+test("views: folder sizes, grid view remembered across pages and reloads, phone toolbar", async ({
+  page,
+}) => {
   const db = await connectTestDb();
   const email = await test.step("sign up", () => signUpWithOwnInvite(page, db, "views"));
 
@@ -78,5 +80,19 @@ test("views: folder sizes, grid view remembered across pages and reloads", async
     await page.getByRole("link", { name: "My Drive" }).first().click();
     await expect(page.getByRole("row", { name: /Photos/ })).toContainText("1 KB");
     await expect(grid).toHaveCount(0);
+  });
+
+  await test.step("on a phone: no sideways scroll, the actions in one menu", async () => {
+    await page.setViewportSize({ width: 375, height: 800 });
+    await expect(page.getByRole("button", { name: "Upload", exact: true })).toBeHidden();
+    // Nothing makes the page wider than the screen (the nav scrolls on its own).
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      375,
+    );
+    await page.getByRole("button", { name: "Folder actions" }).click();
+    await page.getByRole("menuitem", { name: "New folder" }).click();
+    await page.getByLabel("Folder name").fill("From the phone");
+    await page.getByRole("button", { name: "Create" }).click();
+    await expect(page.getByRole("link", { name: "From the phone" })).toBeVisible();
   });
 });

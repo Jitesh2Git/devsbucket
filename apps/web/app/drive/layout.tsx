@@ -17,7 +17,7 @@ const DriveLayout = ({ children }: LayoutProps<"/drive">) => {
     <RealtimeProvider>
       <UploadsProvider>
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:h-[calc(100dvh-3.5rem)] md:flex-row">
-          <aside className="flex shrink-0 flex-col gap-6 md:w-56 md:overflow-y-auto">
+          <aside className="flex min-w-0 shrink-0 flex-col gap-6 md:w-56 md:overflow-y-auto">
             <SearchPalette />
             <DriveNav />
             {/* Same height as the meter, so the sidebar doesn't jump while it loads. */}

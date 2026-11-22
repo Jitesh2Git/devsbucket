@@ -3,9 +3,8 @@
 import { type NewFileFormInput, newFileFormSchema } from "@devsbucket/shared/editing";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { FilePlus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { createTextFile } from "@/app/drive/actions";
 import { Button } from "@/components/ui/button";
@@ -25,11 +24,17 @@ import { itemsQueryKey } from "@/lib/query-keys";
 
 const EMPTY: NewFileFormInput = { name: "" };
 
+type NewFileDialogProps = {
+  parentId: string | null;
+  // Opened from the folder's toolbar or its ⋯ menu on phones (FolderActions).
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
 // "New file" (Phase 4): names an empty text file, then opens it in the editor.
-const NewFileDialog = ({ parentId }: { parentId: string | null }) => {
+const NewFileDialog = ({ parentId, open, onOpenChange: setOpen }: NewFileDialogProps) => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
   const form = useForm<NewFileFormInput>({
     resolver: zodResolver(newFileFormSchema),
     defaultValues: EMPTY,
@@ -42,10 +47,7 @@ const NewFileDialog = ({ parentId }: { parentId: string | null }) => {
     if (!next) form.reset(EMPTY);
   };
   useLayoutEffect(() => {
-    return () => {
-      setOpen(false);
-      form.reset(EMPTY);
-    };
+    return () => form.reset(EMPTY);
   }, [form]);
 
   const onSubmit = async ({ name }: NewFileFormInput) => {
@@ -61,12 +63,6 @@ const NewFileDialog = ({ parentId }: { parentId: string | null }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <FilePlus />
-          New file
-        </Button>
-      </DialogTrigger>
       <DialogContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <fieldset disabled={form.formState.isSubmitting} className="min-w-0">
