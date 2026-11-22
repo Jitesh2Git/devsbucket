@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import OAuthError from "@/components/auth/oauth-error";
+import PageLoader from "@/components/page-loader";
 import NameForm from "@/components/profile/name-form";
 import NotificationSettings from "@/components/profile/notification-settings";
 import SignInMethods from "@/components/profile/sign-in-methods";
@@ -89,7 +90,7 @@ const ProfilePage = () => {
       <Suspense>
         <OAuthError />
       </Suspense>
-      <Suspense>
+      <Suspense fallback={<PageLoader />}>
         <ProfileContent />
       </Suspense>
     </div>

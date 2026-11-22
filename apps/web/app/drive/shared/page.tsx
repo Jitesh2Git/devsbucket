@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import SharedList from "@/components/drive/shared-list";
 import ViewToggle from "@/components/drive/view-toggle";
+import PageLoader from "@/components/page-loader";
 import { resolveFile } from "@/lib/items";
 import { requireSession } from "@/lib/session";
 
@@ -44,7 +45,7 @@ const SharedPage = ({ searchParams }: PageProps<"/drive/shared">) => {
         <h1 className="min-w-0 truncate text-2xl font-semibold tracking-tight">Shared with me</h1>
         <ViewToggle />
       </div>
-      <Suspense>
+      <Suspense fallback={<PageLoader />}>
         <SharedContent searchParams={searchParams} />
       </Suspense>
     </div>

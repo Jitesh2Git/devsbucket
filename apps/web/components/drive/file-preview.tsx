@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Download, SquarePen } from "lucide-react";
 import Link from "next/link";
 import { loadTextPreview } from "@/app/drive/preview-actions";
+import BucketLoader from "@/components/bucket-loader";
 import RecordView from "@/components/drive/record-view";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,7 +18,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Spinner } from "@/components/ui/spinner";
 
 export type PreviewFile = Pick<ListedItem, "id" | "name" | "mimeType" | "size">;
 
@@ -43,7 +43,7 @@ const TextPreview = ({ file }: { file: PreviewFile }) => {
   if (query.isPending) {
     return (
       <div className="flex justify-center py-12">
-        <Spinner />
+        <BucketLoader label="Loading the preview" />
       </div>
     );
   }

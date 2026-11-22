@@ -15,6 +15,7 @@ import {
   type SharingView,
   shareWithPerson,
 } from "@/app/drive/share-actions";
+import BucketLoader from "@/components/bucket-loader";
 import RoleMenu from "@/components/drive/role-menu";
 import ShareLinkSection from "@/components/drive/share-link-section";
 import ShareOwnershipSection from "@/components/drive/share-ownership-section";
@@ -265,7 +266,7 @@ const ShareContent = ({ item }: { item: ShareTarget }) => {
       </DialogHeader>
       {sharing.isPending ? (
         <div className="flex h-32 items-center justify-center">
-          <Spinner />
+          <BucketLoader label="Loading who has access" />
         </div>
       ) : sharing.isError ? (
         <p role="alert" className="text-sm text-muted-foreground">

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import PageLoader from "@/components/page-loader";
 import ThemePicker from "@/components/themes/theme-picker";
 import { requireSession } from "@/lib/session";
 
@@ -14,7 +15,7 @@ const ThemesContent = async () => {
 const ThemesPage = () => {
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-10">
-      <Suspense>
+      <Suspense fallback={<PageLoader />}>
         <ThemesContent />
       </Suspense>
     </div>

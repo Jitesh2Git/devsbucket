@@ -226,7 +226,9 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
       )}
       {hasNextPage && !isFetchNextPageError && (
         <div ref={endOfList} className="flex h-10 w-full items-center justify-center">
-          {isFetchingNextPage && <Spinner aria-label="Loading more" />}
+          {isFetchingNextPage && (
+            <Spinner aria-label="Loading more" className="text-muted-foreground" />
+          )}
         </div>
       )}
       {isFetchNextPageError && (

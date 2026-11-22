@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import FolderView from "@/components/drive/folder-view";
 import NeedAccess from "@/components/drive/need-access";
 import TrashedFolder from "@/components/drive/trashed-folder";
+import PageLoader from "@/components/page-loader";
 import { resolveItem } from "@/lib/items";
 import { requireSession } from "@/lib/session";
 
@@ -34,7 +35,7 @@ const FolderContent = async ({ params }: { params: Promise<{ folderId: string }>
 
 const FolderPage = ({ params }: PageProps<"/drive/folders/[folderId]">) => {
   return (
-    <Suspense>
+    <Suspense fallback={<PageLoader label="Loading the folder" fullHeight />}>
       <FolderContent params={params} />
     </Suspense>
   );

@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import InvitesCard from "@/components/admin/invites-card";
 import UsageCard from "@/components/admin/usage-card";
 import UsersCard from "@/components/admin/users-card";
+import PageLoader from "@/components/page-loader";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Admin" };
@@ -38,7 +39,7 @@ const AdminContent = async () => {
 const AdminPage = () => {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-12">
-      <Suspense>
+      <Suspense fallback={<PageLoader />}>
         <AdminContent />
       </Suspense>
     </div>

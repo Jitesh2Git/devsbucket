@@ -7,6 +7,7 @@ import { History, RotateCcw } from "lucide-react";
 import { useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
 import { loadVersions, loadVersionText } from "@/app/drive/version-actions";
+import BucketLoader from "@/components/bucket-loader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -151,7 +152,7 @@ const VersionHistoryDialog = ({ file, currentText, restore }: VersionHistoryDial
         </DialogHeader>
         {list.isPending ? (
           <div className="flex flex-1 items-center justify-center">
-            <Spinner />
+            <BucketLoader label="Loading versions" />
           </div>
         ) : list.isError ? (
           <p className="text-sm text-destructive">{list.error.message}</p>
@@ -236,7 +237,7 @@ const VersionHistoryDialog = ({ file, currentText, restore }: VersionHistoryDial
                 <div className="min-h-0 flex-1 overflow-hidden rounded-md border">
                   {original === undefined || modified === undefined ? (
                     <div className="flex h-full items-center justify-center">
-                      <Spinner />
+                      <BucketLoader label="Loading the comparison" />
                     </div>
                   ) : (
                     <VersionDiff

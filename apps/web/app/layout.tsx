@@ -1,6 +1,7 @@
 import { defaultTheme, themeBootScript } from "@devsbucket/shared/theme-engine";
 import type { Metadata } from "next";
-import type { CSSProperties } from "react";
+import { type CSSProperties, Suspense } from "react";
+import NavigationProgress from "@/components/navigation-progress";
 import QueryProvider from "@/components/query-provider";
 import SiteHeader from "@/components/site-header";
 import ThemeProvider from "@/components/theme-provider";
@@ -40,6 +41,10 @@ const RootLayout = ({ children }: LayoutProps<"/">) => {
           disableTransitionOnChange
         >
           <QueryProvider>
+            {/* Reads the URL (useSearchParams), so it waits in a Suspense. */}
+            <Suspense>
+              <NavigationProgress />
+            </Suspense>
             <SiteHeader />
             <main className="flex-1">{children}</main>
             <Toaster />

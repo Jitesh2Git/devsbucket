@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import LogoMark from "@/components/logo-mark";
 import ModeToggle from "@/components/mode-toggle";
 import UserMenu from "@/components/user-menu";
 
@@ -10,7 +11,8 @@ const SiteHeader = () => {
   return (
     <header className="sticky top-0 z-40 border-b bg-background supports-backdrop-filter:bg-background/80 supports-backdrop-filter:backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="font-semibold tracking-tight">
+        <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
+          <LogoMark />
           DevsBucket
         </Link>
         <div className="flex items-center gap-2">

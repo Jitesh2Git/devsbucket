@@ -519,6 +519,9 @@ UI and style fixes asked for after `v0.5.0`, on one branch (`fix/ui-polish`) wit
 
 - [x] **Only the list scrolls, everywhere:** Recent, Shared with me, Trash and Notifications work like folders: from `md` up the heading and buttons stay and only the list scrolls, with sticky column headings. The scroll box's classes are one constant, `SCROLL_LIST` (`lib/scroll-list.ts`, used by the folder page too); it's `relative` so sr-only text (the notifications' "(unread)") stays inside it.
 
+- [x] **Loaders and 404:** picked from a preview of options (all SVG and CSS drawn with the theme tokens, so they follow every theme in light and dark, and stop with "reduce motion"; no Lottie, whose colours are baked in). `BucketLoader` (the bucket drawing itself and filling) wherever content loads: page `<Suspense>` fallbacks (`PageLoader`) and the content spinners in dialogs, the preview and the editor; buttons, search results and "Loading more" (infinite scroll) keep `Spinner`. Switching pages: a top bar plus the header's bucket sloshing (`NavigationProgress` starts on in-app link clicks, ends on URL change, 15 s safety timeout). The 404 (`app/not-found.tsx`) is a terminal that curls the address and gets a 404 with links back. e2e: `loaders.spec.ts`.
+  - Gotcha: Next.js has no "navigation started" event; the bar listens for link clicks in the capture phase (before Link prevents the default) and skips new tabs, downloads, `/api/` links and the same URL.
+
 ## Later phases (summary)
 
 4. **Live editing:** see Phase 4 above

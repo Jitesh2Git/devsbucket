@@ -5,6 +5,7 @@ import { ChevronRight, Folder } from "lucide-react";
 import { Fragment, useState } from "react";
 import { toast } from "sonner";
 import { listFolders, moveItem } from "@/app/drive/item-actions";
+import BucketLoader from "@/components/bucket-loader";
 import type { ItemRef } from "@/components/drive/rename-dialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -108,7 +109,7 @@ const MovePicker = ({ item, fromParentId, root, onDone }: MovePickerProps) => {
       <div className="h-64 overflow-y-auto rounded-md border">
         {folders.isPending ? (
           <div className="flex h-full items-center justify-center">
-            <Spinner />
+            <BucketLoader label="Loading folders" />
           </div>
         ) : folders.isError ? (
           <p className="p-4 text-muted-foreground">{folders.error.message}</p>

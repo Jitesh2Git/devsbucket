@@ -213,3 +213,183 @@ html:not([data-sidebar="plain"]) [data-slot="drive-sidebar"] {
   border-radius: var(--radius-xl);
   padding: calc(var(--spacing) * 3);
 }
+
+/* Bucket loader (components/bucket-loader.tsx): the outline draws itself,
+   the accent fills it, then it clears and starts again. */
+.bucket-loader .bucket-outline,
+.bucket-loader .bucket-handle {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.bucket-loader .bucket-outline {
+  stroke: var(--foreground);
+  stroke-dasharray: 170;
+  animation: bucket-draw 2.4s ease-in-out infinite;
+}
+.bucket-loader .bucket-handle {
+  stroke: var(--muted-foreground);
+  stroke-dasharray: 50;
+  animation: bucket-draw-handle 2.4s ease-in-out infinite;
+}
+.bucket-loader .bucket-liquid {
+  fill: var(--primary);
+  opacity: 0.85;
+  animation: bucket-fill 2.4s ease-in-out infinite;
+}
+/* One 2.4 s loop: the outline draws (0–25%) while the fill starts rising
+   (from 12%, full by 45%), it holds, then both clear (80–100%). The fill
+   starting early means a quick page load still shows some water. */
+@keyframes bucket-draw {
+  0% {
+    stroke-dashoffset: 170;
+  }
+  25%,
+  80% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -170;
+  }
+}
+@keyframes bucket-draw-handle {
+  0%,
+  10% {
+    stroke-dashoffset: 50;
+  }
+  32%,
+  80% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -50;
+  }
+}
+@keyframes bucket-fill {
+  0%,
+  12% {
+    transform: translateY(40px);
+  }
+  45%,
+  82% {
+    transform: translateY(8px);
+  }
+  100% {
+    transform: translateY(40px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bucket-loader .bucket-outline,
+  .bucket-loader .bucket-handle,
+  .bucket-loader .bucket-liquid {
+    animation: none;
+  }
+  .bucket-loader .bucket-outline,
+  .bucket-loader .bucket-handle {
+    stroke-dashoffset: 0;
+  }
+  .bucket-loader .bucket-liquid {
+    transform: translateY(20px);
+  }
+}
+
+/* Switching pages (components/navigation-progress.tsx): the top bar races
+   to ~85% and waits, then fills and fades when the next page is here. */
+.nav-progress-grow {
+  animation: nav-progress-grow 8s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+}
+.nav-progress-finish {
+  animation: nav-progress-finish 0.45s ease-out forwards;
+}
+@keyframes nav-progress-grow {
+  from {
+    width: 0;
+  }
+  to {
+    width: 85%;
+  }
+}
+@keyframes nav-progress-finish {
+  0% {
+    width: 85%;
+    opacity: 1;
+  }
+  55% {
+    width: 100%;
+    opacity: 1;
+  }
+  100% {
+    width: 100%;
+    opacity: 0;
+  }
+}
+
+/* The header's bucket (components/logo-mark.tsx): a little accent inside,
+   which rises and sloshes while the next page loads. */
+.logo-mark .logo-outline,
+.logo-mark .logo-handle {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.logo-mark .logo-outline {
+  stroke: var(--foreground);
+}
+.logo-mark .logo-handle {
+  stroke: var(--muted-foreground);
+}
+.logo-mark .logo-wave {
+  fill: var(--primary);
+  animation: logo-wave 2.4s linear infinite;
+}
+.logo-mark .logo-level {
+  animation: logo-level 4s ease-in-out infinite;
+}
+/* While the next page loads: faster, and filled near the top. */
+.logo-mark[data-loading] .logo-wave {
+  animation-duration: 0.8s;
+}
+.logo-mark[data-loading] .logo-level {
+  animation: none;
+  transform: translateY(2px);
+  transition: transform 0.4s ease;
+}
+@keyframes logo-wave {
+  to {
+    transform: translateX(-40px);
+  }
+}
+@keyframes logo-level {
+  0%,
+  100% {
+    transform: translateY(18px);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+/* The 404 terminal's cursor, once it's done typing. */
+@keyframes terminal-blink {
+  50% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-progress-grow,
+  .nav-progress-finish,
+  .logo-mark .logo-wave,
+  .logo-mark .logo-level {
+    animation: none;
+  }
+  .logo-mark .logo-level {
+    transform: translateY(14px);
+  }
+  .nav-progress-grow {
+    width: 85%;
+  }
+  .nav-progress-finish {
+    display: none;
+  }
+}

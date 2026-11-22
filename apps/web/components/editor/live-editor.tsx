@@ -18,6 +18,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
 import { MonacoBinding } from "y-monaco";
 import * as Y from "yjs";
+import BucketLoader from "@/components/bucket-loader";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -27,7 +28,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Spinner } from "@/components/ui/spinner";
 import { versionsQueryKey } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 import { codeFontFamily, followCodeFont } from "./code-font";
@@ -378,7 +378,7 @@ const LiveSession = ({
               aria-hidden
               className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background text-sm text-muted-foreground"
             >
-              <Spinner />
+              <BucketLoader />
               {file.size > LARGE_EDIT_BYTES && (
                 <p>Loading a large file ({formatBytes(file.size)}). This can take a while.</p>
               )}

@@ -155,7 +155,7 @@ const SearchPalette = () => {
           <CommandList>
             {list.isFetching && items.length === 0 ? (
               <div className="flex justify-center py-6">
-                <Spinner />
+                <Spinner aria-label="Searching" className="size-5 text-muted-foreground" />
               </div>
             ) : (
               <CommandEmpty>

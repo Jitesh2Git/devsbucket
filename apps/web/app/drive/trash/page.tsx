@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import TrashList from "@/components/drive/trash-list";
 import ViewToggle from "@/components/drive/view-toggle";
+import PageLoader from "@/components/page-loader";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Trash" };
@@ -31,7 +32,7 @@ const TrashPage = () => {
         <h1 className="min-w-0 truncate text-2xl font-semibold tracking-tight">Trash</h1>
         <ViewToggle />
       </div>
-      <Suspense>
+      <Suspense fallback={<PageLoader />}>
         <TrashContent />
       </Suspense>
     </div>
