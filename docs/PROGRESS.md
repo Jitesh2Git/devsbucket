@@ -506,6 +506,8 @@ UI and style fixes asked for after `v0.5.0`, on one branch (`fix/ui-polish`) wit
   - Gotcha: Next's dev server can keep serving an old CSS build after the source changes, even across restarts; check the served CSS (`document.styleSheets`) or delete `apps/web/.next`.
 - [x] **File page on phones:** Activity and Download are icon-only below `sm` (`aria-label` keeps their names), so the file name shows. The editor box is `70dvh` on phones (`calc(100vh-14rem)` from `md`); Split is two equal rows on phones (`grid-rows-2`), so a long preview no longer squeezes the editor. In version history the list is a short strip on phones (`max-md:max-h-36`, rows `auto / minmax(0,1fr)`) and the comparison fills the rest.
   - Gotcha: a Markdown footnote made the whole page scroll: GitHub footnotes add an `sr-only` (absolute) "Footnotes" heading, placed against the page past the end of the text. The preview `section` is now `relative`. Rule: any scroll box that can hold `sr-only` text needs `relative`. `markdown-preview.spec.ts` checks the page doesn't grow.
+- [x] **Admin tables and profile:** the admin Users and Invites tables have a minimum width (`min-w-180`, `min-w-190`) and scroll sideways on narrow screens; the Invites "For" column sizes to its email. The profile is two columns from `lg` (Username and Sign-in methods left, Notifications right, `max-w-5xl`), with the username and the email on their own lines (`break-all`).
+  - Gotcha: `max-w-0 truncate` on a cell gives that column only the width the others leave over; it suits a name column next to fixed-width columns, not a table whose other columns are all auto-width.
 
 ## Later phases (summary)
 

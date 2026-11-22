@@ -146,7 +146,11 @@ const UsersCard = ({ users, me }: UsersCardProps) => {
         <CardDescription>Everyone with an account.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Table aria-label="Users">
+        <Table
+          aria-label="Users"
+          // Keeps room for names and emails; narrower screens scroll it sideways.
+          className="min-w-180"
+        >
           <TableHeader>
             <TableRow>
               <TableHead>User</TableHead>

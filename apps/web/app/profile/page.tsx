@@ -26,42 +26,51 @@ const ProfileContent = async () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
-        <UserAvatar name={name} image={image ?? null} className="size-16 text-lg" />
+        <UserAvatar name={name} image={image ?? null} className="size-16 shrink-0 text-lg" />
         <div className="min-w-0">
           <h1 className="truncate text-2xl font-semibold tracking-tight">{name}</h1>
-          <p className="truncate text-sm text-muted-foreground">
-            {username ? `@${username}` : "No username yet"} · {email}
+          {/* On their own lines, so a long email wraps instead of being cut off. */}
+          <p className="text-sm text-muted-foreground">
+            {username ? `@${username}` : "No username yet"}
           </p>
+          <p className="text-sm break-all text-muted-foreground">{email}</p>
         </div>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Username</CardTitle>
-          <CardDescription>How other people find you when sharing files.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <UsernameForm username={username ?? null} />
-        </CardContent>
-      </Card>
-      <SignInMethods />
-      <Card>
-        <CardHeader>
-          <CardTitle>Notifications</CardTitle>
-          <CardDescription>
-            What you're told about. To stop hearing about one folder or file, mute it from its menu.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <NotificationSettings prefs={prefs} isAdmin={canAdmin(session.user, "view")} />
-        </CardContent>
-      </Card>
+      {/* Two columns on wide screens: the short cards on the left, the long
+          notification settings on the right. One column below lg. */}
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <div className="flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Username</CardTitle>
+              <CardDescription>How other people find you when sharing files.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UsernameForm username={username ?? null} />
+            </CardContent>
+          </Card>
+          <SignInMethods />
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Notifications</CardTitle>
+            <CardDescription>
+              What you're told about. To stop hearing about one folder or file, mute it from its
+              menu.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <NotificationSettings prefs={prefs} isAdmin={canAdmin(session.user, "view")} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
 
 const ProfilePage = () => {
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-12">
+    <div className="mx-auto w-full max-w-2xl px-4 py-12 lg:max-w-5xl">
       {/* Shows ?error= after a failed "Connect GitHub" round trip. */}
       <Suspense>
         <OAuthError />
