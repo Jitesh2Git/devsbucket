@@ -191,7 +191,11 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
           </ItemGrid>
         </div>
       ) : (
-        <Table>
+        <Table
+          // On a phone the table keeps room for the names (480 px) and
+          // scrolls sideways in its own box; from md up it fits the column.
+          className="min-w-120 md:min-w-0"
+        >
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>

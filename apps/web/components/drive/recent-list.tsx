@@ -77,7 +77,11 @@ const RecentList = ({ items, userId }: RecentListProps) => {
           ))}
         </ItemGrid>
       ) : (
-        <Table>
+        <Table
+          // On a phone the table keeps room for the names (600 px) and
+          // scrolls sideways in its own box; from md up it fits the column.
+          className="min-w-150 md:min-w-0"
+        >
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>

@@ -95,7 +95,7 @@ const FolderActions = ({ parentId, folder, can }: FolderActionsProps) => {
             <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-max">
           {adds.map((action) => (
             <DropdownMenuItem key={action.key} onSelect={action.run}>
               <action.icon />

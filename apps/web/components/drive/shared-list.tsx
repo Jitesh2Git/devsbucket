@@ -58,7 +58,7 @@ const SharedItemMenu = ({ item, onLeave }: { item: SharedItem; onLeave: () => vo
         <MoreHorizontal />
       </Button>
     </DropdownMenuTrigger>
-    <DropdownMenuContent align="end">
+    <DropdownMenuContent align="end" className="w-max">
       {item.type === "file" && (
         <>
           <DropdownMenuItem asChild>
@@ -168,7 +168,11 @@ const SharedList = ({ items, offers, opened }: SharedListProps) => {
           ))}
         </ItemGrid>
       ) : (
-        <Table>
+        <Table
+          // On a phone the table keeps room for the names (760 px) and
+          // scrolls sideways in its own box; from md up it fits the column.
+          className="min-w-190 md:min-w-0"
+        >
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>

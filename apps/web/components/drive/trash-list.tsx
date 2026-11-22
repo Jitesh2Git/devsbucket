@@ -166,7 +166,11 @@ const TrashList = ({ items, userId }: { items: TrashRow[]; userId: string }) => 
           ))}
         </ItemGrid>
       ) : (
-        <Table>
+        <Table
+          // On a phone the table keeps room for the names (900 px) and
+          // scrolls sideways in its own box; from md up it fits the column.
+          className="min-w-225 md:min-w-0"
+        >
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
