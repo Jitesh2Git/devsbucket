@@ -484,6 +484,12 @@ Full plan: `docs/plans/phase-5.md` (design, step table, tests). Decision: 0017 (
 - [ ] ZIP download: no progress in the page (the browser's download bar is the progress); not compressed; capped at 1,000 files / 1 GB; no "select several items".
 - [ ] Phase 6: a long ZIP stream through Caddy (timeouts) and several ZIPs at once on the 2-core VM; `pg_trgm` comes with the same Postgres image there.
 
+## Fixes before Phase 6
+
+UI and style fixes asked for after `v0.5.0`, on one branch (`fix/ui-polish`) with one commit per fix and one PR at the end.
+
+- [x] **Sticky header:** `site-header.tsx` is `sticky top-0 z-40` (dialogs, menus and toasts are `z-50` and up) with a background, frosted (`bg-background/80` + `backdrop-blur`) where the browser supports `backdrop-filter`.
+
 ## Later phases (summary)
 
 4. **Live editing:** see Phase 4 above
