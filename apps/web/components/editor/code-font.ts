@@ -18,7 +18,13 @@ export const followCodeFont = (setFontFamily: (fontFamily: string) => void) => {
   const update = () => {
     const family = codeFontFamily();
     setFontFamily(family);
-    void document.fonts.load(`13px ${family}`).then(() => monaco.editor.remeasureFonts());
+    // The download can fail or be cancelled (leaving the page while it
+    // loads); Monaco then keeps the fallback font, so the error is ignored
+    // rather than left as an unhandled rejection.
+    document.fonts
+      .load(`13px ${family}`)
+      .then(() => monaco.editor.remeasureFonts())
+      .catch(() => {});
   };
   update();
   return onThemeChange(update);

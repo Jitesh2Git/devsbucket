@@ -7,6 +7,8 @@ import { connectTestDb } from "./test-db";
 test("views: folder sizes, grid view remembered across pages and reloads, phone toolbar", async ({
   page,
 }) => {
+  // Many steps (sizes, grid, phone toolbar, narrow screens, breadcrumbs).
+  test.slow();
   const db = await connectTestDb();
   const email = await test.step("sign up", () => signUpWithOwnInvite(page, db, "views"));
 

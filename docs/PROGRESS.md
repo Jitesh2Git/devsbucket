@@ -522,6 +522,9 @@ UI and style fixes asked for after `v0.5.0`, on one branch (`fix/ui-polish`) wit
 - [x] **Loaders and 404:** picked from a preview of options (all SVG and CSS drawn with the theme tokens, so they follow every theme in light and dark, and stop with "reduce motion"; no Lottie, whose colours are baked in). `BucketLoader` (the bucket drawing itself and filling) wherever content loads: page `<Suspense>` fallbacks (`PageLoader`) and the content spinners in dialogs, the preview and the editor; buttons, search results and "Loading more" (infinite scroll) keep `Spinner`. Switching pages: a top bar plus the header's bucket sloshing (`NavigationProgress` starts on in-app link clicks, ends on URL change, 15 s safety timeout). The 404 (`app/not-found.tsx`) is a terminal that curls the address and gets a 404 with links back. e2e: `loaders.spec.ts`.
   - Gotcha: Next.js has no "navigation started" event; the bar listens for link clicks in the capture phase (before Link prevents the default) and skips new tabs, downloads, `/api/` links and the same URL.
 
+- [x] **CI fix:** on GitHub's slower runner, leaving a file page while the code font was still downloading made `document.fonts.load` reject ("A network error occurred."), an unhandled rejection that `editor.spec.ts` counts as a page error; `code-font.ts` now catches it (Monaco keeps the fallback font). `views.spec.ts` got `test.slow()`, since its steps had outgrown the 30 s default.
+  - Gotcha: a `void promise.then(…)` still needs a `.catch`, or a failed load becomes a page error.
+
 ## Later phases (summary)
 
 4. **Live editing:** see Phase 4 above
