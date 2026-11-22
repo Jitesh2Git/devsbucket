@@ -4,7 +4,7 @@ import { setNotificationPref } from "@devsbucket/db/notification-settings";
 import { setUsername } from "@devsbucket/db/users";
 import { setPasswordSchema } from "@devsbucket/shared/auth";
 import { notificationPrefSchema } from "@devsbucket/shared/notifications";
-import { setUsernameSchema } from "@devsbucket/shared/user";
+import { setNameSchema, setUsernameSchema } from "@devsbucket/shared/user";
 import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
@@ -29,6 +29,22 @@ export const updateUsername = async (input: unknown) => {
     return { error: "That username is taken." };
   }
   return { error: null, username: parsed.data.username };
+};
+
+// Your display name. Through Better Auth's updateUser, which also refreshes
+// the session, so the header shows the new name on the next render.
+export const updateName = async (input: unknown) => {
+  const requestHeaders = await headers();
+  const session = await auth.api.getSession({ headers: requestHeaders });
+  if (!session) {
+    return { error: "You're signed out. Sign in again." };
+  }
+  const parsed = setNameSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid name" };
+  }
+  await auth.api.updateUser({ body: { name: parsed.data.name }, headers: requestHeaders });
+  return { error: null, name: parsed.data.name };
 };
 
 // GitHub sign-ups have no password. Better Auth's setPassword is server-only

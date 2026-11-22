@@ -11,7 +11,7 @@ import {
   shareItem,
 } from "@devsbucket/db/sharing";
 import { getPendingTransfer } from "@devsbucket/db/transfers";
-import { findUserByEmail } from "@devsbucket/db/users";
+import { findUserByEmail, findUserByUsername } from "@devsbucket/db/users";
 import { itemRefSchema } from "@devsbucket/shared/item";
 import {
   changeLinkSchema,
@@ -87,12 +87,21 @@ export const shareWithPerson = async (input: unknown) => {
   if (!session) return { error: SIGNED_OUT } as const;
   const parsed = shareSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? INVALID } as const;
-  const { itemId, email, role } = parsed.data;
+  const { itemId, person: ref, role } = parsed.data;
   const found = await resolveItem(session.user, itemId, "share", { trashed: false });
   if (found.denied) return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
-  // Only people who already have an account (no email to invite with).
-  const person = await findUserByEmail(email);
-  if (!person) return { error: "No DevsBucket account uses this email." } as const;
+  // Only people who already have an account (no email to invite with),
+  // found by their email or their username.
+  const person =
+    ref.by === "email" ? await findUserByEmail(ref.email) : await findUserByUsername(ref.username);
+  if (!person) {
+    return {
+      error:
+        ref.by === "email"
+          ? "No DevsBucket account uses this email."
+          : `No one has the username @${ref.username}.`,
+    } as const;
+  }
   if (person.id === found.item.ownerId) return { error: "They own it." } as const;
   if (person.id === session.user.id) return { error: "You already have access." } as const;
   const result = await shareItem({ itemId, userId: person.id, role, actorId: session.user.id });

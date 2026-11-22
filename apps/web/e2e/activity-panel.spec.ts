@@ -42,7 +42,7 @@ test("activity panel: the item's log with names, from the menu and the file page
     await download;
 
     await openMenu("plan.txt", "Share");
-    await dialog.getByPlaceholder("Email of someone with an account").fill(bobEmail);
+    await dialog.getByPlaceholder("Email or @username").fill(bobEmail);
     await dialog.getByRole("button", { name: "Share", exact: true }).click();
     await expect(dialog.getByRole("button", { name: `Access for ${bobEmail}` })).toBeVisible();
     await ada.keyboard.press("Escape");
@@ -61,7 +61,9 @@ test("activity panel: the item's log with names, from the menu and the file page
   };
 
   await test.step("the row menu's Activity lists it, newest first, with names", async () => {
-    await openMenu("plan.txt", "Activity");
+    await ada.getByRole("button", { name: "Actions for plan.txt", exact: true }).click();
+    await ada.getByRole("menuitem", { name: "More" }).click();
+    await ada.getByRole("menuitem", { name: "Activity", exact: true }).click();
     await expect(dialog.getByRole("heading", { name: "Activity" })).toBeVisible();
     await expect(dialog.getByText("plan.txt", { exact: true })).toBeVisible();
     await expectLog();

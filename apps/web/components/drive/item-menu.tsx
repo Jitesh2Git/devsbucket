@@ -1,9 +1,12 @@
 "use client";
 
 import type { ListedItem } from "@devsbucket/db/items";
+import { cn } from "cn";
 import {
   ActivityIcon,
+  ChevronDown,
   Download,
+  Ellipsis,
   Eye,
   FolderDown,
   FolderInput,
@@ -12,7 +15,7 @@ import {
   Trash2,
   UserPlus,
 } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import CopyMenuItem from "@/components/drive/copy-menu-item";
 import { downloadUrl } from "@/components/drive/file-preview";
 import MuteMenuItem from "@/components/drive/mute-menu-item";
@@ -20,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -47,7 +51,8 @@ type ItemMenuProps = {
 };
 
 // The ⋯ menu on each row: only what the user may do, and muting, which
-// everyone may.
+// everyone may. The less used ones (Activity, Mute) sit under "More",
+// which opens in place: a side flyout has no room on a phone.
 const ItemMenu = ({
   item,
   actions,
@@ -66,9 +71,11 @@ const ItemMenu = ({
     pending.current = open;
   };
   const isFile = item.type === "file";
+  const [more, setMore] = useState(false);
 
   return (
-    <DropdownMenu>
+    // Closed again for the next time the menu opens.
+    <DropdownMenu onOpenChange={(open) => !open && setMore(false)}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon-xs" aria-label={`Actions for ${item.name}`}>
           <MoreHorizontal />
@@ -76,6 +83,9 @@ const ItemMenu = ({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
+        // As wide as the longest label: shadcn sizes menus to the button
+        // that opens them, which made labels wrap.
+        className="w-max"
         onCloseAutoFocus={(event) => {
           const open = pending.current;
           if (open) {
@@ -130,13 +140,29 @@ const ItemMenu = ({
             Move
           </DropdownMenuItem>
         )}
-        {actions.activity && (
-          <DropdownMenuItem onSelect={openDialog(onActivity)}>
-            <ActivityIcon />
-            Activity
-          </DropdownMenuItem>
+        <DropdownMenuItem
+          aria-expanded={more}
+          onSelect={(event) => {
+            // Keep the menu open: this only shows or hides the items below.
+            event.preventDefault();
+            setMore((open) => !open);
+          }}
+        >
+          <Ellipsis />
+          More
+          <ChevronDown className={cn("ml-auto transition-transform", more && "rotate-180")} />
+        </DropdownMenuItem>
+        {more && (
+          <DropdownMenuGroup className="pl-4">
+            {actions.activity && (
+              <DropdownMenuItem onSelect={openDialog(onActivity)}>
+                <ActivityIcon />
+                Activity
+              </DropdownMenuItem>
+            )}
+            <MuteMenuItem item={item} />
+          </DropdownMenuGroup>
         )}
-        <MuteMenuItem item={item} />
         {actions.trash && (
           <>
             <DropdownMenuSeparator />

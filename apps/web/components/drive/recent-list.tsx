@@ -1,9 +1,11 @@
 "use client";
 
 import type { RecentItem } from "@devsbucket/db/recent";
+import { formatBytes } from "@devsbucket/shared/bytes";
 import { Clock } from "lucide-react";
 import { useLayoutEffect, useState } from "react";
 import FilePreview, { type PreviewFile } from "@/components/drive/file-preview";
+import { ItemCard, ItemGrid } from "@/components/drive/item-grid";
 import ItemName from "@/components/drive/item-name";
 import LocalDate from "@/components/local-date";
 import {
@@ -21,6 +23,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { SCROLL_LIST } from "@/lib/scroll-list";
+import { useViewMode } from "@/lib/view-mode";
 
 type RecentListProps = {
   items: RecentItem[];
@@ -31,6 +35,7 @@ type RecentListProps = {
 // files open in the editor, others in the preview, like everywhere else.
 const RecentList = ({ items, userId }: RecentListProps) => {
   const [previewing, setPreviewing] = useState<PreviewFile | null>(null);
+  const view = useViewMode();
   // Next hides this page when you leave it (React Activity): close the
   // preview then, so it isn't open when you come back.
   useLayoutEffect(() => () => setPreviewing(null), []);
@@ -56,30 +61,58 @@ const RecentList = ({ items, userId }: RecentListProps) => {
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead className="w-40">Owner</TableHead>
-            <TableHead className="w-36">Opened</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {items.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell className="max-w-0">
-                <ItemName item={item} onPreview={() => setPreviewing(item)} />
-              </TableCell>
-              <TableCell className="max-w-0 truncate text-muted-foreground">
-                {item.ownerId === userId ? "me" : item.ownerName}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                <LocalDate value={item.openedAt} />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <div className={SCROLL_LIST}>
+        {view === "grid" ? (
+          <ItemGrid label="Recent files">
+            {items.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                name={<ItemName item={item} card onPreview={() => setPreviewing(item)} />}
+                details={
+                  <>
+                    {item.size === null ? "—" : formatBytes(item.size)} ·{" "}
+                    <LocalDate value={item.openedAt} />
+                  </>
+                }
+              />
+            ))}
+          </ItemGrid>
+        ) : (
+          <Table
+            // On a phone the table keeps room for the names (600 px) and
+            // scrolls sideways in its own box; from md up it fits the column.
+            className="min-w-150 md:min-w-0"
+          >
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead className="w-40">Owner</TableHead>
+                <TableHead className="w-28 text-right">Size</TableHead>
+                <TableHead className="w-36">Opened</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="max-w-0">
+                    <ItemName item={item} onPreview={() => setPreviewing(item)} />
+                  </TableCell>
+                  <TableCell className="max-w-0 truncate text-muted-foreground">
+                    {item.ownerId === userId ? "me" : item.ownerName}
+                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {item.size === null ? "—" : formatBytes(item.size)}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <LocalDate value={item.openedAt} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </div>
       {preview}
     </>
   );

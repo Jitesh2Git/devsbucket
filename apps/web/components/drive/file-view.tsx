@@ -49,9 +49,10 @@ const FileView = async ({ file, user, access }: FileViewProps) => {
           )}
           <Button asChild variant="outline" className="shrink-0">
             {/* The same route as the preview's Download (downloadUrl is client-only). */}
-            <a href={`/api/items/${file.id}/download`}>
+            <a href={`/api/items/${file.id}/download`} aria-label="Download">
               <Download />
-              Download
+              {/* Icon only on a phone, so the file name has room. */}
+              <span className="hidden sm:inline">Download</span>
             </a>
           </Button>
         </div>

@@ -24,7 +24,7 @@ test("sharing: add people, inherited access, settings, change and remove", async
     await expect(dialog(page).getByRole("heading", { name: 'Share "Team"' })).toBeVisible();
   };
   const share = async (page: Page, email: string, role: "Editor" | "Viewer") => {
-    await dialog(page).getByPlaceholder("Email of someone with an account").fill(email);
+    await dialog(page).getByPlaceholder("Email or @username").fill(email);
     await dialog(page).getByRole("button", { name: "Role for new person" }).click();
     await page.getByRole("menuitemradio", { name: role }).click();
     await dialog(page).getByRole("button", { name: "Share", exact: true }).click();

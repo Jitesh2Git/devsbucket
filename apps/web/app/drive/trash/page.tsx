@@ -3,6 +3,8 @@ import { trashDaysLeft } from "@devsbucket/shared/limits";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import TrashList from "@/components/drive/trash-list";
+import ViewToggle from "@/components/drive/view-toggle";
+import PageLoader from "@/components/page-loader";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Trash" };
@@ -24,9 +26,13 @@ const TrashContent = async () => {
 
 const TrashPage = () => {
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Trash</h1>
-      <Suspense>
+    // From md up the page fills the drive column and only the list scrolls.
+    <div className="flex flex-col gap-4 md:h-full">
+      <div className="flex shrink-0 items-center justify-between gap-4">
+        <h1 className="min-w-0 truncate text-2xl font-semibold tracking-tight">Trash</h1>
+        <ViewToggle />
+      </div>
+      <Suspense fallback={<PageLoader />}>
         <TrashContent />
       </Suspense>
     </div>

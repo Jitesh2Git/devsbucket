@@ -45,7 +45,7 @@ test("notifications: live count, open one, batching, never your own, mark all re
     await expect(navLink(member)).toHaveAccessibleName("Notifications");
     const dialog = owner.getByRole("dialog");
     await owner.getByRole("button", { name: "Share", exact: true }).click();
-    await dialog.getByPlaceholder("Email of someone with an account").fill(bobEmail);
+    await dialog.getByPlaceholder("Email or @username").fill(bobEmail);
     await dialog.getByRole("button", { name: "Role for new person" }).click();
     await owner.getByRole("menuitemradio", { name: "Editor" }).click();
     await dialog.getByRole("button", { name: "Share", exact: true }).click();

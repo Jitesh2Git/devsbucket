@@ -5,12 +5,13 @@ import { formatBytes } from "@devsbucket/shared/bytes";
 import type { Cursor } from "@devsbucket/shared/item";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { FolderOpen } from "lucide-react";
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { loadItems } from "@/app/drive/actions";
 import { restoreItem, trashItem } from "@/app/drive/trash-actions";
 import ActivityDialog, { type ActivityTarget } from "@/components/drive/activity-dialog";
 import FilePreview, { type PreviewFile } from "@/components/drive/file-preview";
+import { ItemCard, ItemGrid } from "@/components/drive/item-grid";
 import ItemMenu, { type ItemActions } from "@/components/drive/item-menu";
 import ItemName from "@/components/drive/item-name";
 import MoveDialog, { type Crumb } from "@/components/drive/move-dialog";
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/table";
 import { itemsQueryKey } from "@/lib/query-keys";
 import { restoreMessage } from "@/lib/restore-message";
+import { useViewMode } from "@/lib/view-mode";
 
 type ItemListProps = {
   parentId: string | null;
@@ -65,6 +67,23 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
   });
 
   const rows = query.data.pages.flatMap((page) => page.items);
+  const view = useViewMode();
+
+  // Infinite scroll: an empty element after the last row; when it scrolls
+  // into view, the next 50 load. Watched again after each page, so a tall
+  // window keeps loading until the list fills it. Not after a failed page:
+  // "Try again" retries by hand, rather than in a loop.
+  const { hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage } = query;
+  const endOfList = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const end = endOfList.current;
+    if (!end || !hasNextPage || isFetchingNextPage || isFetchNextPageError) return;
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) void fetchNextPage();
+    });
+    observer.observe(end);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage]);
 
   const queryClient = useQueryClient();
   const refresh = () =>
@@ -120,6 +139,20 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
     [],
   );
 
+  // The same ⋯ menu in both views.
+  const menu = (item: (typeof rows)[number]) => (
+    <ItemMenu
+      item={item}
+      actions={actions}
+      onPreview={() => setPreviewing(item)}
+      onRename={() => setRenaming(item)}
+      onMove={() => setMoving(item)}
+      onShare={() => setSharing(item)}
+      onActivity={() => setViewingActivity(item)}
+      onTrash={() => moveToTrash(item)}
+    />
+  );
+
   if (rows.length === 0) {
     return (
       <Empty className="border border-dashed">
@@ -138,58 +171,72 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead className="w-28 text-right">Size</TableHead>
-            <TableHead className="w-36">Modified</TableHead>
-            <TableHead className="w-12">
-              <span className="sr-only">Actions</span>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell className="max-w-0">
-                <ItemName item={item} onPreview={() => setPreviewing(item)} />
-              </TableCell>
-              <TableCell className="text-right text-muted-foreground">
-                {item.size === null ? "—" : formatBytes(item.size)}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                <LocalDate value={item.updatedAt} />
-              </TableCell>
-              <TableCell>
-                <ItemMenu
-                  item={item}
-                  actions={actions}
-                  onPreview={() => setPreviewing(item)}
-                  onRename={() => setRenaming(item)}
-                  onMove={() => setMoving(item)}
-                  onShare={() => setSharing(item)}
-                  onActivity={() => setViewingActivity(item)}
-                  onTrash={() => moveToTrash(item)}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      {query.hasNextPage && (
-        <Button
-          variant="outline"
-          onClick={() => query.fetchNextPage()}
-          disabled={query.isFetchingNextPage}
+      {view === "grid" ? (
+        <div className="w-full">
+          <ItemGrid label="Files and folders">
+            {rows.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                name={<ItemName item={item} card onPreview={() => setPreviewing(item)} />}
+                details={
+                  <>
+                    {item.size === null ? "—" : formatBytes(item.size)} ·{" "}
+                    <LocalDate value={item.updatedAt} />
+                  </>
+                }
+                menu={menu(item)}
+              />
+            ))}
+          </ItemGrid>
+        </div>
+      ) : (
+        <Table
+          // On a phone the table keeps room for the names (480 px) and
+          // scrolls sideways in its own box; from md up it fits the column.
+          className="min-w-120 md:min-w-0"
         >
-          {query.isFetchingNextPage && <Spinner />}
-          Load more
-        </Button>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead className="w-28 text-right">Size</TableHead>
+              <TableHead className="w-36">Modified</TableHead>
+              <TableHead className="w-12">
+                <span className="sr-only">Actions</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell className="max-w-0">
+                  <ItemName item={item} onPreview={() => setPreviewing(item)} />
+                </TableCell>
+                <TableCell className="text-right text-muted-foreground">
+                  {item.size === null ? "—" : formatBytes(item.size)}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  <LocalDate value={item.updatedAt} />
+                </TableCell>
+                <TableCell>{menu(item)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       )}
-      {query.isFetchNextPageError && (
-        <p role="alert" className="text-sm text-destructive">
-          Couldn't load more. Try again.
+      {hasNextPage && !isFetchNextPageError && (
+        <div ref={endOfList} className="flex h-10 w-full items-center justify-center">
+          {isFetchingNextPage && (
+            <Spinner aria-label="Loading more" className="text-muted-foreground" />
+          )}
+        </div>
+      )}
+      {isFetchNextPageError && (
+        <p role="alert" className="flex items-center gap-2 text-sm text-destructive">
+          Couldn't load more.
+          <Button variant="outline" size="sm" onClick={() => fetchNextPage()}>
+            Try again
+          </Button>
         </p>
       )}
       <FilePreview file={previewing} onClose={() => setPreviewing(null)} />

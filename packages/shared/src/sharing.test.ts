@@ -1,20 +1,34 @@
 import { describe, expect, it } from "vitest";
-import { roleLabel, shareFormSchema, sharingSettingSchema } from "./sharing.ts";
+import { personRefSchema, roleLabel, shareFormSchema, sharingSettingSchema } from "./sharing.ts";
 
 describe("shareFormSchema", () => {
-  it("accepts an email and a role", () => {
-    expect(shareFormSchema.parse({ email: "ada@example.com", role: "editor" })).toEqual({
-      email: "ada@example.com",
-      role: "editor",
-    });
+  it.each(["ada@example.com", "@ada", "ada"])("accepts %s and a role", (person) => {
+    expect(shareFormSchema.parse({ person, role: "editor" })).toEqual({ person, role: "editor" });
   });
 
   it.each([
-    { email: "not-an-email", role: "viewer" },
-    { email: "ada@example.com", role: "owner" },
-    { email: "ada@example.com", role: "admin" },
+    { person: "", role: "viewer" },
+    { person: "not an email", role: "viewer" },
+    { person: "ada@", role: "viewer" },
+    { person: "@a", role: "viewer" },
+    { person: "ada@example.com", role: "owner" },
+    { person: "ada@example.com", role: "admin" },
   ])("rejects %j", (input) => {
     expect(shareFormSchema.safeParse(input).success).toBe(false);
+  });
+});
+
+describe("personRefSchema", () => {
+  it.each([
+    ["Ada@Example.com", { by: "email", email: "ada@example.com" }],
+    ["@Ada-Lovelace", { by: "username", username: "ada-lovelace" }],
+    ["  ada  ", { by: "username", username: "ada" }],
+  ])("reads %s", (input, expected) => {
+    expect(personRefSchema.parse(input)).toEqual(expected);
+  });
+
+  it.each(["@", "@-ada", "ada smith", "@ada@example.com"])("rejects %s", (input) => {
+    expect(personRefSchema.safeParse(input).success).toBe(false);
   });
 });
 

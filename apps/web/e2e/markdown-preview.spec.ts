@@ -79,5 +79,21 @@ test("markdown preview: live, GitHub extras, no raw HTML, views", async ({ brows
     await expect(ada.getByRole("code")).toBeHidden();
   });
 
+  await test.step("a long text with a footnote doesn't stretch the page", async () => {
+    // GitHub footnotes add an sr-only (absolutely placed) heading after the
+    // text; outside a positioned preview it made the whole page scroll.
+    await ada.getByRole("button", { name: "Split", exact: true }).click();
+    await ada.getByRole("code").click();
+    await ada.keyboard.press("ControlOrMeta+End");
+    const paragraphs = Array.from({ length: 40 }, (_, i) => `Paragraph ${i + 1}.`);
+    await ada.keyboard.insertText(
+      ["", "", ...paragraphs, "", "A note.[^1]", "", "[^1]: The footnote."].join("\n\n"),
+    );
+    await expect(preview(ada).getByText("The footnote.")).toBeAttached();
+    expect(
+      await ada.evaluate(() => document.documentElement.scrollHeight - window.innerHeight),
+    ).toBeLessThanOrEqual(1);
+  });
+
   await db.end();
 });

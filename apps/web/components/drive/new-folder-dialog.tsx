@@ -3,8 +3,7 @@
 import { type NameFormInput, nameFormSchema } from "@devsbucket/shared/item";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { FolderPlus } from "lucide-react";
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { createFolder } from "@/app/drive/actions";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -24,9 +22,15 @@ import { itemsQueryKey } from "@/lib/query-keys";
 
 const EMPTY: NameFormInput = { name: "" };
 
-const NewFolderDialog = ({ parentId }: { parentId: string | null }) => {
+type NewFolderDialogProps = {
+  parentId: string | null;
+  // Opened from the folder's toolbar or its ⋯ menu on phones (FolderActions).
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+const NewFolderDialog = ({ parentId, open, onOpenChange: setOpen }: NewFolderDialogProps) => {
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
   const form = useForm<NameFormInput>({
     resolver: zodResolver(nameFormSchema),
     defaultValues: EMPTY,
@@ -39,10 +43,7 @@ const NewFolderDialog = ({ parentId }: { parentId: string | null }) => {
     if (!next) form.reset(EMPTY);
   };
   useLayoutEffect(() => {
-    return () => {
-      setOpen(false);
-      form.reset(EMPTY);
-    };
+    return () => form.reset(EMPTY);
   }, [form]);
 
   const onSubmit = async ({ name }: NameFormInput) => {
@@ -58,12 +59,6 @@ const NewFolderDialog = ({ parentId }: { parentId: string | null }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button>
-          <FolderPlus />
-          New folder
-        </Button>
-      </DialogTrigger>
       <DialogContent>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <fieldset disabled={form.formState.isSubmitting} className="min-w-0">

@@ -5,13 +5,11 @@ import { roleLabel } from "@devsbucket/shared/sharing";
 import type { ReactNode } from "react";
 import DriveBreadcrumbs from "@/components/drive/drive-breadcrumbs";
 import DropZone from "@/components/drive/drop-zone";
+import FolderActions from "@/components/drive/folder-actions";
 import ItemList from "@/components/drive/item-list";
-import NewFileDialog from "@/components/drive/new-file-dialog";
-import NewFolderDialog from "@/components/drive/new-folder-dialog";
 import OwnershipOfferActions from "@/components/drive/ownership-offer-actions";
-import ShareButton from "@/components/drive/share-button";
-import UploadButton from "@/components/drive/upload-button";
-import ZipDownloadButton from "@/components/drive/zip-download-button";
+import ViewToggle from "@/components/drive/view-toggle";
+import { SCROLL_LIST } from "@/lib/scroll-list";
 
 type FolderViewProps = {
   // null = the top level of My Drive.
@@ -48,11 +46,13 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
   // In someone else's tree, moves stay below the top-most shared folder.
   const moveRoot = breadcrumbs.root === "shared" ? (breadcrumbs.folders[0] ?? null) : null;
 
+  // From md up the page is as tall as the drive's right column: the banner,
+  // breadcrumbs and buttons stay, and only the list scrolls (drive layout).
   const page: ReactNode = (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 md:h-full">
       {current && transfer?.toUserId === userId && (
         // Offered to you (decision 0009): the banner on the item.
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm">
           <span>{transfer.fromName} wants to make you the owner of this folder.</span>
           <OwnershipOfferActions
             offer={{ id: transfer.id, itemId: current.id, name: current.name }}
@@ -60,7 +60,10 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-4">
+      {/* On a phone: the breadcrumbs, the view toggle and one ⋯ menu.
+          From md up the buttons can wrap under the breadcrumbs when the
+          column is narrow. */}
+      <div className="flex shrink-0 items-center justify-between gap-x-4 gap-y-2 md:flex-wrap">
         <div className="flex min-w-0 items-center gap-3">
           <DriveBreadcrumbs root={breadcrumbs.root} folders={breadcrumbs.folders} />
           {access.role !== "owner" && access.role !== null && (
@@ -70,21 +73,30 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
             </span>
           )}
         </div>
-        <div className="flex shrink-0 gap-2">
-          {current && can(access, "download") && <ZipDownloadButton folder={current} />}
-          {current && actions.share && <ShareButton folder={current} />}
-          {canUpload && <UploadButton parentId={folderId} />}
-          {canUpload && <NewFileDialog parentId={folderId} />}
-          {can(access, "create_folder") && <NewFolderDialog parentId={folderId} />}
+        <div className="flex shrink-0 gap-2 md:shrink md:flex-wrap">
+          <ViewToggle />
+          <FolderActions
+            parentId={folderId}
+            folder={current ?? null}
+            can={{
+              upload: canUpload,
+              createFolder: can(access, "create_folder"),
+              share: actions.share,
+              download: can(access, "download"),
+            }}
+          />
         </div>
       </div>
-      <ItemList
-        parentId={folderId}
-        firstPage={firstPage}
-        actions={actions}
-        canAdd={canUpload}
-        moveRoot={moveRoot}
-      />
+      {/* Only the list scrolls (SCROLL_LIST, lib/scroll-list.ts). */}
+      <div className={SCROLL_LIST}>
+        <ItemList
+          parentId={folderId}
+          firstPage={firstPage}
+          actions={actions}
+          canAdd={canUpload}
+          moveRoot={moveRoot}
+        />
+      </div>
     </div>
   );
 

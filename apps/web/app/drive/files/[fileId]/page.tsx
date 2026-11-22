@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import FileView from "@/components/drive/file-view";
 import NeedAccess from "@/components/drive/need-access";
+import PageLoader from "@/components/page-loader";
 import { resolveFile } from "@/lib/items";
 import { requireSession } from "@/lib/session";
 
@@ -26,7 +27,7 @@ const FileContent = async ({ params }: { params: Promise<{ fileId: string }> }) 
 
 const FilePage = ({ params }: PageProps<"/drive/files/[fileId]">) => {
   return (
-    <Suspense>
+    <Suspense fallback={<PageLoader label="Loading the file" fullHeight />}>
       <FileContent params={params} />
     </Suspense>
   );

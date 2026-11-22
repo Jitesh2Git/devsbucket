@@ -37,7 +37,7 @@ test("ownership transfer: offer, quota refusal, accept, cancel, decline", async 
     await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
   };
   const shareWithBob = async (role: "Editor" | "Viewer") => {
-    await dialog.getByPlaceholder("Email of someone with an account").fill(bobEmail);
+    await dialog.getByPlaceholder("Email or @username").fill(bobEmail);
     await dialog.getByRole("button", { name: "Role for new person" }).click();
     await owner.getByRole("menuitemradio", { name: role }).click();
     await dialog.getByRole("button", { name: "Share", exact: true }).click();

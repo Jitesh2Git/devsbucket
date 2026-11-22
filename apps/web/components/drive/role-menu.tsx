@@ -33,7 +33,7 @@ const RoleMenu = ({ label, value, onChange, onRemove, disabled }: RoleMenuProps)
           <ChevronDown />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="w-max">
         <DropdownMenuRadioGroup value={value} onValueChange={(next) => onChange(next as GrantRole)}>
           <DropdownMenuRadioItem value="editor">Editor</DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="viewer">Viewer</DropdownMenuRadioItem>

@@ -3,6 +3,7 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { logActivity } from "./activity.ts";
 import { db, type Executor } from "./client.ts";
 import { isUniqueViolation } from "./errors.ts";
+import { sizeOrFolderSize } from "./folder-size.ts";
 import { users } from "./schema/auth.ts";
 import { items } from "./schema/items.ts";
 import { accessRoots } from "./shared-with-me.ts";
@@ -41,7 +42,8 @@ export const listItems = async ({
       type: items.type,
       name: items.name,
       mimeType: items.mimeType,
-      size: items.size,
+      // A folder's size is what's inside it.
+      size: sizeOrFolderSize("items"),
       updatedAt: items.updatedAt,
       notFolder,
       sortName,

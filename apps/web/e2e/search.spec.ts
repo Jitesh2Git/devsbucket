@@ -42,7 +42,7 @@ test("search: shared items by name and with a typo, never private ones; opens ea
     await ada.getByRole("button", { name: "Actions for Team", exact: true }).click();
     await ada.getByRole("menuitem", { name: "Share", exact: true }).click();
     const share = ada.getByRole("dialog");
-    await share.getByPlaceholder("Email of someone with an account").fill(bobEmail);
+    await share.getByPlaceholder("Email or @username").fill(bobEmail);
     await share.getByRole("button", { name: "Share", exact: true }).click();
     await expect(share.getByRole("button", { name: `Access for ${bobEmail}` })).toBeVisible();
     await ada.keyboard.press("Escape");

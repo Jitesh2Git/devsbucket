@@ -42,6 +42,7 @@ test("notification settings: a switch off, a muted folder, always-on types locke
     await owner.getByRole("link", { name: "My Drive" }).first().click();
     await expect(owner.getByRole("heading", { name: "My Drive" })).toBeVisible();
     await owner.getByRole("button", { name: `Actions for ${name}`, exact: true }).click();
+    await owner.getByRole("menuitem", { name: "More" }).click();
     await owner.getByRole("menuitem", { name: menuItem }).click();
   };
   const profileSwitch = (label: string) => owner.getByRole("checkbox", { name: label });
@@ -100,6 +101,7 @@ test("notification settings: a switch off, a muted folder, always-on types locke
     // Inside Studio, its menu says so.
     await owner.getByRole("link", { name: "Studio" }).click();
     await owner.getByRole("button", { name: "Actions for Inner", exact: true }).click();
+    await owner.getByRole("menuitem", { name: "More" }).click();
     await expect(owner.getByRole("menuitem", { name: "Muted by a folder above" })).toBeVisible();
     await owner.keyboard.press("Escape");
 

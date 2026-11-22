@@ -44,7 +44,14 @@ const isActive = (href: string, pathname: string | null) =>
 
 const NavLinks = ({ pathname }: { pathname: string | null }) => {
   return (
-    <nav aria-label="Drive" className="flex gap-1 md:flex-col">
+    // On a phone the links are one row that scrolls sideways, so it never
+    // makes the page wider than the screen. `relative` keeps absolutely
+    // placed bits (the badge's sr-only " unread") inside that scroll box;
+    // without it they're placed against the page and stick out past it.
+    <nav
+      aria-label="Drive"
+      className="relative flex gap-1 overflow-x-auto md:flex-col md:overflow-visible"
+    >
       {LINKS.map(({ href, label, icon: Icon }) => {
         const active = isActive(href, pathname);
         return (
@@ -52,7 +59,7 @@ const NavLinks = ({ pathname }: { pathname: string | null }) => {
             key={href}
             asChild
             variant={active ? "secondary" : "ghost"}
-            className="justify-start"
+            className="shrink-0 justify-start"
           >
             <Link href={href} aria-current={active ? "page" : undefined}>
               <Icon />

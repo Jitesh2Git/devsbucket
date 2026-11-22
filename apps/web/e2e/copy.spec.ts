@@ -59,7 +59,7 @@ test("make a copy: same folder, numbered, same content, Viewer's copy in their d
     await ada.getByRole("button", { name: "Create" }).click();
     await openMenu(ada, "Team", "Share");
     const share = ada.getByRole("dialog");
-    await share.getByPlaceholder("Email of someone with an account").fill(bobEmail);
+    await share.getByPlaceholder("Email or @username").fill(bobEmail);
     await share.getByRole("button", { name: "Share", exact: true }).click();
     await expect(share.getByRole("button", { name: `Access for ${bobEmail}` })).toBeVisible();
     await ada.keyboard.press("Escape");

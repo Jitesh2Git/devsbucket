@@ -4,6 +4,7 @@ import { activityText } from "@devsbucket/shared/activity-text";
 import { timeAgo } from "@devsbucket/shared/time";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { loadActivity } from "@/app/drive/activity-actions";
+import BucketLoader from "@/components/bucket-loader";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,7 +39,7 @@ const ActivityLog = ({ item }: { item: ActivityTarget }) => {
   if (query.isPending) {
     return (
       <div className="flex justify-center py-8">
-        <Spinner />
+        <BucketLoader label="Loading activity" />
       </div>
     );
   }
@@ -109,6 +110,10 @@ const ActivityDialog = ({
               <DialogDescription className="truncate">{item.name}</DialogDescription>
             </DialogHeader>
             <ActivityLog item={item} />
+            {/* Activity is a permanent log (LOCKED.md): nothing is dropped. */}
+            <p className="text-xs text-muted-foreground">
+              The whole history, newest first, kept for as long as the item exists.
+            </p>
           </>
         )}
       </DialogContent>

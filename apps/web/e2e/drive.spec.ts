@@ -50,7 +50,7 @@ test("folders: create, name clash, open, breadcrumbs, load more, 404", async ({ 
     await expect(page.getByRole("heading", { name: "My Drive" })).toBeVisible();
   });
 
-  await test.step("50 per page, then Load more", async () => {
+  await test.step("50 per page, the rest when scrolled to the end", async () => {
     // 60 more folders at the top level: 61 in all.
     await db.query(
       `insert into items (owner_id, type, name)
@@ -61,9 +61,10 @@ test("folders: create, name clash, open, breadcrumbs, load more, 404", async ({ 
     await page.reload();
     const rows = page.getByRole("row");
     await expect(rows).toHaveCount(51); // the header + 50
-    await page.getByRole("button", { name: "Load more" }).click();
+    // Infinite scroll: bringing the last row into view loads the next page.
+    await rows.last().scrollIntoViewIfNeeded();
     await expect(rows).toHaveCount(62); // the header + 61
-    await expect(page.getByRole("button", { name: "Load more" })).toBeHidden();
+    await expect(page.getByRole("status", { name: "Loading more" })).toHaveCount(0);
     // Sorted by name, ignoring case: "Bulk 01" … "Bulk 60", then "Projects".
     await expect(rows.nth(1)).toContainText("Bulk 01");
     await expect(rows.last()).toContainText("Projects");

@@ -146,7 +146,11 @@ const UsersCard = ({ users, me }: UsersCardProps) => {
         <CardDescription>Everyone with an account.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Table aria-label="Users">
+        <Table
+          aria-label="Users"
+          // Keeps room for names and emails; narrower screens scroll it sideways.
+          className="min-w-180"
+        >
           <TableHeader>
             <TableRow>
               <TableHead>User</TableHead>
@@ -191,7 +195,7 @@ const UsersCard = ({ users, me }: UsersCardProps) => {
                         <MoreHorizontal />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-max">
                       {canAdmin(me, "reset_password", user) && (
                         <DropdownMenuItem onSelect={() => show({ kind: "reset", user })}>
                           Reset password

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { nameSchema } from "./user.ts";
 
 // One rule for every new password: sign-up, set password, change password.
 const newPasswordSchema = z
@@ -11,7 +12,7 @@ export const inviteCodeSchema = z.object({
 });
 
 export const signUpSchema = z.object({
-  name: z.string().trim().min(1, "Enter your name").max(100, "Name is too long"),
+  name: nameSchema,
   email: z.email("Enter a valid email address"),
   password: newPasswordSchema,
 });

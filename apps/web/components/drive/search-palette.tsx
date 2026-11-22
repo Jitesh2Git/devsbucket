@@ -51,7 +51,8 @@ const ShortcutHint = () => {
     () => false,
   );
   return (
-    <kbd className="ml-auto rounded border px-1.5 text-xs text-muted-foreground">
+    // Not on phones: no keyboard to press it on, and little room.
+    <kbd className="ml-auto hidden rounded border px-1.5 text-xs text-muted-foreground sm:inline">
       {mac ? "⌘K" : "Ctrl K"}
     </kbd>
   );
@@ -154,7 +155,7 @@ const SearchPalette = () => {
           <CommandList>
             {list.isFetching && items.length === 0 ? (
               <div className="flex justify-center py-6">
-                <Spinner />
+                <Spinner aria-label="Searching" className="size-5 text-muted-foreground" />
               </div>
             ) : (
               <CommandEmpty>

@@ -45,7 +45,7 @@ const DropZone = ({ parentId, children }: { parentId: string | null; children: R
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: a drop target for the mouse; the Upload button is the keyboard way
     <div
-      className="relative min-h-[60vh]"
+      className="relative min-h-[60vh] md:h-full"
       onDragEnter={(event) => {
         if (!hasFiles(event)) return;
         depth.current += 1;

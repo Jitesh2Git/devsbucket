@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Shield, UserRound } from "lucide-react";
+import { LogOut, Palette, Shield, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -66,6 +66,12 @@ const UserMenuDropdown = ({ name, email, image, isAdmin }: UserMenuDropdownProps
           <Link href="/profile">
             <UserRound />
             Profile
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/themes">
+            <Palette />
+            Themes
           </Link>
         </DropdownMenuItem>
         {isAdmin && (

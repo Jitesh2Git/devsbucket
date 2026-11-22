@@ -94,7 +94,11 @@ const InvitesCard = ({ invites }: { invites: AdminInvite[] }) => {
         {invites.length === 0 ? (
           <p className="text-sm text-muted-foreground">No invites yet.</p>
         ) : (
-          <Table aria-label="Invites">
+          <Table
+            aria-label="Invites"
+            // Keeps room for the email; narrower screens scroll it sideways.
+            className="min-w-190"
+          >
             <TableHeader>
               <TableRow>
                 <TableHead>Code</TableHead>
@@ -110,7 +114,7 @@ const InvitesCard = ({ invites }: { invites: AdminInvite[] }) => {
               {invites.map((invite) => (
                 <TableRow key={invite.id}>
                   <TableCell className="font-mono">{invite.code}</TableCell>
-                  <TableCell className="max-w-0 truncate">{invite.email ?? "Anyone"}</TableCell>
+                  <TableCell>{invite.email ?? "Anyone"}</TableCell>
                   <TableCell className="text-muted-foreground">{status(invite)}</TableCell>
                   <TableCell className="text-muted-foreground">
                     <LocalDate value={invite.expiresAt} />

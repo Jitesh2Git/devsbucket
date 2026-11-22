@@ -18,6 +18,7 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { notificationsQueryKey } from "@/lib/query-keys";
+import { SCROLL_LIST } from "@/lib/scroll-list";
 import { cn } from "@/lib/utils";
 
 // The Notifications page: newest first, unread ones in bold. Opening one
@@ -62,8 +63,8 @@ const NotificationList = ({ initial }: { initial: NotificationView[] }) => {
 
   const unread = notifications.some((notification) => !notification.read);
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-4">
+    <div className="flex flex-col gap-3 md:min-h-0 md:flex-1">
+      <div className="flex shrink-0 items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground">Kept for 90 days.</p>
         <Button
           variant="outline"
@@ -77,34 +78,36 @@ const NotificationList = ({ initial }: { initial: NotificationView[] }) => {
           Mark all as read
         </Button>
       </div>
-      <ul aria-label="Notifications" className="flex flex-col divide-y rounded-lg border">
-        {notifications.map((notification) => (
-          <li key={notification.id}>
-            <button
-              type="button"
-              onClick={() => open(notification)}
-              className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-muted"
-            >
-              <span
-                aria-hidden
-                className={cn(
-                  "mt-1.5 size-2 shrink-0 rounded-full",
-                  notification.read ? "bg-transparent" : "bg-primary",
-                )}
-              />
-              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className={cn("text-sm", !notification.read && "font-medium")}>
-                  {notification.text}
-                  {!notification.read && <span className="sr-only"> (unread)</span>}
+      <div className={SCROLL_LIST}>
+        <ul aria-label="Notifications" className="flex flex-col divide-y rounded-lg border">
+          {notifications.map((notification) => (
+            <li key={notification.id}>
+              <button
+                type="button"
+                onClick={() => open(notification)}
+                className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-muted"
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "mt-1.5 size-2 shrink-0 rounded-full",
+                    notification.read ? "bg-transparent" : "bg-primary",
+                  )}
+                />
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className={cn("text-sm", !notification.read && "font-medium")}>
+                    {notification.text}
+                    {!notification.read && <span className="sr-only"> (unread)</span>}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    <LocalDate value={notification.createdAt} />
+                  </span>
                 </span>
-                <span className="text-xs text-muted-foreground">
-                  <LocalDate value={notification.createdAt} />
-                </span>
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };

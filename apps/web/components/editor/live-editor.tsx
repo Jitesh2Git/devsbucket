@@ -18,6 +18,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useRef, useState } from "react";
 import { MonacoBinding } from "y-monaco";
 import * as Y from "yjs";
+import BucketLoader from "@/components/bucket-loader";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -27,9 +28,9 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { Spinner } from "@/components/ui/spinner";
 import { versionsQueryKey } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
+import { codeFontFamily, followCodeFont } from "./code-font";
 import MarkdownPreview from "./markdown-preview";
 import monaco from "./monaco";
 import SaveVersionDialog from "./save-version-dialog";
@@ -160,6 +161,7 @@ const LiveSession = ({
       scrollBeyondLastLine: false,
       automaticLayout: true,
       fontSize: 13,
+      fontFamily: codeFontFamily(),
       // Room for a name label above a cursor on the first line.
       padding: { top: 18 },
     });
@@ -244,7 +246,11 @@ const LiveSession = ({
       doc.getText(COLLAB_TEXT).observe(updatePreview);
     }
 
+    // The theme's code font, also when it changes while the file is open.
+    const stopFont = followCodeFont((fontFamily) => editor.updateOptions({ fontFamily }));
+
     return () => {
+      stopFont();
       providerRef.current = null;
       docRef.current = null;
       clearTimeout(previewTimer);
@@ -350,8 +356,12 @@ const LiveSession = ({
       </div>
       <div
         className={cn(
-          "grid h-[calc(100vh-14rem)] min-h-80 gap-2",
-          markdown && view === "Split" && "md:grid-cols-2",
+          // On a phone the sidebar sits above, so the height is a share of
+          // the screen; from md up, the screen minus the header and toolbar.
+          "grid h-[70dvh] min-h-80 gap-2 md:h-[calc(100vh-14rem)]",
+          // Split: two equal halves, stacked on a phone, side by side from
+          // md up. Without fixed rows a long preview squeezed the editor.
+          markdown && view === "Split" && "grid-rows-2 md:grid-cols-2 md:grid-rows-1",
         )}
       >
         {/* Hidden, not removed, in Preview: the editor keeps its connection. */}
@@ -368,7 +378,7 @@ const LiveSession = ({
               aria-hidden
               className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-background text-sm text-muted-foreground"
             >
-              <Spinner />
+              <BucketLoader />
               {file.size > LARGE_EDIT_BYTES && (
                 <p>Loading a large file ({formatBytes(file.size)}). This can take a while.</p>
               )}
@@ -376,9 +386,12 @@ const LiveSession = ({
           )}
         </div>
         {markdown && view !== "Editor" && (
+          // `relative`: footnotes add an sr-only (absolutely placed) heading,
+          // which otherwise is placed against the page, past the end of the
+          // text, and stretches the whole page.
           <section
             aria-label="Preview"
-            className="min-h-0 overflow-y-auto rounded-md border px-6 py-4"
+            className="relative min-h-0 overflow-y-auto rounded-md border px-6 py-4"
           >
             <MarkdownPreview text={previewText} />
           </section>

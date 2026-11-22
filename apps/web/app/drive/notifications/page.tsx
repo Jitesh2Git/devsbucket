@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { loadNotifications } from "@/app/drive/notification-actions";
 import NotificationList from "@/components/drive/notification-list";
+import PageLoader from "@/components/page-loader";
 
 export const metadata: Metadata = { title: "Notifications" };
 
@@ -12,9 +13,10 @@ const NotificationsContent = async () => {
 
 const NotificationsPage = () => {
   return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Notifications</h1>
-      <Suspense>
+    // From md up the page fills the drive column and only the list scrolls.
+    <div className="flex flex-col gap-4 md:h-full">
+      <h1 className="shrink-0 text-2xl font-semibold tracking-tight">Notifications</h1>
+      <Suspense fallback={<PageLoader />}>
         <NotificationsContent />
       </Suspense>
     </div>
