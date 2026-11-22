@@ -1,7 +1,7 @@
 "use client";
 
 import type { VersionSummary } from "@devsbucket/db/versions";
-import { type CollabReply, editorPath } from "@devsbucket/shared/editing";
+import { type CollabReply, editorPath, MAX_AUTO_VERSIONS } from "@devsbucket/shared/editing";
 import { useQuery } from "@tanstack/react-query";
 import { History, RotateCcw } from "lucide-react";
 import { useLayoutEffect, useState } from "react";
@@ -27,6 +27,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { versionsQueryKey, versionTextQueryKey } from "@/lib/query-keys";
 import VersionDiff from "./version-diff";
@@ -137,6 +144,9 @@ const VersionHistoryDialog = ({ file, currentText, restore }: VersionHistoryDial
           <DialogTitle>Version history</DialogTitle>
           <DialogDescription>
             Pick a version to see what changed since, and restore it if you need to.
+            <br />
+            Kept: version 1, every named or restored version, and the newest {MAX_AUTO_VERSIONS}{" "}
+            saved when everyone leaves the file.
           </DialogDescription>
         </DialogHeader>
         {list.isPending ? (
@@ -172,26 +182,30 @@ const VersionHistoryDialog = ({ file, currentText, restore }: VersionHistoryDial
             {selected && (
               <div className="flex min-h-0 flex-col gap-2">
                 <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                  <label className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
                     <span>Version {selected.number} compared with</span>
-                    <select
+                    <Select
                       value={other ? other.id : CURRENT}
-                      onChange={(event) => {
-                        setCompareWith(event.target.value);
-                        if (event.target.value === CURRENT) setCurrent(currentText());
+                      onValueChange={(value) => {
+                        setCompareWith(value);
+                        if (value === CURRENT) setCurrent(currentText());
                       }}
-                      className="rounded-md border bg-background px-2 py-1"
                     >
-                      <option value={CURRENT}>the current text</option>
-                      {versions
-                        .filter((v) => v.id !== selected.id)
-                        .map((v) => (
-                          <option key={v.id} value={v.id}>
-                            version {v.number}
-                          </option>
-                        ))}
-                    </select>
-                  </label>
+                      <SelectTrigger size="sm" aria-label="Compare with">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={CURRENT}>the current text</SelectItem>
+                        {versions
+                          .filter((v) => v.id !== selected.id)
+                          .map((v) => (
+                            <SelectItem key={v.id} value={v.id}>
+                              version {v.number}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="outline" size="sm" disabled={restoring}>

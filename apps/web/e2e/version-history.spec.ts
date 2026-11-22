@@ -58,7 +58,8 @@ test("version history: list, compare, restore for everyone", async ({ browser })
     await expect(list).toContainText("Original");
     await list.getByRole("button", { name: /^Version 2/ }).click();
     await expect(dialog.getByText("Version 2 compared with")).toBeVisible();
-    await dialog.getByRole("combobox").selectOption({ label: "version 3" });
+    await dialog.getByRole("combobox", { name: "Compare with" }).click();
+    await ada.getByRole("option", { name: "version 3" }).click();
     await expect(dialog.getByRole("code").first()).toBeVisible();
   });
 
