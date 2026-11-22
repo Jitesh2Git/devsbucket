@@ -63,6 +63,13 @@ Locked on 2026-11-11. To change anything here, add a decision note explaining wh
 - **ZIP download:** a whole folder, any role, streamed by the web app straight from storage, not compressed (CPU on the 2-core VM matters more than bandwidth); up to 1 GB and 1,000 files per ZIP.
 - **Not planned:** stars, Tiptap notes, searching file contents.
 
+## Look and feel (decision 0018)
+
+- **Themes:** 14 colour and font styles, listed as data in `@devsbucket/shared/themes`; anyone can pick one and change its accent, greys, fonts, text size, corners, density, surfaces, main button and sidebar on the Themes page.
+- **Default:** Nord with a blue accent (hue 250) on zinc greys; Sora, IBM Plex Sans for headings, Fira Code for code; 0.75rem corners.
+- **Per browser:** kept in `localStorage`, like light/dark and grid/table; not on the account.
+- **Fonts:** self-hosted with `next/font`, only the default's preloaded.
+
 ## Notifications
 
 - **Never sent** to the person who did the action. Each type can be turned off, and any item can be muted. They're deleted after 90 days.

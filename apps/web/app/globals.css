@@ -8,9 +8,12 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  /* The theme's fonts (decision 0018): --app-font-* point at one of the
+     next/font variables from lib/fonts.ts. */
+  --font-sans: var(--app-font-sans);
+  --font-mono: var(--app-font-mono);
+  --font-heading: var(--app-font-heading);
+  --color-primary-text: var(--primary-text);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,73 +52,75 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Colours come from the theme (decision 0018): the theme engine
+   (@devsbucket/shared/theme-engine) sets --light-* and --dark-* on <html>,
+   for the default on the server and for a saved choice before the first
+   paint. These map them onto shadcn's tokens for each mode. */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --background: var(--light-background);
+  --foreground: var(--light-foreground);
+  --card: var(--light-card);
+  --card-foreground: var(--light-card-foreground);
+  --popover: var(--light-popover);
+  --popover-foreground: var(--light-popover-foreground);
+  --primary: var(--light-primary);
+  --primary-foreground: var(--light-primary-foreground);
+  --primary-text: var(--light-primary-text);
+  --secondary: var(--light-secondary);
+  --secondary-foreground: var(--light-secondary-foreground);
+  --muted: var(--light-muted);
+  --muted-foreground: var(--light-muted-foreground);
+  --accent: var(--light-accent);
+  --accent-foreground: var(--light-accent-foreground);
+  --destructive: var(--light-destructive);
+  --border: var(--light-border);
+  --input: var(--light-input);
+  --ring: var(--light-ring);
+  --sidebar: var(--light-sidebar);
+  --sidebar-foreground: var(--light-sidebar-foreground);
+  --sidebar-muted-foreground: var(--light-sidebar-muted-foreground);
+  --sidebar-primary: var(--light-sidebar-primary);
+  --sidebar-primary-foreground: var(--light-sidebar-primary-foreground);
+  --sidebar-accent: var(--light-sidebar-accent);
+  --sidebar-accent-foreground: var(--light-sidebar-accent-foreground);
+  --sidebar-border: var(--light-sidebar-border);
+  --sidebar-ring: var(--light-sidebar-ring);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: var(--dark-background);
+  --foreground: var(--dark-foreground);
+  --card: var(--dark-card);
+  --card-foreground: var(--dark-card-foreground);
+  --popover: var(--dark-popover);
+  --popover-foreground: var(--dark-popover-foreground);
+  --primary: var(--dark-primary);
+  --primary-foreground: var(--dark-primary-foreground);
+  --primary-text: var(--dark-primary-text);
+  --secondary: var(--dark-secondary);
+  --secondary-foreground: var(--dark-secondary-foreground);
+  --muted: var(--dark-muted);
+  --muted-foreground: var(--dark-muted-foreground);
+  --accent: var(--dark-accent);
+  --accent-foreground: var(--dark-accent-foreground);
+  --destructive: var(--dark-destructive);
+  --border: var(--dark-border);
+  --input: var(--dark-input);
+  --ring: var(--dark-ring);
+  --sidebar: var(--dark-sidebar);
+  --sidebar-foreground: var(--dark-sidebar-foreground);
+  --sidebar-muted-foreground: var(--dark-sidebar-muted-foreground);
+  --sidebar-primary: var(--dark-sidebar-primary);
+  --sidebar-primary-foreground: var(--dark-sidebar-primary-foreground);
+  --sidebar-accent: var(--dark-sidebar-accent);
+  --sidebar-accent-foreground: var(--dark-sidebar-accent-foreground);
+  --sidebar-border: var(--dark-sidebar-border);
+  --sidebar-ring: var(--dark-sidebar-ring);
 }
 
 /* A pointer on everything clickable. Tailwind v4 dropped the browser's
@@ -145,5 +150,66 @@ select:not(:disabled) {
   }
   html {
     @apply font-sans;
+    /* Text size (S/M/L): every rem in the app follows. */
+    font-size: var(--app-font-size, 16px);
   }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+  }
+}
+
+/* Theme options that reshape components (decision 0018), keyed on the
+   attributes the theme engine puts on <html>. Outside @layer, like the
+   cursor rule above, so they beat the components' utility classes. */
+
+/* Raised: cards and tables sit on a soft shadow. */
+html[data-surface="raised"] [data-slot="card"],
+html[data-surface="raised"] [data-slot="table-container"] {
+  box-shadow:
+    0 1px 2px oklch(0 0 0 / 6%),
+    0 8px 24px -14px oklch(0 0 0 / 35%);
+}
+html[data-surface="raised"] [data-slot="table-container"] {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  padding-inline: calc(var(--spacing) * 2);
+}
+
+/* The main button: solid (shadcn's own), soft (tinted) or outline. */
+html[data-button="soft"] [data-slot="button"][data-variant="default"] {
+  background: color-mix(in oklab, var(--primary) 16%, var(--background));
+  color: var(--primary-text);
+}
+html[data-button="outline"] [data-slot="button"][data-variant="default"] {
+  background: transparent;
+  border-color: var(--primary);
+  color: var(--primary-text);
+}
+html[data-button="soft"] [data-slot="button"][data-variant="default"]:hover,
+html[data-button="outline"] [data-slot="button"][data-variant="default"]:hover {
+  background: color-mix(in oklab, var(--primary) 24%, var(--background));
+}
+
+/* The drive's sidebar: its own colours (plain, tinted or contrast), passed
+   to everything inside by pointing the page's tokens at the sidebar's. */
+[data-slot="drive-sidebar"] {
+  --background: var(--sidebar);
+  --foreground: var(--sidebar-foreground);
+  --muted: var(--sidebar-accent);
+  --muted-foreground: var(--sidebar-muted-foreground);
+  --secondary: var(--sidebar-accent);
+  --secondary-foreground: var(--sidebar-accent-foreground);
+  --accent: var(--sidebar-accent);
+  --accent-foreground: var(--sidebar-accent-foreground);
+  --border: var(--sidebar-border);
+  --input: var(--sidebar-border);
+  background: var(--sidebar);
+  color: var(--sidebar-foreground);
+}
+html:not([data-sidebar="plain"]) [data-slot="drive-sidebar"] {
+  border-radius: var(--radius-xl);
+  padding: calc(var(--spacing) * 3);
 }

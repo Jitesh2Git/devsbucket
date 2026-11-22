@@ -509,6 +509,10 @@ UI and style fixes asked for after `v0.5.0`, on one branch (`fix/ui-polish`) wit
 - [x] **Admin tables and profile:** the admin Users and Invites tables have a minimum width (`min-w-180`, `min-w-190`) and scroll sideways on narrow screens; the Invites "For" column sizes to its email. The profile is two columns from `lg` (Username and Sign-in methods left, Notifications right, `max-w-5xl`), with the username and the email on their own lines (`break-all`).
   - Gotcha: `max-w-0 truncate` on a cell gives that column only the width the others leave over; it suits a name column next to fixed-width columns, not a table whose other columns are all auto-width.
 
+- [x] **Themes, step 1 (engine and default, decision 0018):** themes as data (`@devsbucket/shared/themes`), `buildTheme` and the `<head>` boot script (`@devsbucket/shared/theme-engine`, unit-tested, including running the script on its own), 16 fonts self-hosted with `next/font` (`lib/fonts.ts`, only the default's preloaded), `globals.css` mapping `--light-*` / `--dark-*` onto shadcn's tokens plus rules for surfaces, the main button and the drive sidebar (`data-slot="drive-sidebar"`). Default: Nord, blue accent on zinc, Sora / IBM Plex Sans / Fira Code. e2e: `themes.spec.ts`.
+  - Gotcha: the `<head>` script is `buildTheme` / `bootTheme` sent as source (`toString()`), so they must stay self-contained; the unit test runs the script string on its own with a fake `localStorage` and `<html>`, and the e2e test checks it on a production (minified) build. `@devsbucket/shared` has no DOM types, so `bootTheme` reaches `document` / `localStorage` through `globalThis`.
+- [ ] **Themes, step 2:** the Themes page (`/themes`, account menu): pick, customise, live preview, reset.
+
 ## Later phases (summary)
 
 4. **Live editing:** see Phase 4 above
