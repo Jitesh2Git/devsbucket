@@ -1,5 +1,5 @@
 import { type Cursor, copyName, nextAvailableName, splitExtension } from "@devsbucket/shared/item";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { logActivity } from "./activity.ts";
 import { db, type Executor } from "./client.ts";
 import { isUniqueViolation } from "./errors.ts";
@@ -13,11 +13,14 @@ export type Item = typeof items.$inferSelect;
 
 export const PAGE_SIZE = 50;
 
-// The listing's sort key: folders first, then by name ignoring case, then id
-// (so equal names still have a fixed order). Same expressions as the
-// items_parent_list_idx / items_top_level_list_idx indexes, so Postgres
-// reads the rows in order straight from the index.
-const notFolder = sql<boolean>`(${items.type} <> 'folder')`;
+// A folder listing's order: the most recently modified first (folders and
+// files together), then id (so rows modified at the same moment still have
+// a fixed order). Same keys as the items_parent_modified_idx /
+// items_top_level_modified_idx indexes, so Postgres reads the rows in order
+// straight from the index.
+// updated_at as text, for the next page's cursor (exact to the microsecond).
+const modifiedText = sql<string>`${items.updatedAt}::text`;
+// The Move dialog's folder picker is by name, ignoring case.
 const sortName = sql<string>`lower(${items.name})`;
 
 export const getItem = async (id: string) => {
@@ -27,16 +30,19 @@ export const getItem = async (id: string) => {
 
 // One page of a folder (or of the top level of `ownerId`'s My Drive when
 // parentId is null). Callers check permissions on the folder first.
-export const listItems = async ({
-  ownerId,
-  parentId,
-  cursor,
-}: {
-  ownerId: string;
-  parentId: string | null;
-  cursor: Cursor | null;
-}) => {
-  const rows = await db
+export const listItems = async (
+  {
+    ownerId,
+    parentId,
+    cursor,
+  }: {
+    ownerId: string;
+    parentId: string | null;
+    cursor: Cursor | null;
+  },
+  tx: Executor = db,
+) => {
+  const rows = await tx
     .select({
       id: items.id,
       type: items.type,
@@ -45,8 +51,7 @@ export const listItems = async ({
       // A folder's size is what's inside it.
       size: sizeOrFolderSize("items"),
       updatedAt: items.updatedAt,
-      notFolder,
-      sortName,
+      modifiedText,
     })
     .from(items)
     .where(
@@ -58,25 +63,24 @@ export const listItems = async ({
         // Uploads in progress show in the uploads panel, not here.
         eq(items.status, "ready"),
         // Keyset pagination: everything after the last row of the previous
-        // page, compared as a whole row, in the same order as ORDER BY.
+        // page, compared as a whole row, in the same (descending) order as
+        // ORDER BY.
         cursor
-          ? sql`(${notFolder}, ${sortName}, ${items.id}) > (${cursor.notFolder}, ${cursor.sortName}, ${cursor.id})`
+          ? sql`(${items.updatedAt}, ${items.id}) < (${cursor.updatedAt}::timestamptz, ${cursor.id})`
           : undefined,
       ),
     )
-    .orderBy(notFolder, sortName, items.id)
+    .orderBy(desc(items.updatedAt), desc(items.id))
     // One extra row tells us whether there's a next page.
     .limit(PAGE_SIZE + 1);
 
   const page = rows.slice(0, PAGE_SIZE);
   const last = page.at(-1);
   const nextCursor: Cursor | null =
-    rows.length > PAGE_SIZE && last
-      ? { notFolder: last.notFolder, sortName: last.sortName, id: last.id }
-      : null;
+    rows.length > PAGE_SIZE && last ? { updatedAt: last.modifiedText, id: last.id } : null;
 
   return {
-    items: page.map(({ notFolder: _, sortName: __, ...item }) => item),
+    items: page.map(({ modifiedText: _, ...item }) => item),
     nextCursor,
   };
 };

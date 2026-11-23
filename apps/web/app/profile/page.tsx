@@ -85,7 +85,9 @@ const ProfileContent = async () => {
 
 const ProfilePage = () => {
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-12 lg:max-w-5xl">
+    // At least the screen below the header (h-14), so the loader sits in the
+    // middle like on the drive pages.
+    <div className="mx-auto flex min-h-[calc(100dvh-3.5rem)] w-full max-w-2xl flex-col px-4 py-12 lg:max-w-5xl">
       {/* Shows ?error= after a failed "Connect GitHub" round trip. */}
       <Suspense>
         <OAuthError />

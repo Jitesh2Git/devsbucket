@@ -39,10 +39,12 @@ export type NameFormInput = z.infer<typeof nameFormSchema>;
 // row shown (keyset pagination). It comes back from the browser, so the
 // server validates it like any other input.
 export const cursorSchema = z.object({
-  // false for folders, true for everything else: folders come first
-  notFolder: z.boolean(),
-  // lower(name), exactly as Postgres computed it
-  sortName: z.string(),
+  // updated_at as Postgres prints it (microseconds and offset included:
+  // a JavaScript Date keeps only milliseconds, which would skip or repeat
+  // rows), e.g. "2026-11-23 06:20:25.843123+00"
+  updatedAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(\.\d{1,6})?[+-]\d{2}(:\d{2}){0,2}$/),
   id: itemIdSchema,
 });
 

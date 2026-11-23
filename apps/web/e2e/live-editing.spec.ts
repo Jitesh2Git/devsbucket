@@ -61,6 +61,13 @@ test("live editing: two people, a Viewer can't type, promoted mid-session, saved
   await test.step("Ada's typing appears for Bob; Bob's doesn't go anywhere", async () => {
     await typeAtEnd(ada, "Ada was here");
     await expect(editor(bob)).toContainText("Ada was here");
+    // Ada's own cursor says "You", like the names on other people's (the
+    // label has no role, so this uses its class).
+    const ownLabel = ada.locator(".yLocalCursor");
+    await expect(ownLabel).toHaveCount(1);
+    expect(await ownLabel.evaluate((element) => getComputedStyle(element, "::after").content)).toBe(
+      '"You"',
+    );
     await typeAtEnd(bob, "Bob tries");
     await expect(editor(bob)).not.toContainText("Bob tries");
     await expect(editor(ada)).not.toContainText("Bob tries");

@@ -512,3 +512,128 @@ html:not([data-sidebar="plain"]) [data-slot="drive-sidebar"] {
     width: 100%;
   }
 }
+
+/* Homepage easter eggs (components/home/tap-bucket.tsx, coin-fact.tsx,
+   file-drop-hint.tsx). */
+.home-wobble {
+  transform-origin: 50% 90%;
+  animation: home-wobble 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.home-wobble-loop {
+  display: block;
+  transform-origin: 50% 90%;
+  animation: home-wobble 1s cubic-bezier(0.2, 0.7, 0.2, 1) infinite;
+}
+@keyframes home-wobble {
+  25% {
+    transform: rotate(-8deg);
+  }
+  60% {
+    transform: rotate(6deg);
+  }
+}
+/* A tapped bucket sloshes faster; a full one is filled to the rim. */
+.home-bucket[data-tapped] .logo-wave {
+  animation-duration: 0.6s;
+}
+.home-bucket[data-full] .logo-level {
+  animation: none;
+  transform: translateY(-4px);
+  transition: transform 0.4s ease;
+}
+.home-bucket[data-full] .logo-wave {
+  animation-duration: 0.5s;
+}
+/* Drops flying out of the bucket (each sets --dx and --dy). */
+.home-drop {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  width: 7px;
+  height: 9px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: var(--primary);
+  pointer-events: none;
+  animation: home-drop 0.8s cubic-bezier(0.3, 0.6, 0.6, 1) forwards;
+}
+@keyframes home-drop {
+  to {
+    transform: translate(var(--dx), var(--dy)) scale(0.6);
+    opacity: 0;
+  }
+}
+/* What runs down the outside of a full bucket, from its rim. */
+.home-spill {
+  position: absolute;
+  top: 30%;
+  width: 5px;
+  height: 30%;
+  border-radius: 0 0 4px 4px;
+  background: var(--primary);
+  transform-origin: top;
+  animation: home-spill 2.2s ease-in forwards;
+}
+@keyframes home-spill {
+  0% {
+    transform: scaleY(0);
+  }
+  40% {
+    transform: scaleY(1);
+  }
+  100% {
+    transform: scaleY(1) translateY(6px);
+    opacity: 0;
+  }
+}
+/* Coins: gold is the one colour here that isn't the theme's (a coin is
+   gold in every theme, like people's cursor colours). */
+.home-coin {
+  fill: oklch(0.82 0.15 85);
+  stroke: oklch(0.66 0.14 75);
+  stroke-width: 1.5;
+  transform-box: fill-box;
+}
+@keyframes home-coin-in {
+  from {
+    transform: translateY(-36px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+}
+/* A full coin bucket tips them out: each coin slides out over the rim
+   (up and left, in the tipped bucket's own frame), then tumbles down and
+   fades. --spill-x sets how far, and each has its own delay. */
+.home-coin-spill {
+  animation: home-coin-spill 0.8s cubic-bezier(0.4, 0, 0.7, 1) both;
+}
+@keyframes home-coin-spill {
+  35% {
+    transform: translate(calc(var(--spill-x) * 0.3), -30px) rotate(-20deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--spill-x), 8px) rotate(-200deg);
+    opacity: 0;
+  }
+}
+@keyframes home-tip {
+  40%,
+  70% {
+    transform: rotate(-35deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-wobble,
+  .home-wobble-loop,
+  .home-drop,
+  .home-spill,
+  .home-coin-spill {
+    animation: none;
+  }
+  .home-drop,
+  .home-spill {
+    display: none;
+  }
+}

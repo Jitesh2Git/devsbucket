@@ -68,14 +68,14 @@ export const items = pgTable(
         sql`lower(${table.name})`,
       )
       .where(sql`${table.trashedAt} is null`),
-    // Listing a folder: folders first, then by name, outside the trash
-    // (keyset pagination on the same three keys; see ../items.ts).
-    index("items_parent_list_idx")
-      .on(table.parentId, sql`(${table.type} <> 'folder')`, sql`lower(${table.name})`, table.id)
+    // Listing a folder: the most recently modified first, outside the trash
+    // (keyset pagination on the same keys; see ../items.ts).
+    index("items_parent_modified_idx")
+      .on(table.parentId, table.updatedAt.desc().nullsFirst(), table.id.desc().nullsFirst())
       .where(sql`${table.trashedAt} is null`),
     // Listing the top level of My Drive.
-    index("items_top_level_list_idx")
-      .on(table.ownerId, sql`(${table.type} <> 'folder')`, sql`lower(${table.name})`, table.id)
+    index("items_top_level_modified_idx")
+      .on(table.ownerId, table.updatedAt.desc().nullsFirst(), table.id.desc().nullsFirst())
       .where(sql`${table.parentId} is null and ${table.trashedAt} is null`),
     // Trash view.
     index("items_trash_idx").on(table.ownerId, table.trashedAt).where(sql`${table.trashRoot}`),

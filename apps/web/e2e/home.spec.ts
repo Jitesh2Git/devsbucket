@@ -57,3 +57,61 @@ test("home: what DevsBucket does, and the ways in", async ({ page }) => {
 
   expect(errors).toEqual([]);
 });
+
+// The homepage's easter eggs: the bucket, the coins, the file drop, and
+// the chip after midnight.
+test("home: easter eggs", async ({ page }) => {
+  await test.step("tap the bucket: five quick taps fill it to the brim", async () => {
+    await page.goto("/");
+    const bucket = page.getByRole("button", { name: "The DevsBucket bucket" });
+    await expect(bucket).toBeVisible();
+    // The five taps must land within 2 s; a click each with Playwright's
+    // checks can take longer than that on a slow runner, so they're sent
+    // straight to the button.
+    for (let i = 0; i < 4; i++) await bucket.dispatchEvent("click");
+    await expect(page.getByText("Bucket full. 1 GB of 1 GB used.")).toHaveCount(0);
+    await bucket.dispatchEvent("click");
+    await expect(page.getByText("Bucket full. 1 GB of 1 GB used.")).toBeVisible();
+    await expect(page.locator(".home-bucket[data-full]")).toHaveCount(1);
+    // It settles back.
+    await expect(page.locator(".home-bucket[data-full]")).toHaveCount(0);
+  });
+
+  await test.step("click the $0: coins fill a little bucket, then tip out", async () => {
+    const zero = page.getByRole("button", { name: "$0" });
+    await zero.click();
+    await expect(page.getByText("Still $0. Promise.")).toBeVisible();
+    // Coins have no role; they're drawn in the little bucket.
+    const coins = page.locator(".home-coin");
+    await expect(coins).toHaveCount(1);
+    for (let i = 0; i < 6; i++) await zero.click();
+    await expect(coins).toHaveCount(7);
+    await expect(page.getByText("That's a lot of coins for a free app.")).toBeVisible();
+    await expect(coins).toHaveCount(0);
+  });
+
+  await test.step("drag a file over the page: where it would go", async () => {
+    const dataTransfer = await page.evaluateHandle(() => {
+      const data = new DataTransfer();
+      data.items.add(new File(["hello"], "notes.md"));
+      return data;
+    });
+    await page.dispatchEvent("body", "dragenter", { dataTransfer });
+    await expect(page.getByText("Sign in to drop that in the bucket")).toBeVisible();
+    await page.dispatchEvent("body", "drop", { dataTransfer });
+    await expect(page.getByText("Sign in to drop that in the bucket")).toHaveCount(0);
+    await expect(
+      page.getByText("Nice file. Sign in and it goes straight in your bucket."),
+    ).toBeVisible();
+  });
+
+  await test.step("the chip: a note for night owls", async () => {
+    // The browser's own clock, fixed: noon, then 3 a.m.
+    await page.clock.setFixedTime(new Date(2026, 10, 24, 12, 0));
+    await page.reload();
+    await expect(page.getByText("Free, with 1 GB for everyone")).toBeVisible();
+    await page.clock.setFixedTime(new Date(2026, 10, 24, 3, 0));
+    await page.reload();
+    await expect(page.getByText("Coding at 3 a.m.? Same.")).toBeVisible();
+  });
+});

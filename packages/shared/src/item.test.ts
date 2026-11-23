@@ -117,13 +117,20 @@ describe("listItemsSchema", () => {
 
   it("accepts the first page and a cursor", () => {
     expect(listItemsSchema.safeParse({ parentId: null, cursor: null }).success).toBe(true);
-    const cursor = { notFolder: true, sortName: "notes.md", id };
+    const cursor = { updatedAt: "2026-11-23 06:20:25.843123+00", id };
     expect(listItemsSchema.safeParse({ parentId: id, cursor }).success).toBe(true);
   });
 
   it.each([
     ["a bad parent id", { parentId: "1", cursor: null }],
-    ["a bad cursor id", { parentId: null, cursor: { notFolder: true, sortName: "a", id: "x" } }],
+    [
+      "a bad cursor id",
+      { parentId: null, cursor: { updatedAt: "2026-11-23 06:20:25+00", id: "x" } },
+    ],
+    [
+      "a cursor date that isn't Postgres' text",
+      { parentId: null, cursor: { updatedAt: "yesterday", id } },
+    ],
     ["a cursor missing fields", { parentId: null, cursor: { id } }],
   ])("rejects %s", (_label, input) => {
     expect(listItemsSchema.safeParse(input).success).toBe(false);
