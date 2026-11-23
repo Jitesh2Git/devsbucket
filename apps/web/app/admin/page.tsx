@@ -38,7 +38,9 @@ const AdminContent = async () => {
 
 const AdminPage = () => {
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-12">
+    // At least the screen below the header (h-14), so the loader sits in the
+    // middle like on the drive pages.
+    <div className="mx-auto flex min-h-[calc(100dvh-3.5rem)] w-full max-w-5xl flex-col px-4 py-12">
       <Suspense fallback={<PageLoader />}>
         <AdminContent />
       </Suspense>

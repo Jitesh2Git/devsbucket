@@ -14,7 +14,9 @@ const ThemesContent = async () => {
 
 const ThemesPage = () => {
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-10">
+    // At least the screen below the header (h-14), so the loader sits in the
+    // middle like on the drive pages.
+    <div className="mx-auto flex min-h-[calc(100dvh-3.5rem)] w-full max-w-7xl flex-col px-4 py-10">
       <Suspense fallback={<PageLoader />}>
         <ThemesContent />
       </Suspense>

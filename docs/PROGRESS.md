@@ -529,6 +529,8 @@ UI and style fixes asked for after `v0.5.0`, on one branch (`fix/ui-polish`) wit
   - Gotcha: the demos are pictures made of real buttons and tables, so each is `aria-hidden` and `inert` (nothing in it can be focused or clicked, and it isn't in the accessibility tree); `home.spec.ts` checks no table or Upload button is exposed and that Tab never lands inside one.
   - Gotcha: lucide-react 1.x has no brand icons (no `Github`); the GitHub button draws its own SVG.
 
+- [x] **Loader in the middle everywhere:** Profile, Themes and Admin are at least the screen below the header (`min-h-[calc(100dvh-3.5rem)]`, `flex-col`), so their `PageLoader` (`flex-1`) sits in the middle like on the drive pages, instead of just under the header.
+
 ## Later phases (summary)
 
 4. **Live editing:** see Phase 4 above
