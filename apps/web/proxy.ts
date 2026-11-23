@@ -10,26 +10,26 @@ const HOME = "/drive";
 // security check: signed-in pages still verify the session themselves.
 // It checks the session for real (one indexed lookup), not just whether a
 // cookie exists: a stale cookie would otherwise lock someone out of /sign-in.
+// The homepage (/) isn't matched: it's for everyone, signed in or not, and
+// offers "Go to My Drive" to signed-in people itself.
 export const proxy = async (request: NextRequest) => {
   const session = await auth.api.getSession({ headers: request.headers });
   const { pathname } = request.nextUrl;
   const onAuthPage = AUTH_PAGES.includes(pathname);
-  // The landing page is for everyone, but signed-in people go to their drive.
-  const onLanding = pathname === "/";
 
-  if (session && (onAuthPage || onLanding)) {
+  if (session && onAuthPage) {
     // Already signed in, coming from a share link: straight back to it.
-    const next = onAuthPage ? safeNextPath(request.nextUrl.searchParams.get("next")) : null;
+    const next = safeNextPath(request.nextUrl.searchParams.get("next"));
     return NextResponse.redirect(new URL(next ?? HOME, request.url));
   }
 
   // Signed out: every other matched page needs an account.
-  if (!session && !onAuthPage && !onLanding) {
+  if (!session && !onAuthPage) {
     return NextResponse.redirect(new URL("/sign-in", request.url));
   }
   return NextResponse.next();
 };
 
 export const config = {
-  matcher: ["/", "/sign-in", "/sign-up", "/profile", "/themes", "/admin", "/drive/:path*"],
+  matcher: ["/sign-in", "/sign-up", "/profile", "/themes", "/admin", "/drive/:path*"],
 };

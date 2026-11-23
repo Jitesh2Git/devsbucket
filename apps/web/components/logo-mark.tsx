@@ -1,11 +1,13 @@
 "use client";
 
+import { cn } from "cn";
 import { useId } from "react";
 import { useNavigating } from "@/lib/navigation-progress";
 
 // The bucket beside "DevsBucket" in the header: a little accent inside,
-// sloshing while the next page loads (with the top bar).
-const LogoMark = () => {
+// sloshing while the next page loads (with the top bar). The homepage shows
+// a big one (className sets the size).
+const LogoMark = ({ className }: { className?: string }) => {
   const navigating = useNavigating();
   const clip = `logo-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const outline = "M14 20 L50 20 L45 56 Q44 59 41 59 L23 59 Q20 59 19 56 Z";
@@ -14,7 +16,7 @@ const LogoMark = () => {
       viewBox="0 0 64 64"
       aria-hidden
       data-loading={navigating || undefined}
-      className="logo-mark size-6 shrink-0 overflow-visible"
+      className={cn("logo-mark size-6 shrink-0 overflow-visible", className)}
     >
       <defs>
         <clipPath id={clip}>
