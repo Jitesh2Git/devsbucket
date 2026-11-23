@@ -26,9 +26,19 @@ test("sign up with an invite, sign out, sign in", async ({ page }) => {
   await page.getByRole("link", { name: "Trash" }).click();
   await expect(page.getByText("Trash is empty")).toBeVisible();
 
-  // The landing page sends signed-in people to their drive.
-  await page.goto("/");
+  // The homepage is open to signed-in people too (the logo leads there), with
+  // a way back to their drive instead of sign-up and sign-in.
+  await page.getByRole("link", { name: "DevsBucket" }).click();
+  await expect(page).toHaveURL("/");
+  await expect(page.getByRole("link", { name: "Sign up with an invite" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Go to My Drive" })).toHaveCount(2);
+  await page.getByRole("link", { name: "Go to My Drive" }).first().click();
   await expect(page).toHaveURL("/drive");
+  // The account menu leads there too.
+  await accountMenu.click();
+  await page.getByRole("menuitem", { name: "Home" }).click();
+  await expect(page).toHaveURL("/");
+  await expect(page.getByRole("link", { name: "Go to My Drive" })).toHaveCount(2);
 
   // Sign out from the account menu.
   await accountMenu.click();

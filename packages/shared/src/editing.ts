@@ -73,8 +73,9 @@ export type CollabReply =
 export type CollabRefusal = "no-access" | "not-text";
 
 // Each person's cursor color, the same in every browser and every visit:
-// picked from their user id. Readable on light and dark backgrounds.
-const CURSOR_COLORS = [
+// picked from their user id. Readable on light and dark backgrounds. The
+// homepage's demos use them too, so its people look like the real editor's.
+export const CURSOR_COLORS = [
   "#e5484d",
   "#f76b15",
   "#ffc53d",

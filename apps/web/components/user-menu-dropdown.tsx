@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Palette, Shield, UserRound } from "lucide-react";
+import { House, LogOut, Palette, Shield, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -24,8 +24,9 @@ type UserMenuDropdownProps = {
   isAdmin: boolean;
 };
 
-// Pages proxy.ts only lets signed-out people see.
-const SIGNED_OUT_PAGES = ["/", "/sign-in", "/sign-up"];
+// Pages proxy.ts only lets signed-out people see (the homepage is for
+// everyone, so it isn't one).
+const SIGNED_OUT_PAGES = ["/sign-in", "/sign-up"];
 
 const UserMenuDropdown = ({ name, email, image, isAdmin }: UserMenuDropdownProps) => {
   const pathname = usePathname();
@@ -62,6 +63,12 @@ const UserMenuDropdown = ({ name, email, image, isAdmin }: UserMenuDropdownProps
           <div className="truncate text-xs text-muted-foreground">{email}</div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/">
+            <House />
+            Home
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/profile">
             <UserRound />
