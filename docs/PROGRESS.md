@@ -530,6 +530,7 @@ UI and style fixes asked for after `v0.5.0`, on one branch (`fix/ui-polish`) wit
   - Gotcha: lucide-react 1.x has no brand icons (no `Github`); the GitHub button draws its own SVG.
 
 - [x] **Loader in the middle everywhere:** Profile, Themes and Admin are at least the screen below the header (`min-h-[calc(100dvh-3.5rem)]`, `flex-col`), so their `PageLoader` (`flex-1`) sits in the middle like on the drive pages, instead of just under the header.
+- [x] **"You" on your own cursor:** y-monaco labels only other people's cursors; the editor now puts a decoration at your own cursor (`yLocalCursor`, `createDecorationsCollection`, moved on every cursor change) whose label says "You", in your cursor colour, styled like the others (`selfCss` next to `peerCss` in `live-editor.tsx`). It appears once you click into the file. e2e: `live-editing.spec.ts`.
 
 ## Later phases (summary)
 

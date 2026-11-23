@@ -80,6 +80,19 @@ const peerCss = (peers: Peer[]) =>
     )
     .join("\n");
 
+// Your own cursor's label, "You", like the names on everyone else's (the
+// caret itself is Monaco's own, so no line here): a decoration at the
+// cursor tagged yLocalCursor (LiveSession).
+const selfCss = (color: string) => `
+.yLocalCursor { position: absolute; height: 100%; }
+.yLocalCursor::after {
+  content: "You";
+  position: absolute; top: -1.3em; left: -1px; z-index: 10;
+  padding: 0 4px; border-radius: 3px 3px 3px 0;
+  background: ${color}; color: #fff; font-size: 11px; line-height: 1.3em;
+  white-space: nowrap; pointer-events: none;
+}`;
+
 const REFUSALS: Record<CollabRefusal, { title: string; description: string }> = {
   "no-access": {
     title: "This file isn't available",
@@ -231,6 +244,27 @@ const LiveSession = ({
       new Set([editor]),
       provider.awareness,
     );
+
+    // "You" above your own cursor, once you've clicked into the file (until
+    // then the cursor is just the start of the file, not where you are).
+    const ownCursor = editor.createDecorationsCollection();
+    let placed = false;
+    const showOwnCursor = () => {
+      const position = editor.getPosition();
+      if (!placed || !position) return;
+      const { lineNumber, column } = position;
+      ownCursor.set([
+        {
+          range: new monaco.Range(lineNumber, column, lineNumber, column),
+          options: { beforeContentClassName: "yLocalCursor" },
+        },
+      ]);
+    };
+    editor.onDidChangeCursorPosition(showOwnCursor);
+    editor.onDidFocusEditorText(() => {
+      placed = true;
+      showOwnCursor();
+    });
 
     // The preview follows the live text, at most every 150 ms while people
     // type (rendering on every keystroke would slow big files down).
@@ -397,7 +431,7 @@ const LiveSession = ({
           </section>
         )}
       </div>
-      <style>{peerCss(peers)}</style>
+      <style>{peerCss(peers) + selfCss(cursorColor(user.id))}</style>
     </div>
   );
 };
