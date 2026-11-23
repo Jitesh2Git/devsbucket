@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { type ReactNode, Suspense } from "react";
+import CoinFact from "@/components/home/coin-fact";
 import FeatureGrid from "@/components/home/feature-grid";
 import FeatureMarquee from "@/components/home/feature-marquee";
 import Hero from "@/components/home/hero";
 import HomeActions from "@/components/home/home-actions";
+import HomeDropHint from "@/components/home/home-drop-hint";
 import Reveal from "@/components/home/reveal";
 
 export const metadata: Metadata = {
@@ -15,7 +17,6 @@ const FACTS = [
   { value: "1 GB", text: "of space for each person" },
   { value: "100 MB", text: "per file, big ones upload in parts" },
   { value: "30 days", text: "in the trash before it's gone" },
-  { value: "$0", text: "free, with no plans to charge" },
 ];
 
 const STEPS = [
@@ -54,6 +55,10 @@ const SectionTitle = ({
 const HomePage = () => {
   return (
     <div className="flex flex-col pb-16">
+      {/* Easter egg: drag a file over the page. */}
+      <Suspense>
+        <HomeDropHint />
+      </Suspense>
       <Hero />
 
       <div className="mx-auto flex w-full max-w-6xl flex-col px-4">
@@ -65,6 +70,8 @@ const HomePage = () => {
                 <dd className="font-heading text-3xl font-semibold tracking-tight">{fact.value}</dd>
               </div>
             ))}
+            {/* "$0", with an easter egg: click it. */}
+            <CoinFact />
           </dl>
         </Reveal>
 
