@@ -64,9 +64,13 @@ test("home: easter eggs", async ({ page }) => {
   await test.step("tap the bucket: five quick taps fill it to the brim", async () => {
     await page.goto("/");
     const bucket = page.getByRole("button", { name: "The DevsBucket bucket" });
-    for (let i = 0; i < 4; i++) await bucket.click();
+    await expect(bucket).toBeVisible();
+    // The five taps must land within 2 s; a click each with Playwright's
+    // checks can take longer than that on a slow runner, so they're sent
+    // straight to the button.
+    for (let i = 0; i < 4; i++) await bucket.dispatchEvent("click");
     await expect(page.getByText("Bucket full. 1 GB of 1 GB used.")).toHaveCount(0);
-    await bucket.click();
+    await bucket.dispatchEvent("click");
     await expect(page.getByText("Bucket full. 1 GB of 1 GB used.")).toBeVisible();
     await expect(page.locator(".home-bucket[data-full]")).toHaveCount(1);
     // It settles back.
