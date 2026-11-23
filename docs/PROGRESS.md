@@ -537,8 +537,21 @@ UI and style fixes asked for after `v0.5.0`, on one branch (`fix/ui-polish`) wit
 - [x] **Homepage easter eggs:** picked from two previews. Tap the big bucket (`tap-bucket.tsx`, a real button: Enter works): it wobbles and splashes, and five taps within 2 s fill it to the rim, spill down both sides and toast "Bucket full. 1 GB of 1 GB used." Click the "$0" fact (`coin-fact.tsx`): each click drops a gold coin into a little bucket, the first toasts "Still $0. Promise.", seven fill it, it says so and tips over, and the coins spill out over the rim one after another (`home-coin-spill`). Drag a file over the page (`file-drop-hint.tsx`, told by `home-drop-hint.tsx` whether you're signed in): a dashed overlay with the wobbling bucket, and dropping toasts where it would go instead of the browser opening the file. Between midnight and 5 a.m. on the visitor's clock the hero chip says "Coding at 3 a.m.? Same." (`night-owl.tsx`, swapped after hydration). CSS: `home-wobble`, `home-drop`, `home-spill`, `home-coin` in `globals.css`; the coins' gold is the one non-theme colour (like cursor colours). "Reduce motion" keeps everything still; the messages still show. e2e: the "easter eggs" test in `home.spec.ts` (`page.clock.setFixedTime` for 3 a.m.).
   - Gotcha: Turbopack's cache kept an old `globals.css` in both the dev server (`.next`) and the e2e build (`.next-e2e/cache`), so the new rules were missing everywhere (the coins drew black) while a build into a fresh folder had them. When CSS changes don't show: check `document.styleSheets` for the rule, then delete the build folder (`.next`, `.next-e2e`) and restart.
 
+## Phase 6: Production
+
+Full plan: `docs/plans/phase-6.md` (design, step table, tests). Decision: 0020 (VM stays 2 cores / 12 GB, the account's whole Arm allowance; images built on GitHub's ARM runner into GHCR; idle stops monitored and restarted; UptimeRobot and Healthchecks.io; `age`-encrypted backups to Object Storage; a forced-command deploy key). Picks up the "Phase 6" follow-ups from Phases 2–5.
+
+- [ ] 1. **Images and a prod-like stack** (`feat/docker-images`): Dockerfiles for web, realtime, worker; `/api/health`; `docker/compose.prod.yml`, `docker/Caddyfile`, `docker/.env.prod.example`; the stack running on the Mac with Garage
+- [ ] 2. **Images in CI** (`ci/images`): arm64 images built after the checks on `main` and pushed to GHCR
+- [ ] 3. **The server** (`docs/server-setup`): the Oracle VM, network, Docker, DuckDNS, by hand from `docs/runbook.md`
+- [ ] 4. **Services and first deploy** (`chore/first-deploy`): R2, prod GitHub OAuth app, server `.env`, first deploy, first admin and invite, live smoke test
+- [ ] 5. **Deploy on merge** (`ci/deploy`): deploy job with a forced-command SSH key; backup, migrate, health check, rollback
+- [ ] 6. **Backups** (`feat/backups`): nightly encrypted `pg_dump` to Object Storage, Healthchecks.io, restore drill
+- [ ] 7. **Monitoring and prod checks** (`chore/prod-checks`): UptimeRobot; ZIP, big-file and memory checks on the VM; R2 counters
+- [ ] 8. **Review** (`chore/phase-6-review`): CLAUDE.md, diagrams, follow-ups, tag `v0.6.0`
+
 ## Later phases (summary)
 
 4. **Live editing:** see Phase 4 above
 5. **Drive extras:** see Phase 5 above
-6. **Prod:** Oracle VM, Caddy, DuckDNS, R2, backups, deploy pipeline
+6. **Prod:** see Phase 6 above
