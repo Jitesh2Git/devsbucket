@@ -442,12 +442,13 @@ sequenceDiagram
 flowchart LR
   push["git push to main"] --> ci["GitHub Actions: Biome, typecheck, Vitest, Playwright"]
   ci -->|"fail"| stop["Stop: nothing deployed"]
-  ci -->|"pass"| ssh["SSH into Oracle VM"]
-  ssh --> pull["git pull"]
-  pull --> build["docker compose build"]
-  build --> mig["back up DB, run Drizzle migrations"]
+  ci -->|"pass"| images["Build arm64 images on GitHub's ARM runner, push to GHCR (tag: commit SHA)"]
+  images --> ssh["SSH into Oracle VM (forced-command key runs deploy.sh)"]
+  ssh --> backup["Back up DB (encrypted, to Object Storage)"]
+  backup --> pull["docker compose pull (new tag)"]
+  pull --> mig["Run Drizzle migrations (one-off worker container)"]
   mig --> up["docker compose up -d"]
   up --> health{"Health check OK?"}
   health -->|"yes"| done["Live"]
-  health -->|"no"| back["Roll back to previous images"]
+  health -->|"no"| back["Roll back to previous images (previous SHA)"]
 ```
