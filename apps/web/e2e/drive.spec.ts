@@ -51,10 +51,11 @@ test("folders: create, name clash, open, breadcrumbs, load more, 404", async ({ 
   });
 
   await test.step("50 per page, the rest when scrolled to the end", async () => {
-    // 60 more folders at the top level: 61 in all.
+    // 60 more folders at the top level: 61 in all. Each a second apart and
+    // all newer than "Projects", "Bulk 01" the newest.
     await db.query(
-      `insert into items (owner_id, type, name)
-       select u.id, 'folder', 'Bulk ' || lpad(n::text, 2, '0')
+      `insert into items (owner_id, type, name, updated_at)
+       select u.id, 'folder', 'Bulk ' || lpad(n::text, 2, '0'), now() + make_interval(secs => 61 - n)
        from users u, generate_series(1, 60) n where u.email = $1`,
       [email],
     );
@@ -65,8 +66,10 @@ test("folders: create, name clash, open, breadcrumbs, load more, 404", async ({ 
     await rows.last().scrollIntoViewIfNeeded();
     await expect(rows).toHaveCount(62); // the header + 61
     await expect(page.getByRole("status", { name: "Loading more" })).toHaveCount(0);
-    // Sorted by name, ignoring case: "Bulk 01" … "Bulk 60", then "Projects".
+    // Newest modified first: "Bulk 01" … "Bulk 60", then "Projects".
     await expect(rows.nth(1)).toContainText("Bulk 01");
+    await expect(rows.nth(50)).toContainText("Bulk 50");
+    await expect(rows.nth(51)).toContainText("Bulk 51");
     await expect(rows.last()).toContainText("Projects");
   });
 
