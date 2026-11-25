@@ -18,8 +18,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
-  // Locally `next dev` on a busy laptop can take more than 5 s to answer.
-  expect: { timeout: process.env.CI ? 5_000 : 10_000 },
+  // 10 s, not Playwright's 5: a busy laptop or CI runner sometimes takes
+  // more than 5 s to answer a request (a 7.7 s Share action in one trace),
+  // which failed a random test each run. A real bug still fails.
+  expect: { timeout: 10_000 },
   use: {
     baseURL,
     trace: "retain-on-failure",
