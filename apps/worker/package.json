@@ -12,10 +12,10 @@
     "admin": "node --env-file-if-exists=.env src/admin.ts"
   },
   "dependencies": {
+    "@better-auth/utils": "0.5.1",
     "@devsbucket/db": "workspace:*",
     "@devsbucket/shared": "workspace:*",
-    "@devsbucket/storage": "workspace:*",
-    "better-auth": "1.7.21"
+    "@devsbucket/storage": "workspace:*"
   },
   "devDependencies": {
     "@devsbucket/typescript-config": "workspace:*",
