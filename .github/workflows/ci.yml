@@ -22,7 +22,8 @@ jobs:
   checks:
     name: Lint, typecheck and tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # e2e alone takes ~14 minutes here; room for a retry and a slow runner.
+    timeout-minutes: 30
 
     # A throwaway Postgres for the end-to-end tests (same image as local).
     services:
@@ -105,14 +106,18 @@ jobs:
       - name: End-to-end tests
         run: pnpm test:e2e
 
-      # On failure, keep Playwright's traces (step-by-step recordings) for a
-      # week: download them from the run page and open with show-trace.
+      # Keep Playwright's traces (step-by-step recordings) for a week whenever
+      # a test failed, even if its retry passed (a flaky test) or the job was
+      # cancelled: download them from the run page and open with show-trace.
+      # Playwright only keeps traces of failed attempts, so a clean run
+      # uploads nothing.
       - name: Upload Playwright traces
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: playwright-traces
           path: apps/web/test-results/
+          if-no-files-found: ignore
           retention-days: 7
 
   # The images the server runs (docker/*.Dockerfile, Phase 6, decision 0020),

@@ -115,6 +115,11 @@ test("uploads: upload, name clash, into a folder, quota full, cancel, multipart"
     await upload(bigFile);
     await partsStarted;
     expect((await usage()).pending).toBe(1);
+    // The toasts sit in the same corner as the uploads panel: wait for the
+    // last one to go, or it may cover the Cancel button.
+    await expect(
+      page.getByRole("region", { name: "Notifications alt+T" }).getByRole("listitem"),
+    ).toHaveCount(0);
     await panel.getByRole("button", { name: "Cancel big.bin" }).click();
     await expect.poll(usage).toEqual(before);
     await page.unrouteAll({ behavior: "ignoreErrors" });
