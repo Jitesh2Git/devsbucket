@@ -1,0 +1,68 @@
+# The production stack on the Mac (Phase 6 step 1), added on top of
+# compose.prod.yml: images built here instead of pulled, and Garage in
+# place of R2, with its own data (never the dev bucket). Settings in
+# docker/.env.prodlike (from docker/.env.prodlike.example). Run through
+# `pnpm prodlike <compose command>`, e.g. `pnpm prodlike up -d --build`.
+#
+# The browser and the containers must reach Garage at the same address
+# (presigned URLs carry it), so it's published on 127.0.0.1:3910 and called
+# garage.localhost:3910 by both: the browser treats *.localhost as this Mac,
+# and the containers get that name pointed at the Mac (host-gateway).
+name: devsbucket-prodlike
+
+x-garage-host: &garage-host
+  - "garage.localhost:host-gateway"
+
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: docker/web.Dockerfile
+      args:
+        NEXT_PUBLIC_REALTIME_URL: wss://localhost/realtime
+    extra_hosts: *garage-host
+    depends_on:
+      garage:
+        condition: service_healthy
+
+  realtime:
+    build:
+      context: ..
+      dockerfile: docker/node.Dockerfile
+      args:
+        APP: realtime
+    extra_hosts: *garage-host
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/node.Dockerfile
+      args:
+        APP: worker
+    extra_hosts: *garage-host
+
+  garage:
+    image: dxflrs/garage:v2.5.0
+    restart: unless-stopped
+    command: ["/garage", "server", "--single-node", "--default-bucket"]
+    environment:
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET:?}
+      GARAGE_DEFAULT_ACCESS_KEY: ${S3_ACCESS_KEY_ID:?}
+      GARAGE_DEFAULT_SECRET_KEY: ${S3_SECRET_ACCESS_KEY:?}
+      GARAGE_DEFAULT_BUCKET: ${S3_BUCKET:?}
+    ports:
+      - "127.0.0.1:3910:3900"
+    volumes:
+      - ./garage/garage.toml:/etc/garage.toml:ro
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  garage-meta:
+  garage-data:
