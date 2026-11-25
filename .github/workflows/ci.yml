@@ -1,5 +1,7 @@
 # Runs on every pull request and on every push to main. Branch protection on
-# main requires the "checks" job to pass before a PR can be merged.
+# main requires the "checks" job to pass before a PR can be merged. After the
+# checks, "images" builds the three Docker images (Phase 6): on a PR only to
+# prove they still build, on main also pushed to GHCR for the server.
 name: CI
 
 on:
@@ -12,7 +14,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Read-only token: this workflow only checks code, it never writes.
+# Read-only token by default; only the images job may write (to GHCR).
 permissions:
   contents: read
 
@@ -112,3 +114,64 @@ jobs:
           name: playwright-traces
           path: apps/web/test-results/
           retention-days: 7
+
+  # The images the server runs (docker/*.Dockerfile, Phase 6, decision 0020),
+  # built on GitHub's free Arm runner for the arm64 VM. On main they're pushed
+  # to GHCR tagged with the commit SHA (what a deploy runs and a rollback
+  # goes back to) and "main" (the newest). The three packages are public, so
+  # the server pulls them without logging in.
+  images:
+    name: Image (${{ matrix.app }})
+    needs: checks
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: web
+            dockerfile: docker/web.Dockerfile
+          - app: realtime
+            dockerfile: docker/node.Dockerfile
+          - app: worker
+            dockerfile: docker/node.Dockerfile
+    env:
+      PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GHCR
+        if: env.PUSH == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The layer cache lives in GitHub Actions' cache, one scope per image,
+      # so an unchanged dependency install isn't redone. APP is read by
+      # node.Dockerfile, NEXT_PUBLIC_REALTIME_URL (a repository variable,
+      # public anyway: it's in the page) by web.Dockerfile.
+      - name: Build (and push, on main)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/arm64
+          build-args: |
+            APP=${{ matrix.app }}
+            NEXT_PUBLIC_REALTIME_URL=${{ vars.NEXT_PUBLIC_REALTIME_URL }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          tags: |
+            ghcr.io/jitesh2git/devsbucket-${{ matrix.app }}:${{ github.sha }}
+            ghcr.io/jitesh2git/devsbucket-${{ matrix.app }}:main
+          push: ${{ env.PUSH == 'true' }}
+          cache-from: type=gha,scope=${{ matrix.app }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.app }}

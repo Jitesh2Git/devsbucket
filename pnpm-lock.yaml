@@ -339,6 +339,9 @@ importers:
 
   apps/worker:
     dependencies:
+      '@better-auth/utils':
+        specifier: 0.5.1
+        version: 0.5.1
       '@devsbucket/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -348,9 +351,6 @@ importers:
       '@devsbucket/storage':
         specifier: workspace:*
         version: link:../../packages/storage
-      better-auth:
-        specifier: 1.7.21
-        version: 1.7.21(@opentelemetry/api@1.10.0)(drizzle-kit@0.31.11)(drizzle-orm@0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(kysely@0.29.8)(pg@8.23.1))(next@16.4.6(@babel/core@7.29.13)(@opentelemetry/api@1.10.0)(@playwright/test@1.65.0)(@types/node@24.19.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(pg@8.23.1)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@5.1.0(@opentelemetry/api@1.10.0)(@types/node@24.19.2)(vite@8.3.8(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)))
     devDependencies:
       '@devsbucket/typescript-config':
         specifier: workspace:*

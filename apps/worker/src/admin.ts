@@ -8,12 +8,19 @@
 import { stdin, stdout } from "node:process";
 import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
+// What better-auth/crypto itself uses, at the version better-auth 1.7.21
+// depends on, so a password set here is one Better Auth accepts. Not
+// better-auth itself: its optional peers (Next, React…) would come with it
+// into the worker image.
+import { hashPassword } from "@better-auth/utils/password";
+import { createRandomStringGenerator } from "@better-auth/utils/random";
 import { pool } from "@devsbucket/db/client";
 import { createInvite } from "@devsbucket/db/invites";
 import { findUserByEmail, setAdmin, setPasswordHash, setQuota } from "@devsbucket/db/users";
 import { formatBytes, parseBytes } from "@devsbucket/shared/bytes";
 import { removeUser } from "@devsbucket/storage/cleanup";
-import { generateRandomString, hashPassword } from "better-auth/crypto";
+
+const randomPassword = createRandomStringGenerator("a-z", "A-Z", "0-9");
 
 const USAGE = `Usage: pnpm admin <command>
   reset-password <email>           new random password, signs them out everywhere
@@ -66,7 +73,7 @@ const commands: Record<string, (input: Input) => Promise<void>> = {
   "reset-password": async ({ args }) => {
     const user = await userFrom(args[0]);
     // 20 characters from 62: about 119 bits, within the 8–128 sign-up rule.
-    const password = generateRandomString(20, "a-z", "A-Z", "0-9");
+    const password = randomPassword(20);
     const result = await setPasswordHash(user.id, await hashPassword(password));
     console.log(`New password for ${user.email}: ${password}`);
     console.log(
