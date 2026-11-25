@@ -15,6 +15,7 @@
     "docker:down": "docker compose -f docker/compose.dev.yml down",
     "docker:ps": "docker compose -f docker/compose.dev.yml ps",
     "docker:logs": "docker compose -f docker/compose.dev.yml logs -f",
+    "prodlike": "docker compose -f docker/compose.prod.yml -f docker/compose.prodlike.yml --env-file docker/.env.prodlike",
     "db:generate": "pnpm --filter @devsbucket/db db:generate",
     "db:migrate": "pnpm --filter @devsbucket/db db:migrate",
     "db:seed": "pnpm --filter @devsbucket/db db:seed",

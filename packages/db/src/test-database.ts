@@ -1,8 +1,8 @@
 // The test database (devsbucket_test) sits next to the dev one. Shared by
 // the e2e reset (reset-test-db.ts) and the database tests (`pnpm test:db`).
 import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
 import pg from "pg";
+import { applyMigrations } from "./migrations.ts";
 
 // devsbucket -> devsbucket_test; a URL that already ends in _test stays.
 export const testDatabaseUrl = (databaseUrl: string) => {
@@ -38,9 +38,7 @@ export const prepareTestDatabase = async (databaseUrl: string) => {
 
   const client = new pg.Client({ connectionString: databaseUrl });
   await client.connect();
-  await migrate(drizzle({ client, casing: "snake_case" }), {
-    migrationsFolder: new URL("../drizzle", import.meta.url).pathname,
-  });
+  await applyMigrations(drizzle({ client, casing: "snake_case" }));
   await client.end();
   return name;
 };

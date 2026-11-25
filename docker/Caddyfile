@@ -1,0 +1,31 @@
+# Caddy (Phase 6): HTTPS for the one site, in front of web and realtime.
+# DEVSBUCKET_DOMAIN is devsbucket.duckdns.org on the server (a Let's Encrypt
+# certificate, fetched and renewed by Caddy through port 80) and localhost
+# on the Mac (Caddy's own local certificate authority).
+
+{$DEVSBUCKET_DOMAIN} {
+	# Compresses text (pages, scripts, JSON). Caddy only compresses its list
+	# of text types, so the folder ZIPs (application/zip, already a stream)
+	# pass through untouched.
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+		-Server
+	}
+
+	# Live events (/realtime) and live editing (/realtime/collab), as
+	# WebSockets: realtime sees / and /collab.
+	@realtime path /realtime /realtime/*
+	handle @realtime {
+		uri strip_prefix /realtime
+		reverse_proxy realtime:3001
+	}
+
+	# Everything else is the web app.
+	handle {
+		reverse_proxy web:3000
+	}
+}

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:smoke": "playwright test -c smoke/playwright.config.ts"
   },
   "dependencies": {
     "@devsbucket/authz": "workspace:*",

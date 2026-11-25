@@ -1,0 +1,20 @@
+# What `docker build` never sends from the repo (the build context is the
+# repo root). Dependencies and builds are made inside the image; secrets
+# never go in one.
+**/node_modules
+**/.next
+**/.next-*
+**/.turbo
+**/*.tsbuildinfo
+**/.env*
+!**/.env.example
+.git
+.github
+.claude
+.vscode
+docs
+**/coverage
+**/playwright-report
+**/test-results
+**/*.log
+**/.DS_Store

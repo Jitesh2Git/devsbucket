@@ -28,6 +28,11 @@ if (!webUrl) {
 // header on every WebSocket handshake and pages can't change it.
 const allowedOrigin = new URL(webUrl).origin;
 
+// Where to ask the web app who's connecting. In Docker (Phase 6) that's the
+// web container itself (http://web:3000): from inside a container the public
+// address may not lead back to the server. Locally both are the same.
+const sessionUrl = process.env.WEB_INTERNAL_URL ?? webUrl;
+
 type Client = { socket: WebSocket; userId: string; folders: Set<string>; alive: boolean };
 
 // The top of someone's My Drive has no folder id.
@@ -55,7 +60,7 @@ const send = (client: Client, message: ServerMessage) => {
 // (Better Auth); realtime never reads the auth tables itself.
 const sessionUserId = async (cookie: string | undefined) => {
   if (!cookie) return null;
-  const response = await fetch(`${webUrl}/api/auth/get-session`, { headers: { cookie } });
+  const response = await fetch(`${sessionUrl}/api/auth/get-session`, { headers: { cookie } });
   if (!response.ok) return null;
   const session = (await response.json()) as { user?: { id: string } } | null;
   return session?.user?.id ?? null;
