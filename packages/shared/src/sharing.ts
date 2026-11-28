@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { itemIdSchema } from "./item.ts";
+import { itemIdSchema, itemIdsSchema } from "./item.ts";
 import { usernameSchema } from "./user.ts";
 
 // Sharing with people (decision 0008): only someone who already has an
@@ -46,6 +46,13 @@ export const shareSchema = z.object({
   role: grantRoleSchema,
 });
 
+// The same person and role for several selected items (multi-select).
+export const shareItemsSchema = z.object({
+  itemIds: itemIdsSchema,
+  person: personRefSchema,
+  role: grantRoleSchema,
+});
+
 export const grantRefSchema = z.object({ itemId: itemIdSchema, userId: z.uuid() });
 
 export const changeGrantSchema = grantRefSchema.extend({ role: grantRoleSchema });
@@ -62,3 +69,17 @@ export type SharingSetting = z.infer<typeof sharingSettingSchema>["setting"];
 
 export const roleLabel = (role: GrantRole | "owner") =>
   ({ owner: "Owner", editor: "Editor", viewer: "Viewer" })[role];
+
+// What sharing with someone does to their grant on the item (their direct
+// one; null when they have none). `keepHigher`, when sharing several items
+// at once: an Editor asked to be a Viewer stays an Editor, so sharing a
+// selection never takes access away. One item's dialog sets the role.
+export const shareOutcome = (
+  existing: GrantRole | null,
+  role: GrantRole,
+  keepHigher = false,
+): "added" | "changed" | "unchanged" => {
+  if (existing === null) return "added";
+  if (existing === role || (keepHigher && existing === "editor")) return "unchanged";
+  return "changed";
+};

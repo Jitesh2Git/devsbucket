@@ -22,11 +22,14 @@ import {
 import {
   changeGrantSchema,
   grantRefSchema,
+  type PersonRef,
+  shareItemsSchema,
   shareSchema,
   sharingSettingSchema,
 } from "@devsbucket/shared/sharing";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { eachItem } from "@/lib/each-item";
 import { deniedMessage, resolveItem } from "@/lib/items";
 
 const SIGNED_OUT = "You're signed out. Sign in again.";
@@ -82,6 +85,20 @@ export const getSharing = async (input: unknown) => {
 
 export type SharingView = Extract<Awaited<ReturnType<typeof getSharing>>, { error: null }>;
 
+// Only people who already have an account (no email to invite with),
+// found by their email or their username.
+const findPerson = async (ref: PersonRef) => {
+  const person =
+    ref.by === "email" ? await findUserByEmail(ref.email) : await findUserByUsername(ref.username);
+  if (person) return { error: null, person } as const;
+  return {
+    error:
+      ref.by === "email"
+        ? "No DevsBucket account uses this email."
+        : `No one has the username @${ref.username}.`,
+  } as const;
+};
+
 export const shareWithPerson = async (input: unknown) => {
   const session = await getSession();
   if (!session) return { error: SIGNED_OUT } as const;
@@ -90,22 +107,49 @@ export const shareWithPerson = async (input: unknown) => {
   const { itemId, person: ref, role } = parsed.data;
   const found = await resolveItem(session.user, itemId, "share", { trashed: false });
   if (found.denied) return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
-  // Only people who already have an account (no email to invite with),
-  // found by their email or their username.
-  const person =
-    ref.by === "email" ? await findUserByEmail(ref.email) : await findUserByUsername(ref.username);
-  if (!person) {
-    return {
-      error:
-        ref.by === "email"
-          ? "No DevsBucket account uses this email."
-          : `No one has the username @${ref.username}.`,
-    } as const;
-  }
+  const lookup = await findPerson(ref);
+  if (lookup.error !== null) return { error: lookup.error } as const;
+  const { person } = lookup;
   if (person.id === found.item.ownerId) return { error: "They own it." } as const;
   if (person.id === session.user.id) return { error: "You already have access." } as const;
   const result = await shareItem({ itemId, userId: person.id, role, actorId: session.user.id });
   return { error: null, result, name: person.name } as const;
+};
+
+// One person, one role, several selected items (multi-select). Each item
+// is checked and shared on its own (eachItem); an Editor is never lowered
+// to Viewer here (shareOutcome's keepHigher).
+export const shareItems = async (input: unknown) => {
+  const session = await getSession();
+  if (!session) return { error: SIGNED_OUT } as const;
+  const parsed = shareItemsSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? INVALID } as const;
+  const { itemIds, person: ref, role } = parsed.data;
+  const lookup = await findPerson(ref);
+  if (lookup.error !== null) return { error: lookup.error } as const;
+  const { person } = lookup;
+  if (person.id === session.user.id) return { error: "You already have access." } as const;
+  const result = await eachItem(itemIds, async (itemId) => {
+    const found = await resolveItem(session.user, itemId, "share", { trashed: false });
+    if (found.denied) return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
+    if (person.id === found.item.ownerId) return { error: "They own it." } as const;
+    const outcome = await shareItem({
+      itemId,
+      userId: person.id,
+      role,
+      actorId: session.user.id,
+      keepHigher: true,
+    });
+    return { error: null, outcome } as const;
+  });
+  return {
+    error: null,
+    name: person.name,
+    shared: result.done.filter((item) => item.outcome !== "unchanged").length,
+    unchanged: result.done.filter((item) => item.outcome === "unchanged").length,
+    failed: result.failed,
+    firstError: result.firstError,
+  } as const;
 };
 
 export const changeAccess = async (input: unknown) => {

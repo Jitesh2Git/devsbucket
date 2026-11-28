@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { signUpWithOwnInvite } from "./sign-up";
 import { connectTestDb } from "./test-db";
 
@@ -47,10 +47,26 @@ test("multi-select: click, Cmd-click, Shift-click, drag a box, then move and tra
     await expect(page.getByRole("button", { name: "Upload", exact: true })).toBeVisible();
   });
 
-  await test.step("Shift-click selects a range, Cmd/Ctrl+A everything", async () => {
+  await test.step("Shift-click selects a range, Cmd/Ctrl+A everything; the bar stays on the right", async () => {
     await name("Alpha").click();
     await name("Gamma").click({ modifiers: ["Shift"] });
     await expect(bar.getByText("3 selected")).toBeVisible();
+    // The bar sits on the right, at the list's edge, also when the header wraps.
+    for (const width of [1280, 1000]) {
+      await page.setViewportSize({ width, height: 800 });
+      await expect
+        .poll(async () => {
+          const [barBox, tableBox] = await Promise.all([
+            bar.boundingBox(),
+            page.getByRole("table").boundingBox(),
+          ]);
+          return Math.round(
+            (tableBox?.x ?? 0) + (tableBox?.width ?? 0) - (barBox?.x ?? 0) - (barBox?.width ?? 0),
+          );
+        })
+        .toBe(0);
+    }
+    await page.setViewportSize({ width: 1280, height: 800 });
     await page.keyboard.press("ControlOrMeta+a");
     await expect(bar.getByText("5 selected")).toBeVisible();
     await bar.getByRole("button", { name: "Clear selection" }).click();
@@ -89,6 +105,32 @@ test("multi-select: click, Cmd-click, Shift-click, drag a box, then move and tra
     await expect(page).toHaveURL("/drive");
   });
 
+  await test.step("on a phone the bar covers the site header, inside the screen", async () => {
+    await page.setViewportSize({ width: 375, height: 800 });
+    // A long press is touch; on a phone-sized mouse window a click still selects.
+    await name("Alpha").click();
+    await expect(bar.getByText("1 selected")).toBeVisible();
+    // Whole on screen (once it has slid in), over the 56 px site header.
+    await expect(bar).toBeInViewport({ ratio: 1 });
+    await expect
+      .poll(async () => {
+        const box = await bar.boundingBox();
+        return (box?.y ?? 99) + (box?.height ?? 0);
+      })
+      .toBeLessThanOrEqual(56);
+    // The page doesn't get wider, and the breadcrumb keeps its room.
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+      375,
+    );
+    await expect(page.getByRole("heading", { name: "My Drive" })).toBeVisible();
+    for (const label of ["Share", "Download", "Move", "Move to trash"]) {
+      await expect(bar.getByRole("button", { name: label, exact: true })).toBeVisible();
+    }
+    await page.keyboard.press("Escape");
+    await expect(bar).toBeHidden();
+    await page.setViewportSize({ width: 1280, height: 800 });
+  });
+
   await test.step("move two files into a folder at once", async () => {
     await name("a.txt").click();
     await name("b.txt").click({ modifiers: ["ControlOrMeta"] });
@@ -113,6 +155,81 @@ test("multi-select: click, Cmd-click, Shift-click, drag a box, then move and tra
     await expect(page.getByText("Restored 2 items")).toBeVisible();
     await expect(name("Beta")).toBeVisible();
     await expect(name("Gamma")).toBeVisible();
+  });
+
+  await db.end();
+});
+
+test("multi-select: share several items with one person, never lowering access", async ({
+  browser,
+}) => {
+  test.slow();
+  const db = await connectTestDb();
+  const [ada, bob] = (await Promise.all(
+    [0, 1].map(async () => (await browser.newContext()).newPage()),
+  )) as [Page, Page];
+  const adaEmail = await signUpWithOwnInvite(ada, db, "ada-multishare");
+  const bobEmail = await signUpWithOwnInvite(bob, db, "bob-multishare");
+  const name = (text: string) => ada.getByRole("link", { name: text, exact: true });
+  const dialog = ada.getByRole("dialog");
+  const share = async (email: string, role: "Editor" | "Viewer") => {
+    await dialog.getByPlaceholder("Email or @username").fill(email);
+    await dialog.getByRole("button", { name: "Role for new person" }).click();
+    await ada.getByRole("menuitemradio", { name: role }).click();
+    await dialog.getByRole("button", { name: "Share", exact: true }).click();
+  };
+
+  await test.step("Ada has Alpha, Beta and c.txt; Bob is already an Editor on Alpha", async () => {
+    for (const folder of ["Alpha", "Beta"]) {
+      await ada.getByRole("button", { name: "New folder" }).click();
+      await ada.getByLabel("Folder name").fill(folder);
+      await ada.getByRole("button", { name: "Create" }).click();
+      await expect(name(folder)).toBeVisible();
+    }
+    const chooser = ada.waitForEvent("filechooser");
+    await ada.getByRole("button", { name: "Upload", exact: true }).click();
+    await (await chooser).setFiles({
+      name: "c.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("c"),
+    });
+    await expect(name("c.txt")).toBeVisible();
+    await ada.getByRole("button", { name: "Actions for Alpha", exact: true }).click();
+    await ada.getByRole("menuitem", { name: "Share", exact: true }).click();
+    await share(bobEmail, "Editor");
+    await expect(ada.getByText("Shared with E2E bob-multishare")).toBeVisible();
+    await ada.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+  });
+
+  await test.step("Share from the bar adds Bob to the other two as Viewer", async () => {
+    await name("Alpha").click();
+    await name("c.txt").click({ modifiers: ["Shift"] });
+    const bar = ada.getByRole("toolbar", { name: "Selection" });
+    await expect(bar.getByText("3 selected")).toBeVisible();
+    await bar.getByRole("button", { name: "Share" }).click();
+    await expect(dialog.getByRole("heading", { name: "Share 3 items" })).toBeVisible();
+    await share(bobEmail, "Viewer");
+    await expect(ada.getByText("Shared 2 items with E2E bob-multishare as viewer")).toBeVisible();
+    await expect(ada.getByText("1 item already had this access or more.")).toBeVisible();
+    const { rows } = await db.query<{ name: string; role: string }>(
+      `select i.name, p.role from item_permissions p join items i on i.id = p.item_id
+       join users owner on owner.id = i.owner_id join users member on member.id = p.user_id
+       where owner.email = $1 and member.email = $2 order by i.name`,
+      [adaEmail, bobEmail],
+    );
+    expect(rows).toEqual([
+      { name: "Alpha", role: "editor" },
+      { name: "Beta", role: "viewer" },
+      { name: "c.txt", role: "viewer" },
+    ]);
+  });
+
+  await test.step("Bob sees all three in Shared with me", async () => {
+    await bob.getByRole("link", { name: "Shared with me" }).first().click();
+    for (const item of ["Alpha", "Beta", "c.txt"]) {
+      await expect(bob.getByRole("link", { name: item, exact: true })).toBeVisible();
+    }
   });
 
   await db.end();

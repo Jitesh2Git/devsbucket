@@ -1,13 +1,14 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Download, FolderInput, Trash2, X } from "lucide-react";
+import { Download, FolderInput, Trash2, UserPlus, X } from "lucide-react";
 import { type ReactNode, useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
 import { restoreItems, trashItems } from "@/app/drive/trash-actions";
 import type { ItemActions } from "@/components/drive/item-menu";
 import MoveDialog, { type Crumb } from "@/components/drive/move-dialog";
 import type { ItemRef } from "@/components/drive/rename-dialog";
+import ShareSelectionDialog from "@/components/drive/share-selection-dialog";
 import { Button } from "@/components/ui/button";
 import { itemsQueryKey } from "@/lib/query-keys";
 import { restoreMessage } from "@/lib/restore-message";
@@ -40,8 +41,15 @@ const SelectionBar = ({
 }: SelectionBarProps) => {
   const { selectedItems, clear } = useSelection<ItemRef & { type: "folder" | "file" }>();
   const [moving, setMoving] = useState<ItemRef[] | null>(null);
-  // Leaving the page only hides it (Activity): close the dialog.
-  useLayoutEffect(() => () => setMoving(null), []);
+  const [sharing, setSharing] = useState<ItemRef[] | null>(null);
+  // Leaving the page only hides it (Activity): close the dialogs.
+  useLayoutEffect(
+    () => () => {
+      setMoving(null);
+      setSharing(null);
+    },
+    [],
+  );
   const queryClient = useQueryClient();
   const refresh = () =>
     Promise.all([
@@ -106,11 +114,16 @@ const SelectionBar = ({
       <div className={cn("[grid-area:1/1]", selecting && "invisible")}>{children}</div>
       {selecting && (
         // A pill in the accent colour, like the selected rows, so it reads
-        // as "this is about what you picked". Pops in, unless reduce motion.
+        // as "this is about what you picked" (the tint over an opaque
+        // background, since on a phone it floats over the header). From md
+        // up it sits in the buttons' place; on a phone there's no room next
+        // to the breadcrumbs, so it covers the site header, like Drive's app
+        // (the bottom is the toasts' and the uploads panel's). Pops in,
+        // unless reduce motion.
         <div
           role="toolbar"
           aria-label="Selection"
-          className="flex items-center gap-1 self-center justify-self-end rounded-full border border-primary/30 bg-primary/10 p-1 shadow-sm [grid-area:1/1] motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95"
+          className="flex items-center gap-1 rounded-full border border-primary/30 bg-background bg-linear-to-r from-primary/10 to-primary/10 p-1 shadow-sm md:py-px motion-safe:animate-in motion-safe:fade-in max-md:fixed max-md:inset-x-3 max-md:top-1.5 max-md:z-50 max-md:shadow-lg max-md:motion-safe:slide-in-from-top-4 md:self-center md:justify-self-end md:[grid-area:1/1] md:motion-safe:zoom-in-95"
         >
           <Button
             variant="ghost"
@@ -124,8 +137,19 @@ const SelectionBar = ({
           <span className="pr-1 text-sm font-medium whitespace-nowrap text-primary-text">
             {selectedItems.length} selected
           </span>
-          {(canDownload || actions.move || actions.trash) && (
-            <span aria-hidden className="mx-1 h-5 w-px bg-primary/30" />
+          {(actions.share || canDownload || actions.move || actions.trash) && (
+            <span aria-hidden className="mx-1 h-5 w-px bg-primary/30 max-md:ml-auto" />
+          )}
+          {actions.share && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full hover:bg-primary/15"
+              onClick={() => setSharing(selectedItems)}
+            >
+              <UserPlus />
+              <span className="sr-only md:not-sr-only">Share</span>
+            </Button>
           )}
           {canDownload && (
             <Button
@@ -162,6 +186,7 @@ const SelectionBar = ({
           )}
         </div>
       )}
+      <ShareSelectionDialog items={sharing} onClose={() => setSharing(null)} />
       <MoveDialog
         items={moving}
         parentId={parentId}

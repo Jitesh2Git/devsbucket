@@ -66,7 +66,9 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
           From md up the buttons can wrap under the breadcrumbs when the
           column is narrow. */}
       <div className="flex shrink-0 items-center justify-between gap-x-4 gap-y-2 md:flex-wrap">
-        <div className="flex min-w-0 items-center gap-3">
+        {/* grow-[999]: on one line almost all the spare room goes to the
+            breadcrumbs, so the view toggle stays next to the buttons. */}
+        <div className="flex min-w-0 items-center gap-3 md:grow-[999]">
           <DriveBreadcrumbs root={breadcrumbs.root} folders={breadcrumbs.folders} />
           {access.role !== "owner" && access.role !== null && (
             <span className="shrink-0 rounded-md border px-2 py-0.5 text-xs text-muted-foreground">
@@ -75,7 +77,10 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
             </span>
           )}
         </div>
-        <div className="flex shrink-0 gap-2 md:shrink md:flex-wrap">
+        {/* From md up, when it wraps onto its own row, the group fills that
+            row: the view toggle on the left, the buttons (or the selection
+            bar) on the right. */}
+        <div className="flex shrink-0 gap-2 md:shrink md:grow md:flex-wrap md:justify-between">
           <ViewToggle />
           {/* While items are selected, their actions take the buttons' place. */}
           <SelectionBar

@@ -78,6 +78,10 @@ export const SelectionProvider = ({ children }: { children: ReactNode }) => {
     [order],
   );
   const clear = useCallback(() => setState(EMPTY_SELECTION), []);
+  const selectAllRows = useCallback(
+    () => setState((current) => selectAll(current, order)),
+    [order],
+  );
   const latest = useRef(state);
   useLayoutEffect(() => {
     latest.current = state;
@@ -98,12 +102,12 @@ export const SelectionProvider = ({ children }: { children: ReactNode }) => {
         setState(EMPTY_SELECTION);
       } else if (event.key === "a" && (event.metaKey || event.ctrlKey) && order.length > 0) {
         event.preventDefault();
-        setState((current) => selectAll(current, order));
+        selectAllRows();
       }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [count, order]);
+  }, [count, order, selectAllRows]);
 
   const value = useMemo(
     () => ({

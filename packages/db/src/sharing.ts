@@ -1,7 +1,7 @@
 // Sharing with people (decision 0008): the grants on an item, and changing
 // them. Each change logs activity in its own transaction (decision 0010).
 // Callers check `can(access, "share")` / "change_settings" first.
-import type { GrantRole, SharingSetting } from "@devsbucket/shared/sharing";
+import { type GrantRole, type SharingSetting, shareOutcome } from "@devsbucket/shared/sharing";
 import { and, eq, sql } from "drizzle-orm";
 import { logActivity } from "./activity.ts";
 import { db, type Executor } from "./client.ts";
@@ -130,11 +130,14 @@ export const shareItem = async ({
   userId,
   role,
   actorId,
+  keepHigher = false,
 }: {
   itemId: string;
   userId: string;
   role: GrantRole;
   actorId: string;
+  // Sharing several items at once: never lower an Editor (shareOutcome).
+  keepHigher?: boolean;
 }) => {
   return db.transaction(async (tx) => {
     const [existing] = await tx
@@ -142,7 +145,7 @@ export const shareItem = async ({
       .from(itemPermissions)
       .where(and(eq(itemPermissions.itemId, itemId), eq(itemPermissions.userId, userId)))
       .for("update");
-    if (existing?.role === role) {
+    if (shareOutcome(existing?.role ?? null, role, keepHigher) === "unchanged") {
       return "unchanged" as const;
     }
     // Two shares at once: the unique (item, user) decides, the second updates.

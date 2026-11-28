@@ -151,7 +151,7 @@ export const moveItemSchema = z.object({
 // so one request can't keep the server busy for long.
 export const MAX_SELECTED_ITEMS = 500;
 
-const itemIdsSchema = z.array(itemIdSchema).min(1).max(MAX_SELECTED_ITEMS);
+export const itemIdsSchema = z.array(itemIdSchema).min(1).max(MAX_SELECTED_ITEMS);
 
 // An action on several items by id (move to trash, restore).
 export const itemRefsSchema = z.object({ itemIds: itemIdsSchema });
