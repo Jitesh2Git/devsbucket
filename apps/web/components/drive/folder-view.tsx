@@ -8,8 +8,10 @@ import DropZone from "@/components/drive/drop-zone";
 import FolderActions from "@/components/drive/folder-actions";
 import ItemList from "@/components/drive/item-list";
 import OwnershipOfferActions from "@/components/drive/ownership-offer-actions";
+import SelectionBar from "@/components/drive/selection-bar";
 import ViewToggle from "@/components/drive/view-toggle";
 import { SCROLL_LIST } from "@/lib/scroll-list";
+import { SelectionProvider } from "@/lib/selection";
 
 type FolderViewProps = {
   // null = the top level of My Drive.
@@ -64,7 +66,9 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
           From md up the buttons can wrap under the breadcrumbs when the
           column is narrow. */}
       <div className="flex shrink-0 items-center justify-between gap-x-4 gap-y-2 md:flex-wrap">
-        <div className="flex min-w-0 items-center gap-3">
+        {/* grow-[999]: on one line almost all the spare room goes to the
+            breadcrumbs, so the view toggle stays next to the buttons. */}
+        <div className="flex min-w-0 items-center gap-3 md:grow-[999]">
           <DriveBreadcrumbs root={breadcrumbs.root} folders={breadcrumbs.folders} />
           {access.role !== "owner" && access.role !== null && (
             <span className="shrink-0 rounded-md border px-2 py-0.5 text-xs text-muted-foreground">
@@ -73,18 +77,29 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
             </span>
           )}
         </div>
-        <div className="flex shrink-0 gap-2 md:shrink md:flex-wrap">
+        {/* From md up, when it wraps onto its own row, the group fills that
+            row: the view toggle on the left, the buttons (or the selection
+            bar) on the right. */}
+        <div className="flex shrink-0 gap-2 md:shrink md:grow md:flex-wrap md:justify-between">
           <ViewToggle />
-          <FolderActions
+          {/* While items are selected, their actions take the buttons' place. */}
+          <SelectionBar
             parentId={folderId}
-            folder={current ?? null}
-            can={{
-              upload: canUpload,
-              createFolder: can(access, "create_folder"),
-              share: actions.share,
-              download: can(access, "download"),
-            }}
-          />
+            actions={actions}
+            canDownload={can(access, "download")}
+            moveRoot={moveRoot}
+          >
+            <FolderActions
+              parentId={folderId}
+              folder={current ?? null}
+              can={{
+                upload: canUpload,
+                createFolder: can(access, "create_folder"),
+                share: actions.share,
+                download: can(access, "download"),
+              }}
+            />
+          </SelectionBar>
         </div>
       </div>
       {/* Only the list scrolls (SCROLL_LIST, lib/scroll-list.ts). */}
@@ -100,7 +115,12 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
     </div>
   );
 
-  return canUpload ? <DropZone parentId={folderId}>{page}</DropZone> : page;
+  // One selection for the list and the bar (multi-select, lib/selection.tsx).
+  return (
+    <SelectionProvider>
+      {canUpload ? <DropZone parentId={folderId}>{page}</DropZone> : page}
+    </SelectionProvider>
+  );
 };
 
 export default FolderView;

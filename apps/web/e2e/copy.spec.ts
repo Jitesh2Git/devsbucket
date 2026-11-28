@@ -63,12 +63,12 @@ test("make a copy: same folder, numbered, same content, Viewer's copy in their d
     await share.getByRole("button", { name: "Share", exact: true }).click();
     await expect(share.getByRole("button", { name: `Access for ${bobEmail}` })).toBeVisible();
     await ada.keyboard.press("Escape");
-    await ada.getByRole("link", { name: "Team", exact: true }).click();
+    await ada.getByRole("link", { name: "Team", exact: true }).dblclick();
     await expect(ada.getByRole("heading", { name: "Team" })).toBeVisible();
     await upload("plan.txt", "plan");
 
     await bob.getByRole("link", { name: "Shared with me" }).first().click();
-    await bob.getByRole("link", { name: "Team", exact: true }).click();
+    await bob.getByRole("link", { name: "Team", exact: true }).dblclick();
     await expect(bob.getByRole("heading", { name: "Team" })).toBeVisible();
     await openMenu(bob, "plan.txt", "Make a copy");
     await expect(bob.getByText('Copied to your My Drive as "plan (copy).txt"')).toBeVisible();

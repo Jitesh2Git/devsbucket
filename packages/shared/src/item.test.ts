@@ -3,10 +3,13 @@ import {
   copyName,
   DEFAULT_MIME_TYPE,
   itemNameSchema,
+  itemRefsSchema,
   listItemsSchema,
   MAX_NAME_LENGTH,
+  MAX_SELECTED_ITEMS,
   mimeTypeSchema,
   moveItemSchema,
+  moveItemsSchema,
   nextAvailableName,
   renameSelection,
   requestUploadSchema,
@@ -189,5 +192,28 @@ describe("moveItemSchema", () => {
     expect(moveItemSchema.safeParse({ itemId, parentId: null }).success).toBe(true);
     expect(moveItemSchema.safeParse({ itemId, parentId: itemId }).success).toBe(true);
     expect(moveItemSchema.safeParse({ itemId, parentId: "My Drive" }).success).toBe(false);
+  });
+});
+
+describe("itemRefsSchema", () => {
+  const id = "0190a4b8-7e00-7000-8000-000000000001";
+
+  it("accepts one to MAX_SELECTED_ITEMS ids", () => {
+    expect(itemRefsSchema.safeParse({ itemIds: [id] }).success).toBe(true);
+    const many = Array.from({ length: MAX_SELECTED_ITEMS }, () => id);
+    expect(itemRefsSchema.safeParse({ itemIds: many }).success).toBe(true);
+  });
+
+  it("rejects none, too many and bad ids", () => {
+    expect(itemRefsSchema.safeParse({ itemIds: [] }).success).toBe(false);
+    const tooMany = Array.from({ length: MAX_SELECTED_ITEMS + 1 }, () => id);
+    expect(itemRefsSchema.safeParse({ itemIds: tooMany }).success).toBe(false);
+    expect(itemRefsSchema.safeParse({ itemIds: ["nope"] }).success).toBe(false);
+  });
+
+  it("moveItemsSchema takes a target folder or null (My Drive)", () => {
+    expect(moveItemsSchema.safeParse({ itemIds: [id], parentId: null }).success).toBe(true);
+    expect(moveItemsSchema.safeParse({ itemIds: [id], parentId: id }).success).toBe(true);
+    expect(moveItemsSchema.safeParse({ itemIds: [id] }).success).toBe(false);
   });
 });

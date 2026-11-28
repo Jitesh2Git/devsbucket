@@ -8,10 +8,11 @@ import {
   restoreItem as restoreRows,
   trashItem as trashRows,
 } from "@devsbucket/db/trash";
-import { itemRefSchema } from "@devsbucket/shared/item";
+import { itemRefSchema, itemRefsSchema } from "@devsbucket/shared/item";
 import { deleteStoredFiles, isComplete } from "@devsbucket/storage/cleanup";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { eachItem } from "@/lib/each-item";
 import { deniedMessage, resolveItem } from "@/lib/items";
 
 const SIGNED_OUT = "You're signed out. Sign in again.";
@@ -43,23 +44,58 @@ const findTrashRoot = async (
   return found;
 };
 
-export const trashItem = async (input: unknown) => {
-  const session = await getSession();
-  if (!session) {
-    return { error: SIGNED_OUT } as const;
-  }
-  const itemId = parseItemId(input);
-  // Editors can trash too (inside the owner's tree); only the Owner deletes
-  // forever.
+// One item to the trash, for trashItem and trashItems. Editors can trash
+// too (inside the owner's tree); only the Owner deletes forever.
+const trashOne = async (user: { id: string }, itemId: string | null) => {
   const found = itemId
-    ? await resolveItem(session.user, itemId, "trash", { trashed: false })
+    ? await resolveItem(user, itemId, "trash", { trashed: false })
     : ({ denied: "missing" } as const);
   if (found.denied) {
     return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
   }
   const { item } = found;
-  await trashRows({ id: item.id, ownerId: item.ownerId, trashedBy: session.user.id });
-  return { error: null, name: item.name } as const;
+  await trashRows({ id: item.id, ownerId: item.ownerId, trashedBy: user.id });
+  return { error: null, id: item.id, name: item.name } as const;
+};
+
+// A trashed item back, for restoreItem and restoreItems.
+const restoreOne = async (user: { id: string }, itemId: string | null) => {
+  const found = await findTrashRoot(user, itemId, "restore");
+  if (found.denied) {
+    return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
+  }
+  const root = found.item;
+  const result = await restoreRows({ id: root.id, ownerId: root.ownerId, actorId: user.id });
+  if (!result) {
+    return { error: ITEM_GONE } as const;
+  }
+  return { error: null, ...result } as const;
+};
+
+const parseItemIds = (input: unknown) => {
+  const parsed = itemRefsSchema.safeParse(input);
+  return parsed.success ? parsed.data.itemIds : null;
+};
+
+export const trashItem = async (input: unknown) => {
+  const session = await getSession();
+  if (!session) {
+    return { error: SIGNED_OUT } as const;
+  }
+  return trashOne(session.user, parseItemId(input));
+};
+
+export const trashItems = async (input: unknown) => {
+  const session = await getSession();
+  if (!session) {
+    return { error: SIGNED_OUT } as const;
+  }
+  const itemIds = parseItemIds(input);
+  if (!itemIds) {
+    return { error: "Invalid request" } as const;
+  }
+  const result = await eachItem(itemIds, (itemId) => trashOne(session.user, itemId));
+  return { error: null, ...result } as const;
 };
 
 export const restoreItem = async (input: unknown) => {
@@ -67,19 +103,19 @@ export const restoreItem = async (input: unknown) => {
   if (!session) {
     return { error: SIGNED_OUT } as const;
   }
-  const found = await findTrashRoot(session.user, parseItemId(input), "restore");
-  if (found.denied) {
-    return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
+  return restoreOne(session.user, parseItemId(input));
+};
+
+export const restoreItems = async (input: unknown) => {
+  const session = await getSession();
+  if (!session) {
+    return { error: SIGNED_OUT } as const;
   }
-  const root = found.item;
-  const result = await restoreRows({
-    id: root.id,
-    ownerId: root.ownerId,
-    actorId: session.user.id,
-  });
-  if (!result) {
-    return { error: ITEM_GONE } as const;
+  const itemIds = parseItemIds(input);
+  if (!itemIds) {
+    return { error: "Invalid request" } as const;
   }
+  const result = await eachItem(itemIds, (itemId) => restoreOne(session.user, itemId));
   return { error: null, ...result } as const;
 };
 
@@ -92,24 +128,41 @@ const deleteFromStorage = async (cleanup: StorageCleanup) => {
   }
 };
 
+// One trashed item deleted forever, for deleteForever and
+// deleteItemsForever. Owner only (decisions 0007, 0008): an Editor can
+// trash, not this.
+const deleteOne = async (user: { id: string }, itemId: string | null) => {
+  const found = await findTrashRoot(user, itemId, "delete_forever");
+  if (found.denied) {
+    return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
+  }
+  const root = found.item;
+  const result = await deleteRows({ ids: [root.id], ownerId: root.ownerId, actorId: user.id });
+  await deleteFromStorage(result);
+  return { error: null, id: root.id } as const;
+};
+
 export const deleteForever = async (input: unknown) => {
   const session = await getSession();
   if (!session) {
     return { error: SIGNED_OUT } as const;
   }
-  // Owner only (decisions 0007, 0008): an Editor can trash, not this.
-  const found = await findTrashRoot(session.user, parseItemId(input), "delete_forever");
-  if (found.denied) {
-    return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
+  const result = await deleteOne(session.user, parseItemId(input));
+  return result.error === null ? ({ error: null } as const) : result;
+};
+
+// Several selected items in the Trash (multi-select), each on its own.
+export const deleteItemsForever = async (input: unknown) => {
+  const session = await getSession();
+  if (!session) {
+    return { error: SIGNED_OUT } as const;
   }
-  const root = found.item;
-  const result = await deleteRows({
-    ids: [root.id],
-    ownerId: root.ownerId,
-    actorId: session.user.id,
-  });
-  await deleteFromStorage(result);
-  return { error: null } as const;
+  const itemIds = parseItemIds(input);
+  if (!itemIds) {
+    return { error: "Invalid request" } as const;
+  }
+  const result = await eachItem(itemIds, (itemId) => deleteOne(session.user, itemId));
+  return { error: null, ...result } as const;
 };
 
 export const emptyTrash = async () => {

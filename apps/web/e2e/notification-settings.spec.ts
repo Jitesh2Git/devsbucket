@@ -95,11 +95,11 @@ test("notification settings: a switch off, a muted folder, always-on types locke
     await member.getByRole("button", { name: "New folder" }).click();
     await member.getByLabel("Folder name").fill("Inner");
     await member.getByRole("button", { name: "Create" }).click();
-    await member.getByRole("link", { name: "Inner" }).click();
+    await member.getByRole("link", { name: "Inner" }).dblclick();
     await expect(member.getByRole("heading", { name: "Inner" })).toBeVisible();
     await upload("s3.txt");
     // Inside Studio, its menu says so.
-    await owner.getByRole("link", { name: "Studio" }).click();
+    await owner.getByRole("link", { name: "Studio" }).dblclick();
     await owner.getByRole("button", { name: "Actions for Inner", exact: true }).click();
     await owner.getByRole("menuitem", { name: "More" }).click();
     await expect(owner.getByRole("menuitem", { name: "Muted by a folder above" })).toBeVisible();

@@ -5,11 +5,19 @@ import { formatBytes } from "@devsbucket/shared/bytes";
 import { useQueryClient } from "@tanstack/react-query";
 import { RotateCcw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
-import { deleteForever, emptyTrash, restoreItem } from "@/app/drive/trash-actions";
+import {
+  deleteForever,
+  deleteItemsForever,
+  emptyTrash,
+  restoreItem,
+  restoreItems,
+} from "@/app/drive/trash-actions";
 import { ItemCard, ItemGrid } from "@/components/drive/item-grid";
 import ItemIcon from "@/components/drive/item-icon";
+import SelectableArea from "@/components/drive/selectable-area";
+import SelectionPill, { PillButton } from "@/components/drive/selection-pill";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,12 +46,15 @@ import {
 } from "@/components/ui/table";
 import { restoreMessage } from "@/lib/restore-message";
 import { SCROLL_LIST } from "@/lib/scroll-list";
+import { SelectionPortal, useSelectableRows, useSelection } from "@/lib/selection";
+import { countItems } from "@/lib/trash-selection";
 import { useViewMode } from "@/lib/view-mode";
 
 export type TrashRow = TrashedItem & { daysLeft: number };
 
-// What the confirm dialog is about: one item, or the whole trash.
-type Confirming = { item: TrashRow } | "all" | null;
+// What the confirm dialog is about: one item, the selected ones, or the
+// whole trash.
+type Confirming = { item: TrashRow } | { items: TrashRow[] } | "all" | null;
 
 // The Trash page's list: restore, or delete forever (with a confirm, since
 // it can't be undone). Rows from other people's trees (what an Editor
@@ -57,6 +68,17 @@ const TrashList = ({ items, userId }: { items: TrashRow[]; userId: string }) => 
   const [busy, setBusy] = useState(false);
   const view = useViewMode();
   useLayoutEffect(() => () => setConfirming(null), []);
+
+  // Multi-select: a click selects, Restore and Delete forever in the bar.
+  // Trashed items don't open, so a double-click does nothing.
+  const { setRows, selectedItems, clear } = useSelection<TrashRow>();
+  useEffect(() => setRows(items), [setRows, items]);
+  const { rowProps, listProps, box } = useSelectableRows();
+  const noOpen = () => {};
+  // Delete forever is the Owner's (decisions 0007, 0008), so the bar only
+  // offers it when every selected item is the user's own.
+  const canDeleteSelected =
+    selectedItems.length > 0 && selectedItems.every((item) => item.ownerId === userId);
 
   const refresh = async () => {
     router.refresh();
@@ -78,9 +100,55 @@ const TrashList = ({ items, userId }: { items: TrashRow[]; userId: string }) => 
     await refresh();
   };
 
+  const restoreSelected = async () => {
+    const chosen = selectedItems;
+    clear();
+    setBusy(true);
+    const result = await restoreItems({ itemIds: chosen.map((item) => item.id) });
+    setBusy(false);
+    if (result.error !== null) {
+      toast.error(result.error);
+      return;
+    }
+    const [only] = result.done;
+    if (result.done.length === 1 && only) {
+      toast.success(restoreMessage(only));
+    } else if (result.done.length > 0) {
+      toast.success(`Restored ${countItems(result.done.length)}`, {
+        description:
+          result.failed > 0
+            ? `${countItems(result.failed)} couldn't be: ${result.firstError}`
+            : undefined,
+      });
+    } else {
+      toast.error(result.firstError ?? "Nothing was restored.");
+    }
+    await refresh();
+  };
+
   const confirmDelete = async () => {
     if (!confirming) return;
     setBusy(true);
+    if (confirming !== "all" && "items" in confirming) {
+      const result = await deleteItemsForever({ itemIds: confirming.items.map((item) => item.id) });
+      setBusy(false);
+      setConfirming(null);
+      clear();
+      if (result.error !== null) {
+        toast.error(result.error);
+      } else if (result.done.length === 0) {
+        toast.error(result.firstError ?? "Nothing was deleted.");
+      } else {
+        toast.success(`${countItems(result.done.length)} deleted forever`, {
+          description:
+            result.failed > 0
+              ? `${countItems(result.failed)} couldn't be: ${result.firstError}`
+              : undefined,
+        });
+      }
+      await refresh();
+      return;
+    }
     const result =
       confirming === "all"
         ? await emptyTrash()
@@ -149,71 +217,99 @@ const TrashList = ({ items, userId }: { items: TrashRow[]; userId: string }) => 
           Empty trash
         </Button>
       </div>
-      <div className={SCROLL_LIST}>
-        {view === "grid" ? (
-          <ItemGrid label="Trash">
-            {items.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                name={<span className="truncate font-medium">{item.name}</span>}
-                details={
-                  <>
-                    {item.size === null ? "—" : formatBytes(item.size)} ·{" "}
-                    {item.daysLeft === 1 ? "1 day left" : `${item.daysLeft} days left`}
-                  </>
-                }
-                footer={buttons(item)}
+      {selectedItems.length > 0 && (
+        <SelectionPortal>
+          <SelectionPill count={selectedItems.length} onClear={clear}>
+            <PillButton
+              icon={<RotateCcw />}
+              label="Restore"
+              onClick={restoreSelected}
+              disabled={busy}
+            />
+            {canDeleteSelected && (
+              <PillButton
+                icon={<Trash2 />}
+                label="Delete forever"
+                destructive
+                onClick={() => setConfirming({ items: selectedItems })}
+                disabled={busy}
               />
-            ))}
-          </ItemGrid>
-        ) : (
-          <Table
-            // On a phone the table keeps room for the names (900 px) and
-            // scrolls sideways in its own box; from md up it fits the column.
-            className="min-w-225 md:min-w-0"
-          >
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-56">Name</TableHead>
-                <TableHead className="w-40">Was in</TableHead>
-                <TableHead className="w-32">Trashed by</TableHead>
-                <TableHead className="w-24 text-right">Size</TableHead>
-                <TableHead className="w-28">Days left</TableHead>
-                <TableHead className="w-56">
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+            )}
+          </SelectionPill>
+        </SelectionPortal>
+      )}
+      <div className={SCROLL_LIST}>
+        <SelectableArea listProps={listProps} box={box} count={selectedItems.length}>
+          {view === "grid" ? (
+            <ItemGrid label="Trash">
               {items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="max-w-0">
-                    <span className="flex items-center gap-2">
-                      <ItemIcon item={item} className="size-4 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{item.name}</span>
-                    </span>
-                  </TableCell>
-                  <TableCell className="max-w-0 truncate text-muted-foreground">
-                    {item.parentName ?? (item.ownerId === userId ? "My Drive" : "—")}
-                  </TableCell>
-                  <TableCell className="max-w-0 truncate text-muted-foreground">
-                    {item.trashedBy === userId ? "You" : (item.trashedByName ?? "—")}
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {item.size === null ? "—" : formatBytes(item.size)}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {item.daysLeft === 1 ? "1 day" : `${item.daysLeft} days`}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-1">{buttons(item)}</div>
-                  </TableCell>
-                </TableRow>
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  name={<span className="truncate font-medium">{item.name}</span>}
+                  details={
+                    <>
+                      {item.size === null ? "—" : formatBytes(item.size)} ·{" "}
+                      {item.daysLeft === 1 ? "1 day left" : `${item.daysLeft} days left`}
+                    </>
+                  }
+                  footer={buttons(item)}
+                  selectable={rowProps(item, noOpen)}
+                />
               ))}
-            </TableBody>
-          </Table>
-        )}
+            </ItemGrid>
+          ) : (
+            <Table
+              // On a phone the table keeps room for the names (900 px) and
+              // scrolls sideways in its own box; from md up it fits the column.
+              className="min-w-225 md:min-w-0"
+            >
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-56">Name</TableHead>
+                  <TableHead className="w-40">Was in</TableHead>
+                  <TableHead className="w-32">Trashed by</TableHead>
+                  <TableHead className="w-24 text-right">Size</TableHead>
+                  <TableHead className="w-28">Days left</TableHead>
+                  <TableHead className="w-56">
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((item) => (
+                  <TableRow
+                    key={item.id}
+                    {...rowProps(item, noOpen)}
+                    className="data-selected:bg-primary/10 data-selected:hover:bg-primary/15"
+                  >
+                    <TableCell className="max-w-0">
+                      <span className="flex items-center gap-2">
+                        <ItemIcon item={item} className="size-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{item.name}</span>
+                      </span>
+                    </TableCell>
+                    <TableCell className="max-w-0 truncate text-muted-foreground">
+                      {item.parentName ?? (item.ownerId === userId ? "My Drive" : "—")}
+                    </TableCell>
+                    <TableCell className="max-w-0 truncate text-muted-foreground">
+                      {item.trashedBy === userId ? "You" : (item.trashedByName ?? "—")}
+                    </TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      {item.size === null ? "—" : formatBytes(item.size)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {item.daysLeft === 1 ? "1 day" : `${item.daysLeft} days`}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-1">{buttons(item)}</div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </SelectableArea>
       </div>
       <AlertDialog open={confirming !== null} onOpenChange={(open) => !open && setConfirming(null)}>
         <AlertDialogContent>
@@ -221,12 +317,16 @@ const TrashList = ({ items, userId }: { items: TrashRow[]; userId: string }) => 
             <AlertDialogTitle>
               {confirming === "all"
                 ? "Empty the trash?"
-                : `Delete "${confirming?.item.name}" forever?`}
+                : confirming && "items" in confirming
+                  ? `Delete ${countItems(confirming.items.length)} forever?`
+                  : `Delete "${confirming?.item.name}" forever?`}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirming === "all"
                 ? "Everything in the trash is deleted forever. This can't be undone."
-                : "It's deleted forever, with everything inside it. This can't be undone."}
+                : confirming && "items" in confirming
+                  ? "They're deleted forever, with everything inside them. This can't be undone."
+                  : "It's deleted forever, with everything inside it. This can't be undone."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

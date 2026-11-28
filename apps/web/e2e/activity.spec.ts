@@ -89,7 +89,7 @@ test("activity: one row per action with its actor; a refused action writes none"
     expect(
       (await owner.request.get(`/api/items/${fileId}/download`, { maxRedirects: 0 })).status(),
     ).toBe(302);
-    await owner.getByRole("link", { name: "Docs" }).click();
+    await owner.getByRole("link", { name: "Docs" }).dblclick();
     await openMenu(owner, "b.txt", "Move to trash");
     await expect(owner.getByText('"b.txt" moved to trash')).toBeVisible();
     await owner.goto("/drive/trash");

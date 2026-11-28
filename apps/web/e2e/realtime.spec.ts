@@ -55,7 +55,7 @@ test("realtime: live folder changes, access removed, only signed-in pages connec
   let liveUrl = "";
   await test.step("Ada shares Live with Bob as Editor; both open it", async () => {
     await newFolder(owner, "Live");
-    await owner.getByRole("link", { name: "Live" }).click();
+    await owner.getByRole("link", { name: "Live" }).dblclick();
     await expect(owner.getByRole("heading", { name: "Live" })).toBeVisible();
     liveUrl = new URL(owner.url()).pathname;
     await db.query(

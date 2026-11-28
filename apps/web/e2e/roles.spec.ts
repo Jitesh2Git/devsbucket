@@ -53,7 +53,7 @@ test("roles: a Viewer opens but can't change, an Editor can, no role sees 'You n
     await owner.getByRole("button", { name: "New folder" }).click();
     await owner.getByLabel("Folder name").fill("Team");
     await owner.getByRole("button", { name: "Create" }).click();
-    await owner.getByRole("link", { name: "Team" }).click();
+    await owner.getByRole("link", { name: "Team" }).dblclick();
     await expect(owner.getByRole("heading", { name: "Team" })).toBeVisible();
     await upload(owner, "plan.txt", "0123456789");
     await expect(owner.getByRole("link", { name: "plan.txt", exact: true })).toBeVisible();

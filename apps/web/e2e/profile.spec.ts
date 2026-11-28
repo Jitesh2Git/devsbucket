@@ -33,7 +33,7 @@ test("profile: change your name, share by @username", async ({ browser }) => {
     await bob.getByRole("button", { name: "New folder" }).click();
     await bob.getByLabel("Folder name").fill("Notes");
     await bob.getByRole("button", { name: "Create" }).click();
-    await bob.getByRole("link", { name: "Notes" }).click();
+    await bob.getByRole("link", { name: "Notes" }).dblclick();
     await bob.getByRole("button", { name: "Share", exact: true }).click();
     const dialog = bob.getByRole("dialog");
     const field = dialog.getByPlaceholder("Email or @username");

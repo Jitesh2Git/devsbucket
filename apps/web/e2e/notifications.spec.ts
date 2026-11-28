@@ -39,7 +39,7 @@ test("notifications: live count, open one, batching, never your own, mark all re
     await owner.getByRole("button", { name: "New folder" }).click();
     await owner.getByLabel("Folder name").fill("Desk");
     await owner.getByRole("button", { name: "Create" }).click();
-    await owner.getByRole("link", { name: "Desk" }).click();
+    await owner.getByRole("link", { name: "Desk" }).dblclick();
     await expect(owner.getByRole("heading", { name: "Desk" })).toBeVisible();
     deskUrl = new URL(owner.url()).pathname;
     await expect(navLink(member)).toHaveAccessibleName("Notifications");

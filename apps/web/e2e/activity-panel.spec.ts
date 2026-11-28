@@ -73,7 +73,7 @@ test("activity panel: the item's log with names, from the menu and the file page
 
   let fileUrl = "";
   await test.step("the file page has the same Activity", async () => {
-    await ada.getByRole("link", { name: "plan.txt", exact: true }).click();
+    await ada.getByRole("link", { name: "plan.txt", exact: true }).dblclick();
     await expect(ada.getByRole("heading", { name: "plan.txt" })).toBeVisible();
     fileUrl = ada.url();
     await ada.getByRole("button", { name: "Activity", exact: true }).click();

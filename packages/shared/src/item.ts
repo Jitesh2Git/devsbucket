@@ -147,6 +147,20 @@ export const moveItemSchema = z.object({
   parentId: itemIdSchema.nullable(),
 });
 
+// Selected items in one action (multi-select): at most this many at once,
+// so one request can't keep the server busy for long.
+export const MAX_SELECTED_ITEMS = 500;
+
+export const itemIdsSchema = z.array(itemIdSchema).min(1).max(MAX_SELECTED_ITEMS);
+
+// An action on several items by id (move to trash, restore).
+export const itemRefsSchema = z.object({ itemIds: itemIdsSchema });
+
+export const moveItemsSchema = z.object({
+  itemIds: itemIdsSchema,
+  parentId: itemIdSchema.nullable(),
+});
+
 // The folders inside one folder, for the Move dialog's folder picker.
 export const listFoldersSchema = z.object({ parentId: itemIdSchema.nullable() });
 

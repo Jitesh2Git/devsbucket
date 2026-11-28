@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, Folder } from "lucide-react";
 import { Fragment, useState } from "react";
 import { toast } from "sonner";
-import { listFolders, moveItem } from "@/app/drive/item-actions";
+import { listFolders, moveItems } from "@/app/drive/item-actions";
 import BucketLoader from "@/components/bucket-loader";
 import type { ItemRef } from "@/components/drive/rename-dialog";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,8 @@ import { foldersQueryKey, itemsQueryKey } from "@/lib/query-keys";
 export type Crumb = { id: string; name: string };
 
 type MovePickerProps = {
-  item: ItemRef;
+  // One item (the ⋯ menu) or several (the selection bar), all in one folder.
+  items: ItemRef[];
   fromParentId: string | null;
   // null: the top of the user's own My Drive. In someone else's tree: the
   // top-most folder shared with them (moves stay inside one tree).
@@ -32,7 +33,7 @@ type MovePickerProps = {
 
 // Browse from the top (My Drive, or the shared folder) into folders, then
 // "Move here".
-const MovePicker = ({ item, fromParentId, root, onDone }: MovePickerProps) => {
+const MovePicker = ({ items, fromParentId, root, onDone }: MovePickerProps) => {
   const queryClient = useQueryClient();
   // Where the picker is: the folders opened below the top.
   const top = root ? [root] : [];
@@ -60,14 +61,24 @@ const MovePicker = ({ item, fromParentId, root, onDone }: MovePickerProps) => {
 
   const move = async () => {
     setMoving(true);
-    const result = await moveItem({ itemId: item.id, parentId: hereId });
+    const result = await moveItems({ itemIds: items.map((item) => item.id), parentId: hereId });
     setMoving(false);
     if (result.error !== null) {
       setError(result.error);
       return;
     }
+    // Nothing moved: say why here, and keep the dialog open.
+    if (result.moved === 0) {
+      setError(result.firstError);
+      return;
+    }
     onDone();
-    toast.success(`Moved to ${here?.name ?? "My Drive"}`);
+    toast.success(`Moved to ${here?.name ?? "My Drive"}`, {
+      description:
+        result.failed > 0
+          ? `${result.failed} ${result.failed === 1 ? "item" : "items"} couldn't move: ${result.firstError}`
+          : undefined,
+    });
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: itemsQueryKey(fromParentId) }),
       queryClient.invalidateQueries({ queryKey: itemsQueryKey(hereId) }),
@@ -78,7 +89,9 @@ const MovePicker = ({ item, fromParentId, root, onDone }: MovePickerProps) => {
   return (
     <DialogContent className="sm:max-w-md">
       <DialogHeader className="min-w-0">
-        <DialogTitle className="truncate">Move "{item.name}"</DialogTitle>
+        <DialogTitle className="truncate">
+          {items.length === 1 ? `Move "${items[0]?.name}"` : `Move ${items.length} items`}
+        </DialogTitle>
         <DialogDescription>Choose a folder, then Move here.</DialogDescription>
       </DialogHeader>
       <nav aria-label="Folder path" className="flex min-w-0 flex-wrap items-center gap-1 text-sm">
@@ -119,7 +132,7 @@ const MovePicker = ({ item, fromParentId, root, onDone }: MovePickerProps) => {
           <ul aria-label="Folders">
             {folders.data.map((folder) => {
               // A folder can't be opened as its own destination.
-              const isItself = folder.id === item.id;
+              const isItself = items.some((item) => item.id === folder.id);
               return (
                 <li key={folder.id}>
                   <button
@@ -154,22 +167,22 @@ const MovePicker = ({ item, fromParentId, root, onDone }: MovePickerProps) => {
 };
 
 const MoveDialog = ({
-  item,
+  items,
   parentId,
   root,
   onClose,
 }: {
-  item: ItemRef | null;
+  items: ItemRef[] | null;
   parentId: string | null;
   root: Crumb | null;
   onClose: () => void;
 }) => {
   return (
-    <Dialog open={item !== null} onOpenChange={(open) => !open && onClose()}>
-      {item && (
+    <Dialog open={items !== null} onOpenChange={(open) => !open && onClose()}>
+      {items && (
         <MovePicker
-          key={item.id}
-          item={item}
+          key={items.map((item) => item.id).join()}
+          items={items}
           fromParentId={parentId}
           root={root}
           onDone={onClose}

@@ -35,7 +35,7 @@ test("access requests: request, change it, approve with a role, deny", async ({ 
     await owner.getByRole("button", { name: "New folder" }).click();
     await owner.getByLabel("Folder name").fill("Plans");
     await owner.getByRole("button", { name: "Create" }).click();
-    await owner.getByRole("link", { name: "Plans" }).click();
+    await owner.getByRole("link", { name: "Plans" }).dblclick();
     await expect(owner.getByRole("heading", { name: "Plans" })).toBeVisible();
     plansUrl = new URL(owner.url()).pathname;
   });

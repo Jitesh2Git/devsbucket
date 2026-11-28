@@ -41,10 +41,13 @@ test("recent: opened files newest first, reopened moves up, trashed drops out", 
     await goTo("My Drive", "My Drive");
     await upload("notes.txt", "text/plain");
     await upload("photo.png", "image/png");
-    await page.getByRole("table").getByRole("link", { name: "notes.txt", exact: true }).click();
+    await page.getByRole("table").getByRole("link", { name: "notes.txt", exact: true }).dblclick();
     await expect(page.getByRole("heading", { name: "notes.txt" })).toBeVisible();
     await goTo("My Drive", "My Drive");
-    await page.getByRole("table").getByRole("button", { name: "photo.png", exact: true }).click();
+    await page
+      .getByRole("table")
+      .getByRole("button", { name: "photo.png", exact: true })
+      .dblclick();
     await expect(page.getByRole("dialog", { name: "photo.png" })).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).toBeHidden();
@@ -59,7 +62,7 @@ test("recent: opened files newest first, reopened moves up, trashed drops out", 
   });
 
   await test.step("opening notes.txt from Recent moves it to the top", async () => {
-    await page.getByRole("table").getByRole("link", { name: "notes.txt", exact: true }).click();
+    await page.getByRole("table").getByRole("link", { name: "notes.txt", exact: true }).dblclick();
     await expect(page.getByRole("heading", { name: "notes.txt" })).toBeVisible();
     await goTo("Recent", "Recent");
     await expectRecent(["notes.txt", "photo.png"]);
