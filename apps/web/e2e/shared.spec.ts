@@ -69,7 +69,7 @@ test("shared with me: top-most list, browsing, role-aware buttons, quota, trash,
     await owner.getByRole("button", { name: "New folder" }).click();
     await owner.getByLabel("Folder name").fill("Team");
     await owner.getByRole("button", { name: "Create" }).click();
-    await owner.getByRole("link", { name: "Team" }).click();
+    await owner.getByRole("link", { name: "Team" }).dblclick();
     await expect(owner.getByRole("heading", { name: "Team" })).toBeVisible();
     teamUrl = new URL(owner.url()).pathname;
     await upload(owner, "plan.txt", "plan");
@@ -139,7 +139,7 @@ test("shared with me: top-most list, browsing, role-aware buttons, quota, trash,
     await dialog.getByRole("button", { name: "Sub" }).click();
     await dialog.getByRole("button", { name: "Move here" }).click();
     await expect(member.getByText("Moved to Sub")).toBeVisible();
-    await member.getByRole("link", { name: "Sub" }).click();
+    await member.getByRole("link", { name: "Sub" }).dblclick();
     await expect(member.getByRole("heading", { name: "Sub" })).toBeVisible();
     await expect(breadcrumb.getByRole("link", { name: "Team" })).toBeVisible();
     await expect(member.getByRole("link", { name: "plan.txt", exact: true })).toBeVisible();

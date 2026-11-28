@@ -44,7 +44,7 @@ test("file page: text opens in the editor, others say why, no access", async ({ 
         elsewhere.push(request.url());
       }
     });
-    await page.getByRole("link", { name: "answer.ts", exact: true }).click();
+    await page.getByRole("link", { name: "answer.ts", exact: true }).dblclick();
     await expect(page).toHaveURL(/\/drive\/files\//);
     await expect(page.getByRole("heading", { name: "answer.ts" })).toBeVisible();
     await expect(page.getByRole("code")).toContainText("export const answer = 42;");
@@ -60,7 +60,10 @@ test("file page: text opens in the editor, others say why, no access", async ({ 
     for (let round = 0; round < 2; round++) {
       await page.getByRole("link", { name: "My Drive" }).first().click();
       // In the folder's table: the file page's breadcrumb is a "link" too.
-      await page.getByRole("table").getByRole("link", { name: "answer.ts", exact: true }).click();
+      await page
+        .getByRole("table")
+        .getByRole("link", { name: "answer.ts", exact: true })
+        .dblclick();
       await expect(page.getByRole("code")).toContainText("export const answer = 42;");
     }
     expect(errors).toEqual([]);
@@ -68,7 +71,7 @@ test("file page: text opens in the editor, others say why, no access", async ({ 
 
   await test.step("a file that isn't UTF-8 says why", async () => {
     await page.getByRole("link", { name: "My Drive" }).first().click();
-    await page.getByRole("link", { name: "latin.txt", exact: true }).click();
+    await page.getByRole("link", { name: "latin.txt", exact: true }).dblclick();
     await expect(
       page.getByText("This file isn't UTF-8 text, so it can't be edited."),
     ).toBeVisible();

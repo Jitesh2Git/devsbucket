@@ -44,7 +44,7 @@ test("sharing: add people, inherited access, settings, change and remove", async
     await owner.getByRole("button", { name: "New folder" }).click();
     await owner.getByLabel("Folder name").fill("Team");
     await owner.getByRole("button", { name: "Create" }).click();
-    await owner.getByRole("link", { name: "Team" }).click();
+    await owner.getByRole("link", { name: "Team" }).dblclick();
     await expect(owner.getByRole("heading", { name: "Team" })).toBeVisible();
     folderUrl = new URL(owner.url()).pathname;
     const chooser = owner.waitForEvent("filechooser");

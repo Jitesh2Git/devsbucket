@@ -5,7 +5,8 @@ import { formatBytes } from "@devsbucket/shared/bytes";
 import type { Cursor } from "@devsbucket/shared/item";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { FolderOpen } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { loadItems } from "@/app/drive/actions";
 import { restoreItem, trashItem } from "@/app/drive/trash-actions";
@@ -13,7 +14,7 @@ import ActivityDialog, { type ActivityTarget } from "@/components/drive/activity
 import FilePreview, { type PreviewFile } from "@/components/drive/file-preview";
 import { ItemCard, ItemGrid } from "@/components/drive/item-grid";
 import ItemMenu, { type ItemActions } from "@/components/drive/item-menu";
-import ItemName from "@/components/drive/item-name";
+import ItemName, { itemHref } from "@/components/drive/item-name";
 import MoveDialog, { type Crumb } from "@/components/drive/move-dialog";
 import RenameDialog, { type ItemRef } from "@/components/drive/rename-dialog";
 import ShareDialog, { type ShareTarget } from "@/components/drive/share-dialog";
@@ -36,8 +37,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { startNavigation } from "@/lib/navigation-progress";
 import { itemsQueryKey } from "@/lib/query-keys";
 import { restoreMessage } from "@/lib/restore-message";
+import { useSelectableRows, useSelection } from "@/lib/selection";
 import { useViewMode } from "@/lib/view-mode";
 
 type ItemListProps = {
@@ -66,8 +69,25 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
     initialData: { pages: [firstPage], pageParams: [null] },
   });
 
-  const rows = query.data.pages.flatMap((page) => page.items);
+  // Memoized: the selection is told about the rows each time they change.
+  const rows = useMemo(() => query.data.pages.flatMap((page) => page.items), [query.data]);
   const view = useViewMode();
+
+  // Multi-select (lib/selection.tsx): the page's selection gets the rows
+  // loaded so far; a click selects and a double-click opens.
+  const { setRows, selectedItems } = useSelection();
+  useEffect(() => setRows(rows), [setRows, rows]);
+  const { rowProps, listProps, box } = useSelectableRows();
+  const router = useRouter();
+  const open = (item: (typeof rows)[number]) => {
+    const href = itemHref(item);
+    if (href) {
+      startNavigation();
+      router.push(href);
+    } else {
+      setPreviewing(item);
+    }
+  };
 
   // Infinite scroll: an empty element after the last row; when it scrolls
   // into view, the next 50 load. Watched again after each page, so a tall
@@ -123,7 +143,7 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
 
   const [previewing, setPreviewing] = useState<PreviewFile | null>(null);
   const [renaming, setRenaming] = useState<ItemRef | null>(null);
-  const [moving, setMoving] = useState<ItemRef | null>(null);
+  const [moving, setMoving] = useState<ItemRef[] | null>(null);
   const [sharing, setSharing] = useState<ShareTarget | null>(null);
   const [viewingActivity, setViewingActivity] = useState<ActivityTarget | null>(null);
   // Leaving the page only hides it (Activity): close any dialog, so a video
@@ -146,7 +166,7 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
       actions={actions}
       onPreview={() => setPreviewing(item)}
       onRename={() => setRenaming(item)}
-      onMove={() => setMoving(item)}
+      onMove={() => setMoving([item])}
       onShare={() => setSharing(item)}
       onActivity={() => setViewingActivity(item)}
       onTrash={() => moveToTrash(item)}
@@ -170,7 +190,12 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
   }
 
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div
+      {...listProps}
+      // As tall as the scroll box, so a drag can start below the last row.
+      // No text selection while dragging, and no phone callout on a long press.
+      className="relative flex min-h-full flex-col items-center gap-4 select-none [-webkit-touch-callout:none]"
+    >
       {view === "grid" ? (
         <div className="w-full">
           <ItemGrid label="Files and folders">
@@ -186,6 +211,7 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
                   </>
                 }
                 menu={menu(item)}
+                selectable={rowProps(item, () => open(item))}
               />
             ))}
           </ItemGrid>
@@ -208,7 +234,11 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
           </TableHeader>
           <TableBody>
             {rows.map((item) => (
-              <TableRow key={item.id}>
+              <TableRow
+                key={item.id}
+                {...rowProps(item, () => open(item))}
+                className="data-selected:bg-primary/10 data-selected:hover:bg-primary/15"
+              >
                 <TableCell className="max-w-0">
                   <ItemName item={item} onPreview={() => setPreviewing(item)} />
                 </TableCell>
@@ -241,8 +271,19 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
       )}
       <FilePreview file={previewing} onClose={() => setPreviewing(null)} />
       <RenameDialog item={renaming} parentId={parentId} onClose={() => setRenaming(null)} />
+      {/* Said by screen readers when the count changes. */}
+      <p className="sr-only" aria-live="polite">
+        {selectedItems.length > 0 ? `${selectedItems.length} selected` : ""}
+      </p>
+      {box && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute z-20 rounded-sm border border-primary bg-primary/10"
+          style={box}
+        />
+      )}
       <MoveDialog
-        item={moving}
+        items={moving}
         parentId={parentId}
         root={moveRoot}
         onClose={() => setMoving(null)}

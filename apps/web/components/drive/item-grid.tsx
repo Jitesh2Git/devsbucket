@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import ItemIcon from "@/components/drive/item-icon";
 
 type CardItem = { id: string; type: "folder" | "file"; name: string; mimeType: string | null };
@@ -13,11 +13,17 @@ type ItemCardProps = {
   menu?: ReactNode;
   // Buttons along the bottom (the Trash's Restore and Delete forever).
   footer?: ReactNode;
+  // Multi-select (rowProps from lib/selection.tsx): clicks, the selected
+  // look (data-selected) and the id the drag box finds.
+  selectable?: ComponentProps<"li">;
 };
 
 // The grid view's card: a big icon, the name and a line of details.
-export const ItemCard = ({ item, name, details, menu, footer }: ItemCardProps) => (
-  <li className="relative flex min-w-0 flex-col gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50 has-focus-visible:ring-2 has-focus-visible:ring-ring">
+export const ItemCard = ({ item, name, details, menu, footer, selectable }: ItemCardProps) => (
+  <li
+    {...selectable}
+    className="relative flex min-w-0 flex-col gap-3 rounded-lg border p-4 transition-colors hover:bg-muted/50 has-focus-visible:ring-2 has-focus-visible:ring-ring data-selected:border-primary data-selected:bg-primary/10"
+  >
     <div className="flex items-start justify-between gap-2">
       <span className="flex size-10 items-center justify-center rounded-full bg-muted">
         <ItemIcon item={item} className="size-5 text-muted-foreground" />

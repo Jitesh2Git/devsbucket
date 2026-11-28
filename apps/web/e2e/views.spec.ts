@@ -49,7 +49,7 @@ test("views: folder sizes, grid view remembered across pages and reloads, phone 
   });
 
   await test.step("a card opens the folder, which is a grid too", async () => {
-    await grid.getByRole("link", { name: "Photos" }).click();
+    await grid.getByRole("link", { name: "Photos" }).dblclick();
     await expect(page.getByRole("heading", { name: "Photos" })).toBeVisible();
     await expect(grid.getByRole("listitem").filter({ hasText: "Trip" })).toContainText("24 B");
   });

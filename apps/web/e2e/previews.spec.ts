@@ -62,7 +62,7 @@ test("previews and downloads: text, image, HTML as text, download name, 404s", a
   });
 
   await test.step("an image is shown", async () => {
-    await page.getByRole("button", { name: "pixel.png", exact: true }).click();
+    await page.getByRole("button", { name: "pixel.png", exact: true }).dblclick();
     const image = dialog.getByRole("img", { name: "pixel.png" });
     await expect(image).toBeVisible();
     await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(1);

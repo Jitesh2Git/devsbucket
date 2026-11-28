@@ -69,10 +69,10 @@ test("ownership transfer: offer, quota refusal, accept, cancel, decline", async 
     await newFolder(member, "Garden");
     await upload(owner, "solo.txt", "solo");
     await newFolder(owner, "Projects");
-    await owner.getByRole("link", { name: "Projects" }).click();
+    await owner.getByRole("link", { name: "Projects" }).dblclick();
     await expect(owner.getByRole("heading", { name: "Projects" })).toBeVisible();
     await newFolder(owner, "Garden");
-    await owner.getByRole("link", { name: "Garden" }).click();
+    await owner.getByRole("link", { name: "Garden" }).dblclick();
     await expect(owner.getByRole("heading", { name: "Garden" })).toBeVisible();
     gardenUrl = new URL(owner.url()).pathname;
     await upload(owner, "seed.txt", "12345678");
@@ -116,7 +116,7 @@ test("ownership transfer: offer, quota refusal, accept, cancel, decline", async 
     const breadcrumb = owner.getByRole("navigation", { name: "breadcrumb" });
     await expect(breadcrumb.getByRole("link", { name: "Shared with me" })).toBeVisible();
     await owner.getByRole("link", { name: "My Drive" }).first().click();
-    await owner.getByRole("link", { name: "Projects" }).click();
+    await owner.getByRole("link", { name: "Projects" }).dblclick();
     await expect(owner.getByRole("heading", { name: "Projects" })).toBeVisible();
     await expect(owner.getByText("This folder is empty")).toBeVisible();
   });

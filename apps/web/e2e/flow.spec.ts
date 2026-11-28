@@ -31,7 +31,7 @@ test("a file's life: folder, upload, preview, rename, move, trash, restore, dele
   });
 
   await test.step("upload into Work", async () => {
-    await page.getByRole("link", { name: "Work", exact: true }).click();
+    await page.getByRole("link", { name: "Work", exact: true }).dblclick();
     await expect(page.getByRole("heading", { name: "Work" })).toBeVisible();
     const chooser = page.waitForEvent("filechooser");
     await page.getByRole("button", { name: "Upload", exact: true }).click();
@@ -68,7 +68,7 @@ test("a file's life: folder, upload, preview, rename, move, trash, restore, dele
     await expect(page.getByText("Moved to Archive")).toBeVisible();
     await expect(fileLink("summary.md")).toBeHidden();
     await myDrive();
-    await page.getByRole("link", { name: "Archive", exact: true }).click();
+    await page.getByRole("link", { name: "Archive", exact: true }).dblclick();
     await expect(fileLink("summary.md")).toBeVisible();
   });
 
@@ -80,7 +80,7 @@ test("a file's life: folder, upload, preview, rename, move, trash, restore, dele
     await page.getByRole("button", { name: "Restore summary.md" }).click();
     await expect(page.getByText('Restored "summary.md"')).toBeVisible();
     await myDrive();
-    await page.getByRole("link", { name: "Archive", exact: true }).click();
+    await page.getByRole("link", { name: "Archive", exact: true }).dblclick();
     await expect(fileLink("summary.md")).toBeVisible();
   });
 

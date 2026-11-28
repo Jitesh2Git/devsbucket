@@ -8,11 +8,13 @@ import {
 import {
   listFoldersSchema,
   moveItemSchema,
+  moveItemsSchema,
   nameTakenMessage,
   renameItemSchema,
 } from "@devsbucket/shared/item";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { eachItem } from "@/lib/each-item";
 import { deniedMessage, resolveFolder, resolveItem } from "@/lib/items";
 
 const SIGNED_OUT = "You're signed out. Sign in again.";
@@ -43,23 +45,16 @@ export const renameItem = async (input: unknown) => {
   return { error: null, item: result.item } as const;
 };
 
-export const moveItem = async (input: unknown) => {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) {
-    return { error: SIGNED_OUT } as const;
-  }
-  const parsed = moveItemSchema.safeParse(input);
-  if (!parsed.success) {
-    return { error: "Invalid request" } as const;
-  }
-  const { itemId, parentId } = parsed.data;
+// One item into a folder (null = the top of My Drive), for moveItem and
+// moveItems.
+const moveOne = async (user: { id: string }, itemId: string, parentId: string | null) => {
   // An Editor needs Editor access on both ends (decision 0008).
-  const found = await resolveItem(session.user, itemId, "move", { trashed: false });
+  const found = await resolveItem(user, itemId, "move", { trashed: false });
   if (found.denied) {
     return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
   }
   const { item } = found;
-  const target = await resolveFolder(session.user, parentId, "move");
+  const target = await resolveFolder(user, parentId, "move");
   if (target.denied) {
     return { error: deniedMessage(target.denied, FOLDER_GONE) } as const;
   }
@@ -75,7 +70,7 @@ export const moveItem = async (input: unknown) => {
     id: item.id,
     ownerId: item.ownerId,
     parentId,
-    actorId: session.user.id,
+    actorId: user.id,
   });
   if (!result.ok) {
     const error = {
@@ -86,6 +81,39 @@ export const moveItem = async (input: unknown) => {
     return { error } as const;
   }
   return { error: null, item: result.item } as const;
+};
+
+export const moveItem = async (input: unknown) => {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    return { error: SIGNED_OUT } as const;
+  }
+  const parsed = moveItemSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: "Invalid request" } as const;
+  }
+  return moveOne(session.user, parsed.data.itemId, parsed.data.parentId);
+};
+
+// Several items into one folder (multi-select): each checked and moved on
+// its own (eachItem).
+export const moveItems = async (input: unknown) => {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    return { error: SIGNED_OUT } as const;
+  }
+  const parsed = moveItemsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { error: "Invalid request" } as const;
+  }
+  const { itemIds, parentId } = parsed.data;
+  const result = await eachItem(itemIds, (itemId) => moveOne(session.user, itemId, parentId));
+  return {
+    error: null,
+    moved: result.done.length,
+    failed: result.failed,
+    firstError: result.firstError,
+  } as const;
 };
 
 // The folders in one folder, for the Move dialog.

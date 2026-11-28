@@ -44,7 +44,7 @@ test("share links: open, sign-in round trip, role, expiry, reset, disable, file"
     await owner.getByRole("button", { name: "New folder" }).click();
     await owner.getByLabel("Folder name").fill("Launch");
     await owner.getByRole("button", { name: "Create" }).click();
-    await owner.getByRole("link", { name: "Launch" }).click();
+    await owner.getByRole("link", { name: "Launch" }).dblclick();
     await expect(owner.getByRole("heading", { name: "Launch" })).toBeVisible();
     launchUrl = new URL(owner.url()).pathname;
     const chooser = owner.waitForEvent("filechooser");

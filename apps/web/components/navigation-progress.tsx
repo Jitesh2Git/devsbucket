@@ -13,6 +13,9 @@ const leavesPage = (event: MouseEvent) => {
   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return false;
   const link = (event.target as Element | null)?.closest?.("a[href]");
   if (!(link instanceof HTMLAnchorElement)) return false;
+  // A name in a multi-select list: a click selects (lib/selection.tsx),
+  // which starts the bar itself when it opens the item.
+  if (link.closest("[data-item-id]")) return false;
   if ((link.target && link.target !== "_self") || link.hasAttribute("download")) return false;
   const url = new URL(link.href, window.location.href);
   if (url.origin !== window.location.origin || url.pathname.startsWith("/api/")) return false;

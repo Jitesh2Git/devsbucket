@@ -40,7 +40,7 @@ test("folders: create, name clash, open, breadcrumbs, load more, 404", async ({ 
   });
 
   await test.step("open it, create inside, go back up", async () => {
-    await page.getByRole("link", { name: "Projects" }).click();
+    await page.getByRole("link", { name: "Projects" }).dblclick();
     await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
     await expect(page.getByText("This folder is empty")).toBeVisible();
     await newFolder("src");

@@ -8,8 +8,10 @@ import DropZone from "@/components/drive/drop-zone";
 import FolderActions from "@/components/drive/folder-actions";
 import ItemList from "@/components/drive/item-list";
 import OwnershipOfferActions from "@/components/drive/ownership-offer-actions";
+import SelectionBar from "@/components/drive/selection-bar";
 import ViewToggle from "@/components/drive/view-toggle";
 import { SCROLL_LIST } from "@/lib/scroll-list";
+import { SelectionProvider } from "@/lib/selection";
 
 type FolderViewProps = {
   // null = the top level of My Drive.
@@ -75,16 +77,19 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
         </div>
         <div className="flex shrink-0 gap-2 md:shrink md:flex-wrap">
           <ViewToggle />
-          <FolderActions
-            parentId={folderId}
-            folder={current ?? null}
-            can={{
-              upload: canUpload,
-              createFolder: can(access, "create_folder"),
-              share: actions.share,
-              download: can(access, "download"),
-            }}
-          />
+          {/* While items are selected, their actions take the buttons' place. */}
+          <SelectionBar parentId={folderId} actions={actions} moveRoot={moveRoot}>
+            <FolderActions
+              parentId={folderId}
+              folder={current ?? null}
+              can={{
+                upload: canUpload,
+                createFolder: can(access, "create_folder"),
+                share: actions.share,
+                download: can(access, "download"),
+              }}
+            />
+          </SelectionBar>
         </div>
       </div>
       {/* Only the list scrolls (SCROLL_LIST, lib/scroll-list.ts). */}
@@ -100,7 +105,12 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
     </div>
   );
 
-  return canUpload ? <DropZone parentId={folderId}>{page}</DropZone> : page;
+  // One selection for the list and the bar (multi-select, lib/selection.tsx).
+  return (
+    <SelectionProvider>
+      {canUpload ? <DropZone parentId={folderId}>{page}</DropZone> : page}
+    </SelectionProvider>
+  );
 };
 
 export default FolderView;

@@ -36,7 +36,7 @@ test("trash: undo, Trash view, trashed folder link, restore with rename, delete 
   let projectsUrl = "";
   await test.step("a folder with a file in it", async () => {
     await newFolder("Projects");
-    await folderLink("Projects").click();
+    await folderLink("Projects").dblclick();
     await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
     projectsUrl = page.url();
     await upload("plan.md", "# Plan\n");

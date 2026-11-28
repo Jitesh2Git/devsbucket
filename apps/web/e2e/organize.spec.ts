@@ -59,7 +59,7 @@ test("rename and move: keep the extension, name clash, move into a folder, not i
     await dialog.getByRole("button", { name: "Move here" }).click();
     await expect(page.getByText("Moved to Docs")).toBeVisible();
     await expect(page.getByRole("link", { name: "todo.md", exact: true })).toBeHidden();
-    await page.getByRole("link", { name: "Docs", exact: true }).click();
+    await page.getByRole("link", { name: "Docs", exact: true }).dblclick();
     await expect(page.getByRole("heading", { name: "Docs" })).toBeVisible();
     await expect(page.getByRole("link", { name: "todo.md", exact: true })).toBeVisible();
     await page.getByRole("link", { name: "My Drive" }).first().click();

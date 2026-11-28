@@ -3,16 +3,27 @@ import Link from "next/link";
 import ItemIcon from "@/components/drive/item-icon";
 import { cn } from "@/lib/utils";
 
+type NamedItem = { id: string; type: "folder" | "file"; name: string; mimeType: string | null };
+
 type ItemNameProps = {
-  item: { id: string; type: "folder" | "file"; name: string; mimeType: string | null };
+  item: NamedItem;
   onPreview: () => void;
   // In a grid card: no small icon (the card has a big one), and the link or
   // button covers the whole card, so a click anywhere opens it.
   card?: boolean;
 };
 
-// A row's name: folders open their page, text files open in the editor
-// (Phase 4), and other files open the preview.
+// Where an item opens: folders their page, text files the editor (Phase 4);
+// null for other files, which open the preview.
+export const itemHref = (item: NamedItem) => {
+  if (item.type === "folder") return `/drive/folders/${item.id}`;
+  if (isEditableName(item.name, item.mimeType)) return `/drive/files/${item.id}`;
+  return null;
+};
+
+// A row's name: a link to its page, or a button for the preview. In a list
+// with multi-select (lib/selection.tsx) the row decides what a click does;
+// `data-item-name` tells it this is the name, not another control.
 const ItemName = ({ item, onPreview, card = false }: ItemNameProps) => {
   const className = cn(
     "flex min-w-0 items-center gap-2 text-left",
@@ -25,22 +36,16 @@ const ItemName = ({ item, onPreview, card = false }: ItemNameProps) => {
       <span className="truncate">{item.name}</span>
     </>
   );
-  if (item.type === "folder") {
+  const href = itemHref(item);
+  if (href) {
     return (
-      <Link href={`/drive/folders/${item.id}`} className={className}>
-        {content}
-      </Link>
-    );
-  }
-  if (isEditableName(item.name, item.mimeType)) {
-    return (
-      <Link href={`/drive/files/${item.id}`} className={className}>
+      <Link href={href} className={className} data-item-name draggable={false}>
         {content}
       </Link>
     );
   }
   return (
-    <button type="button" onClick={onPreview} className={cn(className, "w-full")}>
+    <button type="button" onClick={onPreview} className={cn(className, "w-full")} data-item-name>
       {content}
     </button>
   );

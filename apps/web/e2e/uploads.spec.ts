@@ -55,7 +55,7 @@ test("uploads: upload, name clash, into a folder, quota full, cancel, multipart"
     await page.getByRole("button", { name: "New folder" }).click();
     await page.getByLabel("Folder name").fill("Docs");
     await page.getByRole("button", { name: "Create" }).click();
-    await page.getByRole("link", { name: "Docs" }).click();
+    await page.getByRole("link", { name: "Docs" }).dblclick();
     await expect(page.getByRole("heading", { name: "Docs" })).toBeVisible();
     await upload(textFile("inside.txt", "in a folder\n"));
     await expect(page.getByRole("cell", { name: "inside.txt", exact: true })).toBeVisible();

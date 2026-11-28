@@ -44,7 +44,7 @@ test("zip download: the folder's tree with contents; empty and too big are refus
     await expect(page.getByRole("link", { name, exact: true })).toBeVisible();
   };
   const open = async (name: string) => {
-    await page.getByRole("link", { name, exact: true }).click();
+    await page.getByRole("link", { name, exact: true }).dblclick();
     await expect(page.getByRole("heading", { name })).toBeVisible();
   };
   const upload = async (name: string, text: string) => {
