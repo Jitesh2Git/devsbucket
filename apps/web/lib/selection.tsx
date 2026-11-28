@@ -164,7 +164,7 @@ type Press = { x: number; y: number; timer?: ReturnType<typeof setTimeout> };
 // The props for one row or card: spread them on the <li> or <tr>. `open`
 // opens the item (its page, the editor or the preview).
 export const useSelectableRows = () => {
-  const { update, isSelected, selectedItems } = useSelection();
+  const { update, isSelected, selectedItems, clear } = useSelection();
   const press = useRef<Press | null>(null);
   // A long press or a box drag just ended: the click that follows it is
   // part of it, not a click of its own.
@@ -188,6 +188,8 @@ export const useSelectableRows = () => {
         swallowClick.current = false;
         return;
       }
+      // The second click of a double-click: the double-click opens.
+      if (event.detail > 1) return;
       // detail 0: a click made without a pointer (a screen reader's, say).
       if (event.detail === 0) {
         open();
@@ -206,6 +208,8 @@ export const useSelectableRows = () => {
     },
     onDoubleClick: (event: MouseEvent) => {
       if (onOtherControl(event.target)) return;
+      // Opening isn't selecting: the first click's selection goes.
+      clear();
       open();
     },
     // Keys on the focused name. Handled here rather than through the click
