@@ -1,18 +1,16 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Download, FolderInput, Trash2, UserPlus, X } from "lucide-react";
+import { Download, FolderInput, Trash2, UserPlus } from "lucide-react";
 import { type ReactNode, useLayoutEffect, useState } from "react";
-import { toast } from "sonner";
-import { restoreItems, trashItems } from "@/app/drive/trash-actions";
 import type { ItemActions } from "@/components/drive/item-menu";
 import MoveDialog, { type Crumb } from "@/components/drive/move-dialog";
 import type { ItemRef } from "@/components/drive/rename-dialog";
+import SelectionPill, { PillButton } from "@/components/drive/selection-pill";
 import ShareSelectionDialog from "@/components/drive/share-selection-dialog";
-import { Button } from "@/components/ui/button";
 import { itemsQueryKey } from "@/lib/query-keys";
-import { restoreMessage } from "@/lib/restore-message";
 import { useSelection } from "@/lib/selection";
+import { trashSelection } from "@/lib/trash-selection";
 import { cn } from "@/lib/utils";
 import { downloadSelection } from "@/lib/zip-download";
 
@@ -26,8 +24,6 @@ type SelectionBarProps = {
   // Shown while nothing is selected: the folder's own buttons.
   children: ReactNode;
 };
-
-const count = (n: number) => `${n} ${n === 1 ? "item" : "items"}`;
 
 // While items are selected, the folder's buttons make way for what can be
 // done to all of them (Google Drive style). Every item is checked again on
@@ -57,51 +53,10 @@ const SelectionBar = ({
       queryClient.invalidateQueries({ queryKey: ["folders"] }),
     ]);
 
-  // No confirm: trash is undoable, from the toast or from the Trash page.
-  const moveToTrash = async () => {
+  const moveToTrash = () => {
     const chosen = selectedItems;
     clear();
-    const result = await trashItems({ itemIds: chosen.map((item) => item.id) });
-    if (result.error !== null) {
-      toast.error(result.error);
-      return;
-    }
-    await refresh();
-    const { done, failed, firstError } = result;
-    if (done.length === 0) {
-      toast.error(firstError ?? "Nothing was moved to trash.");
-      return;
-    }
-    const first = done[0];
-    toast.success(
-      done.length === 1 && first
-        ? `"${first.name}" moved to trash`
-        : `${count(done.length)} moved to trash`,
-      {
-        description: failed > 0 ? `${count(failed)} couldn't be: ${firstError}` : undefined,
-        // Long enough to reach for Undo (sonner's default is 4 seconds).
-        duration: 10_000,
-        action: {
-          label: "Undo",
-          onClick: async () => {
-            const restored = await restoreItems({ itemIds: done.map((item) => item.id) });
-            if (restored.error !== null) {
-              toast.error(restored.error);
-              return;
-            }
-            await refresh();
-            const back = restored.done[0];
-            if (restored.done.length === 1 && back) {
-              toast.success(restoreMessage(back));
-            } else if (restored.done.length > 0) {
-              toast.success(`Restored ${count(restored.done.length)}`);
-            } else {
-              toast.error(restored.firstError ?? "Nothing was restored.");
-            }
-          },
-        },
-      },
-    );
+    return trashSelection(chosen, refresh);
   };
 
   const selecting = selectedItems.length > 0;
@@ -113,78 +68,36 @@ const SelectionBar = ({
     <div className="grid">
       <div className={cn("[grid-area:1/1]", selecting && "invisible")}>{children}</div>
       {selecting && (
-        // A pill in the accent colour, like the selected rows, so it reads
-        // as "this is about what you picked" (the tint over an opaque
-        // background, since on a phone it floats over the header). From md
-        // up it sits in the buttons' place; on a phone there's no room next
-        // to the breadcrumbs, so it covers the site header, like Drive's app
-        // (the bottom is the toasts' and the uploads panel's). Pops in,
-        // unless reduce motion.
-        <div
-          role="toolbar"
-          aria-label="Selection"
-          className="flex items-center gap-1 rounded-full border border-primary/30 bg-background bg-linear-to-r from-primary/10 to-primary/10 p-1 shadow-sm md:py-px motion-safe:animate-in motion-safe:fade-in max-md:fixed max-md:inset-x-3 max-md:top-1.5 max-md:z-50 max-md:shadow-lg max-md:motion-safe:slide-in-from-top-4 md:self-center md:justify-self-end md:[grid-area:1/1] md:motion-safe:zoom-in-95"
+        <SelectionPill
+          count={selectedItems.length}
+          onClear={clear}
+          className="md:self-center md:justify-self-end md:[grid-area:1/1]"
         >
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="rounded-full hover:bg-primary/15"
-            aria-label="Clear selection"
-            onClick={clear}
-          >
-            <X />
-          </Button>
-          <span className="pr-1 text-sm font-medium whitespace-nowrap text-primary-text">
-            {selectedItems.length} selected
-          </span>
-          {(actions.share || canDownload || actions.move || actions.trash) && (
-            <span aria-hidden className="mx-1 h-5 w-px bg-primary/30 max-md:ml-auto" />
-          )}
           {actions.share && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-full hover:bg-primary/15"
+            <PillButton
+              icon={<UserPlus />}
+              label="Share"
               onClick={() => setSharing(selectedItems)}
-            >
-              <UserPlus />
-              <span className="sr-only md:not-sr-only">Share</span>
-            </Button>
+            />
           )}
           {canDownload && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-full hover:bg-primary/15"
+            <PillButton
+              icon={<Download />}
+              label="Download"
               onClick={() => downloadSelection(selectedItems)}
-            >
-              <Download />
-              <span className="sr-only md:not-sr-only">Download</span>
-            </Button>
+            />
           )}
           {actions.move && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-full hover:bg-primary/15"
+            <PillButton
+              icon={<FolderInput />}
+              label="Move"
               onClick={() => setMoving(selectedItems)}
-            >
-              <FolderInput />
-              <span className="sr-only md:not-sr-only">Move</span>
-            </Button>
+            />
           )}
           {actions.trash && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-full hover:bg-destructive/10 hover:text-destructive"
-              onClick={moveToTrash}
-            >
-              <Trash2 />
-              <span className="sr-only md:not-sr-only">Move to trash</span>
-            </Button>
+            <PillButton icon={<Trash2 />} label="Move to trash" destructive onClick={moveToTrash} />
           )}
-        </div>
+        </SelectionPill>
       )}
       <ShareSelectionDialog items={sharing} onClose={() => setSharing(null)} />
       <MoveDialog

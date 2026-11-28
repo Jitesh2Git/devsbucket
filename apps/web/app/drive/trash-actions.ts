@@ -128,24 +128,41 @@ const deleteFromStorage = async (cleanup: StorageCleanup) => {
   }
 };
 
+// One trashed item deleted forever, for deleteForever and
+// deleteItemsForever. Owner only (decisions 0007, 0008): an Editor can
+// trash, not this.
+const deleteOne = async (user: { id: string }, itemId: string | null) => {
+  const found = await findTrashRoot(user, itemId, "delete_forever");
+  if (found.denied) {
+    return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
+  }
+  const root = found.item;
+  const result = await deleteRows({ ids: [root.id], ownerId: root.ownerId, actorId: user.id });
+  await deleteFromStorage(result);
+  return { error: null, id: root.id } as const;
+};
+
 export const deleteForever = async (input: unknown) => {
   const session = await getSession();
   if (!session) {
     return { error: SIGNED_OUT } as const;
   }
-  // Owner only (decisions 0007, 0008): an Editor can trash, not this.
-  const found = await findTrashRoot(session.user, parseItemId(input), "delete_forever");
-  if (found.denied) {
-    return { error: deniedMessage(found.denied, ITEM_GONE) } as const;
+  const result = await deleteOne(session.user, parseItemId(input));
+  return result.error === null ? ({ error: null } as const) : result;
+};
+
+// Several selected items in the Trash (multi-select), each on its own.
+export const deleteItemsForever = async (input: unknown) => {
+  const session = await getSession();
+  if (!session) {
+    return { error: SIGNED_OUT } as const;
   }
-  const root = found.item;
-  const result = await deleteRows({
-    ids: [root.id],
-    ownerId: root.ownerId,
-    actorId: session.user.id,
-  });
-  await deleteFromStorage(result);
-  return { error: null } as const;
+  const itemIds = parseItemIds(input);
+  if (!itemIds) {
+    return { error: "Invalid request" } as const;
+  }
+  const result = await eachItem(itemIds, (itemId) => deleteOne(session.user, itemId));
+  return { error: null, ...result } as const;
 };
 
 export const emptyTrash = async () => {

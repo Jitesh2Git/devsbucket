@@ -6,6 +6,7 @@ import SharedList from "@/components/drive/shared-list";
 import ViewToggle from "@/components/drive/view-toggle";
 import PageLoader from "@/components/page-loader";
 import { resolveFile } from "@/lib/items";
+import { SelectionProvider, SelectionSlot } from "@/lib/selection";
 import { requireSession } from "@/lib/session";
 
 export const metadata: Metadata = { title: "Shared with me" };
@@ -40,15 +41,21 @@ const SharedContent = async ({
 const SharedPage = ({ searchParams }: PageProps<"/drive/shared">) => {
   return (
     // From md up the page fills the drive column and only the list scrolls.
-    <div className="flex flex-col gap-4 md:h-full">
-      <div className="flex shrink-0 items-center justify-between gap-4">
-        <h1 className="min-w-0 truncate text-2xl font-semibold tracking-tight">Shared with me</h1>
-        <ViewToggle />
+    // One selection for the list and the bar in the header (multi-select).
+    <SelectionProvider>
+      <div className="flex flex-col gap-4 md:h-full">
+        <div className="flex shrink-0 items-center justify-between gap-4">
+          <h1 className="min-w-0 truncate text-2xl font-semibold tracking-tight">Shared with me</h1>
+          <div className="flex items-center gap-2">
+            <ViewToggle />
+            <SelectionSlot />
+          </div>
+        </div>
+        <Suspense fallback={<PageLoader />}>
+          <SharedContent searchParams={searchParams} />
+        </Suspense>
       </div>
-      <Suspense fallback={<PageLoader />}>
-        <SharedContent searchParams={searchParams} />
-      </Suspense>
-    </div>
+    </SelectionProvider>
   );
 };
 

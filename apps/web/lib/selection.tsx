@@ -23,6 +23,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 
 // Multi-select on a list page (Google Drive style). The provider wraps the
 // page, so the list (which rows are selected) and the header (the
@@ -47,6 +48,10 @@ type SelectionContextValue<T extends SelectableItem> = {
   update: (change: (state: Selection, order: string[]) => Selection) => void;
   // The selection right now (for a drag that started earlier).
   current: () => Selection;
+  // Where the page's header keeps a place for the selection bar
+  // (SelectionSlot); the list puts its bar there (SelectionPortal).
+  slot: HTMLElement | null;
+  setSlot: (element: HTMLElement | null) => void;
 };
 
 // biome-ignore lint/suspicious/noExplicitAny: each page decides its row type.
@@ -69,6 +74,7 @@ const isTyping = (target: EventTarget | null) =>
 export const SelectionProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<Selection>(EMPTY_SELECTION);
   const [rows, setRowsState] = useState<SelectableItem[]>([]);
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
   const order = useMemo(() => rows.map((row) => row.id), [rows]);
 
   const setRows = useCallback((next: SelectableItem[]) => setRowsState(next), []);
@@ -117,11 +123,28 @@ export const SelectionProvider = ({ children }: { children: ReactNode }) => {
       setRows,
       update,
       current,
+      slot,
+      setSlot,
     }),
-    [rows, state, clear, setRows, update, current],
+    [rows, state, clear, setRows, update, current, slot],
   );
 
   return <SelectionContext.Provider value={value}>{children}</SelectionContext.Provider>;
+};
+
+// The place in a page's header for the selection bar (Trash, Shared with
+// me, Recent: next to the view toggle). From md up the bar sits in it; on
+// a phone the bar floats over the site header wherever it's rendered.
+export const SelectionSlot = () => {
+  const { setSlot } = useSelection();
+  return <div ref={setSlot} className="flex" />;
+};
+
+// Renders the list's selection bar into the header's SelectionSlot, so the
+// bar's actions stay next to the list code that runs them.
+export const SelectionPortal = ({ children }: { children: ReactNode }) => {
+  const { slot } = useSelection();
+  return slot ? createPortal(children, slot) : null;
 };
 
 // A press that lasts this long on a touch screen starts selecting.

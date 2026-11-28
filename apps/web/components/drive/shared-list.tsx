@@ -4,17 +4,20 @@ import type { SharedItem } from "@devsbucket/db/shared-with-me";
 import type { TransferOffer } from "@devsbucket/db/transfers";
 import { formatBytes } from "@devsbucket/shared/bytes";
 import { roleLabel } from "@devsbucket/shared/sharing";
-import { Download, FolderDown, LogOut, MoreHorizontal, Users } from "lucide-react";
+import { Copy, Download, FolderDown, LogOut, MoreHorizontal, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
-import { leaveSharedItem } from "@/app/drive/shared-actions";
+import { copyFiles } from "@/app/drive/copy-actions";
+import { leaveSharedItem, leaveSharedItems } from "@/app/drive/shared-actions";
 import CopyMenuItem from "@/components/drive/copy-menu-item";
 import FilePreview, { downloadUrl, type PreviewFile } from "@/components/drive/file-preview";
 import { ItemCard, ItemGrid } from "@/components/drive/item-grid";
-import ItemName from "@/components/drive/item-name";
+import ItemName, { itemHref } from "@/components/drive/item-name";
 import MuteMenuItem from "@/components/drive/mute-menu-item";
 import OwnershipOfferActions from "@/components/drive/ownership-offer-actions";
+import SelectableArea from "@/components/drive/selectable-area";
+import SelectionPill, { PillButton } from "@/components/drive/selection-pill";
 import LocalDate from "@/components/local-date";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,9 +42,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { startNavigation } from "@/lib/navigation-progress";
 import { SCROLL_LIST } from "@/lib/scroll-list";
+import { SelectionPortal, useSelectableRows, useSelection } from "@/lib/selection";
+import { countItems } from "@/lib/trash-selection";
 import { useViewMode } from "@/lib/view-mode";
-import { downloadFolderZip } from "@/lib/zip-download";
+import { downloadFolderZip, downloadSelection } from "@/lib/zip-download";
 
 type SharedListProps = {
   items: SharedItem[];
@@ -108,6 +114,58 @@ const SharedList = ({ items, offers, opened }: SharedListProps) => {
     router.refresh();
   };
 
+  // Multi-select: a click selects, a double-click opens (a folder in the
+  // drive, a text file in the editor, others in the preview).
+  const { setRows, selectedItems, clear } = useSelection<SharedItem>();
+  useEffect(() => setRows(items), [setRows, items]);
+  const { rowProps, listProps, box } = useSelectableRows();
+  const open = (item: SharedItem) => {
+    const href = itemHref(item);
+    if (href) {
+      startNavigation();
+      router.push(href);
+    } else {
+      setPreviewing(item);
+    }
+  };
+  const onlyFiles = selectedItems.every((item) => item.type === "file");
+
+  const copySelected = async () => {
+    const chosen = selectedItems;
+    clear();
+    const result = await copyFiles({ itemIds: chosen.map((item) => item.id) });
+    if (result.error !== null) {
+      toast.error(result.error);
+    } else if (result.done.length === 0) {
+      toast.error(result.firstError ?? "Nothing was copied.");
+    } else {
+      // Each copy goes next to its original when you may add files there,
+      // otherwise to your My Drive, as with one file.
+      toast.success(`Copied ${countItems(result.done.length)}`, {
+        description:
+          result.failed > 0
+            ? `${countItems(result.failed)} couldn't be copied: ${result.firstError}`
+            : result.done.some((copy) => !copy.inPlace)
+              ? "Copies you can't put next to the original are in your My Drive."
+              : undefined,
+      });
+    }
+  };
+
+  const leaveSelected = async () => {
+    const chosen = selectedItems;
+    clear();
+    const result = await leaveSharedItems({ itemIds: chosen.map((item) => item.id) });
+    if (result.error !== null) {
+      toast.error(result.error);
+    } else if (result.done.length === 0) {
+      toast.error(result.firstError ?? "Nothing was removed.");
+    } else {
+      toast.success(`Removed ${countItems(result.done.length)} from Shared with me`);
+    }
+    router.refresh();
+  };
+
   const preview = <FilePreview file={previewing} onClose={() => setPreviewing(null)} />;
 
   const offerList = offers.length > 0 && (
@@ -152,65 +210,90 @@ const SharedList = ({ items, offers, opened }: SharedListProps) => {
     <>
       {offerList}
 
+      {selectedItems.length > 0 && (
+        <SelectionPortal>
+          <SelectionPill count={selectedItems.length} onClear={clear}>
+            <PillButton
+              icon={<Download />}
+              label="Download"
+              onClick={() => downloadSelection(selectedItems)}
+            />
+            {onlyFiles && <PillButton icon={<Copy />} label="Make a copy" onClick={copySelected} />}
+            <PillButton
+              icon={<LogOut />}
+              label="Remove from Shared with me"
+              destructive
+              onClick={leaveSelected}
+            />
+          </SelectionPill>
+        </SelectionPortal>
+      )}
       <div className={SCROLL_LIST}>
-        {view === "grid" ? (
-          <ItemGrid label="Shared with me">
-            {items.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                name={<ItemName item={item} card onPreview={() => setPreviewing(item)} />}
-                details={
-                  <>
-                    {item.ownerName} · {item.size === null ? "—" : formatBytes(item.size)}
-                  </>
-                }
-                menu={<SharedItemMenu item={item} onLeave={() => leave(item)} />}
-              />
-            ))}
-          </ItemGrid>
-        ) : (
-          <Table
-            // On a phone the table keeps room for the names (760 px) and
-            // scrolls sideways in its own box; from md up it fits the column.
-            className="min-w-190 md:min-w-0"
-          >
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="w-40">Owner</TableHead>
-                <TableHead className="w-24">Your role</TableHead>
-                <TableHead className="w-28 text-right">Size</TableHead>
-                <TableHead className="w-36">Shared</TableHead>
-                <TableHead className="w-12">
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+        <SelectableArea listProps={listProps} box={box} count={selectedItems.length}>
+          {view === "grid" ? (
+            <ItemGrid label="Shared with me">
               {items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell className="max-w-0">
-                    <ItemName item={item} onPreview={() => setPreviewing(item)} />
-                  </TableCell>
-                  <TableCell className="max-w-0 truncate text-muted-foreground">
-                    {item.ownerName}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{roleLabel(item.role)}</TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {item.size === null ? "—" : formatBytes(item.size)}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    <LocalDate value={item.sharedAt} />
-                  </TableCell>
-                  <TableCell>
-                    <SharedItemMenu item={item} onLeave={() => leave(item)} />
-                  </TableCell>
-                </TableRow>
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  name={<ItemName item={item} card onPreview={() => setPreviewing(item)} />}
+                  details={
+                    <>
+                      {item.ownerName} · {item.size === null ? "—" : formatBytes(item.size)}
+                    </>
+                  }
+                  menu={<SharedItemMenu item={item} onLeave={() => leave(item)} />}
+                  selectable={rowProps(item, () => open(item))}
+                />
               ))}
-            </TableBody>
-          </Table>
-        )}
+            </ItemGrid>
+          ) : (
+            <Table
+              // On a phone the table keeps room for the names (760 px) and
+              // scrolls sideways in its own box; from md up it fits the column.
+              className="min-w-190 md:min-w-0"
+            >
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="w-40">Owner</TableHead>
+                  <TableHead className="w-24">Your role</TableHead>
+                  <TableHead className="w-28 text-right">Size</TableHead>
+                  <TableHead className="w-36">Shared</TableHead>
+                  <TableHead className="w-12">
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((item) => (
+                  <TableRow
+                    key={item.id}
+                    {...rowProps(item, () => open(item))}
+                    className="data-selected:bg-primary/10 data-selected:hover:bg-primary/15"
+                  >
+                    <TableCell className="max-w-0">
+                      <ItemName item={item} onPreview={() => setPreviewing(item)} />
+                    </TableCell>
+                    <TableCell className="max-w-0 truncate text-muted-foreground">
+                      {item.ownerName}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{roleLabel(item.role)}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">
+                      {item.size === null ? "—" : formatBytes(item.size)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      <LocalDate value={item.sharedAt} />
+                    </TableCell>
+                    <TableCell>
+                      <SharedItemMenu item={item} onLeave={() => leave(item)} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </SelectableArea>
       </div>
       {preview}
     </>

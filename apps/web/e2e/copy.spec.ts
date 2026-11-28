@@ -68,7 +68,7 @@ test("make a copy: same folder, numbered, same content, Viewer's copy in their d
     await upload("plan.txt", "plan");
 
     await bob.getByRole("link", { name: "Shared with me" }).first().click();
-    await bob.getByRole("link", { name: "Team", exact: true }).click();
+    await bob.getByRole("link", { name: "Team", exact: true }).dblclick();
     await expect(bob.getByRole("heading", { name: "Team" })).toBeVisible();
     await openMenu(bob, "plan.txt", "Make a copy");
     await expect(bob.getByText('Copied to your My Drive as "plan (copy).txt"')).toBeVisible();

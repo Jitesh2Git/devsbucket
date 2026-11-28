@@ -17,6 +17,7 @@ import ItemMenu, { type ItemActions } from "@/components/drive/item-menu";
 import ItemName, { itemHref } from "@/components/drive/item-name";
 import MoveDialog, { type Crumb } from "@/components/drive/move-dialog";
 import RenameDialog, { type ItemRef } from "@/components/drive/rename-dialog";
+import SelectableArea from "@/components/drive/selectable-area";
 import ShareDialog, { type ShareTarget } from "@/components/drive/share-dialog";
 import LocalDate from "@/components/local-date";
 import { useFolderEvents } from "@/components/realtime-provider";
@@ -190,12 +191,7 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
   }
 
   return (
-    <div
-      {...listProps}
-      // As tall as the scroll box, so a drag can start below the last row.
-      // No text selection while dragging, and no phone callout on a long press.
-      className="relative flex min-h-full flex-col items-center gap-4 select-none [-webkit-touch-callout:none]"
-    >
+    <SelectableArea listProps={listProps} box={box} count={selectedItems.length}>
       {view === "grid" ? (
         <div className="w-full">
           <ItemGrid label="Files and folders">
@@ -271,17 +267,6 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
       )}
       <FilePreview file={previewing} onClose={() => setPreviewing(null)} />
       <RenameDialog item={renaming} parentId={parentId} onClose={() => setRenaming(null)} />
-      {/* Said by screen readers when the count changes. */}
-      <p className="sr-only" aria-live="polite">
-        {selectedItems.length > 0 ? `${selectedItems.length} selected` : ""}
-      </p>
-      {box && (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute z-20 rounded-sm border border-primary bg-primary/10"
-          style={box}
-        />
-      )}
       <MoveDialog
         items={moving}
         parentId={parentId}
@@ -290,7 +275,7 @@ const ItemList = ({ parentId, firstPage, actions, canAdd, moveRoot }: ItemListPr
       />
       <ShareDialog item={sharing} onClose={() => setSharing(null)} />
       <ActivityDialog item={viewingActivity} onClose={() => setViewingActivity(null)} />
-    </div>
+    </SelectableArea>
   );
 };
 

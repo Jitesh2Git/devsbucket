@@ -89,7 +89,7 @@ test("shared with me: top-most list, browsing, role-aware buttons, quota, trash,
   });
 
   await test.step("a Viewer browses Team from Shared with me, without changing buttons", async () => {
-    await member.getByRole("link", { name: "Team" }).click();
+    await member.getByRole("link", { name: "Team" }).dblclick();
     await expect(member.getByRole("heading", { name: "Team" })).toBeVisible();
     await expect(breadcrumb.getByRole("link", { name: "Shared with me" })).toBeVisible();
     await expect(breadcrumb.getByText("My Drive")).toHaveCount(0);
