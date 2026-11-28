@@ -217,27 +217,25 @@ const TrashList = ({ items, userId }: { items: TrashRow[]; userId: string }) => 
           Empty trash
         </Button>
       </div>
-      {selectedItems.length > 0 && (
-        <SelectionPortal>
-          <SelectionPill count={selectedItems.length} onClear={clear}>
+      <SelectionPortal>
+        <SelectionPill open={selectedItems.length > 0} count={selectedItems.length} onClear={clear}>
+          <PillButton
+            icon={<RotateCcw />}
+            label="Restore"
+            onClick={restoreSelected}
+            disabled={busy}
+          />
+          {canDeleteSelected && (
             <PillButton
-              icon={<RotateCcw />}
-              label="Restore"
-              onClick={restoreSelected}
+              icon={<Trash2 />}
+              label="Delete forever"
+              destructive
+              onClick={() => setConfirming({ items: selectedItems })}
               disabled={busy}
             />
-            {canDeleteSelected && (
-              <PillButton
-                icon={<Trash2 />}
-                label="Delete forever"
-                destructive
-                onClick={() => setConfirming({ items: selectedItems })}
-                disabled={busy}
-              />
-            )}
-          </SelectionPill>
-        </SelectionPortal>
-      )}
+          )}
+        </SelectionPill>
+      </SelectionPortal>
       <div className={SCROLL_LIST}>
         <SelectableArea listProps={listProps} box={box} count={selectedItems.length}>
           {view === "grid" ? (

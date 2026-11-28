@@ -95,18 +95,16 @@ const RecentList = ({ items, userId }: RecentListProps) => {
 
   return (
     <>
-      {selectedItems.length > 0 && (
-        <SelectionPortal>
-          <SelectionPill count={selectedItems.length} onClear={clear}>
-            <PillButton
-              icon={<Download />}
-              label="Download"
-              onClick={() => downloadSelection(selectedItems)}
-            />
-            <PillButton icon={<Trash2 />} label="Move to trash" destructive onClick={moveToTrash} />
-          </SelectionPill>
-        </SelectionPortal>
-      )}
+      <SelectionPortal>
+        <SelectionPill open={selectedItems.length > 0} count={selectedItems.length} onClear={clear}>
+          <PillButton
+            icon={<Download />}
+            label="Download"
+            onClick={() => downloadSelection(selectedItems)}
+          />
+          <PillButton icon={<Trash2 />} label="Move to trash" destructive onClick={moveToTrash} />
+        </SelectionPill>
+      </SelectionPortal>
       <div className={SCROLL_LIST}>
         <SelectableArea listProps={listProps} box={box} count={selectedItems.length}>
           {view === "grid" ? (
