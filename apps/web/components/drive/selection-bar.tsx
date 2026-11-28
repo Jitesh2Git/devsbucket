@@ -66,39 +66,42 @@ const SelectionBar = ({
   // a click selects (the second click of a double-click would miss).
   return (
     <div className="grid">
-      <div className={cn("[grid-area:1/1]", selecting && "invisible")}>{children}</div>
-      {selecting && (
-        <SelectionPill
-          count={selectedItems.length}
-          onClear={clear}
-          className="md:self-center md:justify-self-end md:[grid-area:1/1]"
-        >
-          {actions.share && (
-            <PillButton
-              icon={<UserPlus />}
-              label="Share"
-              onClick={() => setSharing(selectedItems)}
-            />
-          )}
-          {canDownload && (
-            <PillButton
-              icon={<Download />}
-              label="Download"
-              onClick={() => downloadSelection(selectedItems)}
-            />
-          )}
-          {actions.move && (
-            <PillButton
-              icon={<FolderInput />}
-              label="Move"
-              onClick={() => setMoving(selectedItems)}
-            />
-          )}
-          {actions.trash && (
-            <PillButton icon={<Trash2 />} label="Move to trash" destructive onClick={moveToTrash} />
-          )}
-        </SelectionPill>
-      )}
+      <div
+        className={cn(
+          "transition-[opacity,visibility] duration-150 [grid-area:1/1] motion-reduce:transition-none",
+          selecting && "invisible opacity-0",
+        )}
+      >
+        {children}
+      </div>
+      <SelectionPill
+        open={selecting}
+        count={selectedItems.length}
+        onClear={clear}
+        className="md:self-center md:justify-self-end md:[grid-area:1/1]"
+      >
+        {actions.share && (
+          <PillButton icon={<UserPlus />} label="Share" onClick={() => setSharing(selectedItems)} />
+        )}
+        {canDownload && (
+          <PillButton
+            icon={<Download />}
+            label="Download"
+            onClick={() => downloadSelection(selectedItems)}
+          />
+        )}
+        {actions.move && (
+          <PillButton
+            icon={<FolderInput />}
+            label="Move"
+            onClick={() => setMoving(selectedItems)}
+          />
+        )}
+        {actions.trash && (
+          <PillButton icon={<Trash2 />} label="Move to trash" destructive onClick={moveToTrash} />
+        )}
+      </SelectionPill>
+
       <ShareSelectionDialog items={sharing} onClose={() => setSharing(null)} />
       <MoveDialog
         items={moving}

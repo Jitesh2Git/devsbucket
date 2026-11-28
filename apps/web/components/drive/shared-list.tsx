@@ -210,24 +210,22 @@ const SharedList = ({ items, offers, opened }: SharedListProps) => {
     <>
       {offerList}
 
-      {selectedItems.length > 0 && (
-        <SelectionPortal>
-          <SelectionPill count={selectedItems.length} onClear={clear}>
-            <PillButton
-              icon={<Download />}
-              label="Download"
-              onClick={() => downloadSelection(selectedItems)}
-            />
-            {onlyFiles && <PillButton icon={<Copy />} label="Make a copy" onClick={copySelected} />}
-            <PillButton
-              icon={<LogOut />}
-              label="Remove from Shared with me"
-              destructive
-              onClick={leaveSelected}
-            />
-          </SelectionPill>
-        </SelectionPortal>
-      )}
+      <SelectionPortal>
+        <SelectionPill open={selectedItems.length > 0} count={selectedItems.length} onClear={clear}>
+          <PillButton
+            icon={<Download />}
+            label="Download"
+            onClick={() => downloadSelection(selectedItems)}
+          />
+          {onlyFiles && <PillButton icon={<Copy />} label="Make a copy" onClick={copySelected} />}
+          <PillButton
+            icon={<LogOut />}
+            label="Remove from Shared with me"
+            destructive
+            onClick={leaveSelected}
+          />
+        </SelectionPill>
+      </SelectionPortal>
       <div className={SCROLL_LIST}>
         <SelectableArea listProps={listProps} box={box} count={selectedItems.length}>
           {view === "grid" ? (
