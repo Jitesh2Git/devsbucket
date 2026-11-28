@@ -1,5 +1,7 @@
 # Phase 6 plan: Production
 
+**On hold since 2026-11-28 (decision 0021):** Oracle had no free A1 capacity in the home region, so step 3 never started and DevsBucket stays local. Steps 1–2 are done; the rest of this plan is kept as it is for a later attempt, which gets its own decision note first.
+
 Planned 2026-11-23, after Phase 5 (`v0.5.0`) and the pre-Phase-6 UI fixes (PRs #62–#64). Checklist and progress: `docs/PROGRESS.md`. Decision made for this phase: `docs/decisions/0020-production-setup.md` (the VM stays 2 cores / 12 GB, images built on GitHub's ARM runners and kept in GHCR, an idle stop is monitored and restarted rather than prevented, UptimeRobot and Healthchecks.io for alerts, `age`-encrypted backups).
 
 ## Goal
