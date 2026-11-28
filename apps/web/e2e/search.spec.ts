@@ -75,9 +75,26 @@ test("search: shared items by name and with a typo, never private ones; opens ea
     await search(bob, "package");
     await bob.getByRole("option", { name: /package\.json/ }).click();
     await expect(bob.getByRole("heading", { name: "package.json" })).toBeVisible();
+    // The editor page records the view in the background (RecordView), and
+    // the search box reads Recent once, when it opens: wait for the record,
+    // or on a busy machine the box can open before it's there.
+    await expect
+      .poll(async () => {
+        const { rows } = await db.query<{ views: number }>(
+          `select count(*)::int as views from item_views v
+           join users u on u.id = v.user_id join items i on i.id = v.item_id
+           where u.email = $1 and i.name = 'package.json'`,
+          [bobEmail],
+        );
+        return rows[0]?.views;
+      })
+      .toBe(1);
   });
 
   await test.step("opened files show in the empty box", async () => {
+    // From the editor page, the Search button: once Monaco has the focus it
+    // keeps Ctrl+K for its own shortcuts, and the palette leaves it alone.
+    await bob.getByRole("button", { name: /^Search/ }).click();
     const dialog = await search(bob, "");
     await expect(dialog.getByRole("group", { name: "Recent" })).toBeVisible();
     await expect(dialog.getByRole("option", { name: /package\.json/ })).toBeVisible();
