@@ -63,19 +63,30 @@ export const uploadLimitError = (input: {
 export const ZIP_MAX_FILES = 1000;
 export const ZIP_MAX_BYTES = 1 * GiB;
 
-// Why a folder can't be downloaded as a ZIP, or null when it can.
-export const zipLimitError = (input: { files: number; bytes: number; ops: OpsCount }) => {
+// Why a folder (or several selected items, `selection`) can't be
+// downloaded as a ZIP, or null when it can.
+export const zipLimitError = (input: {
+  files: number;
+  bytes: number;
+  ops: OpsCount;
+  selection?: boolean;
+}) => {
+  const what = input.selection ? "These items" : "This folder";
   if (input.files === 0) {
-    return "This folder has no files to download.";
+    return `${what} ${input.selection ? "have" : "has"} no files to download.`;
   }
   if (input.files > ZIP_MAX_FILES || input.bytes > ZIP_MAX_BYTES) {
-    return `This folder is too big to download as a ZIP (${input.files} files, ${formatBytes(input.bytes)}). The limit is ${ZIP_MAX_FILES} files and ${formatBytes(ZIP_MAX_BYTES)}: download smaller folders.`;
+    return `${what} ${input.selection ? "are" : "is"} too big to download as a ZIP (${input.files} files, ${formatBytes(input.bytes)}). The limit is ${ZIP_MAX_FILES} files and ${formatBytes(ZIP_MAX_BYTES)}: download ${input.selection ? "fewer items" : "smaller folders"}.`;
   }
   if (opsLevel(input.ops) === "block") {
     return "ZIP downloads are paused until next month: the app reached its storage limit for this month.";
   }
   return null;
 };
+
+// The file name of a ZIP of several selected items: they have no name in
+// common.
+export const selectionZipName = (count: number) => `DevsBucket (${count} items).zip`;
 
 // Multipart uploads: 10 MB parts, so a 100 MB file is at most 10 of them.
 export const PART_SIZE = 10 * MiB;

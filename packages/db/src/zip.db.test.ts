@@ -58,6 +58,39 @@ describe("ZIP tree", () => {
       expect(await zipSummary(src, tx)).toEqual({ files: 1, bytes: 20 });
     }));
 
+  it("starts from selected items: files at the top, folders with what's inside", () =>
+    withRollback(async (tx) => {
+      const [user] = await tx
+        .insert(users)
+        .values({ name: "ada", email: `ada-${randomUUID()}@example.test` })
+        .returning({ id: users.id });
+      const ownerId = user?.id ?? "";
+      const add = async (
+        name: string,
+        parentId: string | null,
+        extra: Partial<typeof items.$inferInsert> = {},
+      ) => {
+        const [item] = await tx
+          .insert(items)
+          .values({ ownerId, parentId, name, type: "file", size: 10, ...extra })
+          .returning({ id: items.id });
+        return item?.id ?? "";
+      };
+      const notes = await add("notes.txt", null);
+      const docs = await add("Docs", null, { type: "folder", size: null });
+      await add("plan.md", docs, { size: 5 });
+      await add("left-out.txt", null);
+      const trashed = await add("old.txt", null, { trashedAt: new Date(), trashRoot: true });
+
+      const roots = { itemIds: [notes, docs, trashed] };
+      expect(await zipSummary(roots, tx)).toEqual({ files: 2, bytes: 15 });
+      expect((await listZipEntries(roots, tx)).map((entry) => [entry.type, entry.path])).toEqual([
+        ["folder", "Docs"],
+        ["file", "Docs/plan.md"],
+        ["file", "notes.txt"],
+      ]);
+    }));
+
   it("counts an empty folder as no files", () =>
     withRollback(async (tx) => {
       const [user] = await tx

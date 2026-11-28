@@ -161,7 +161,7 @@ export const useSelectableRows = () => {
         swallowClick.current = false;
         return;
       }
-      // detail 0: Enter on the focused name (a keyboard "click").
+      // detail 0: a click made without a pointer (a screen reader's, say).
       if (event.detail === 0) {
         open();
         return;
@@ -181,10 +181,21 @@ export const useSelectableRows = () => {
       if (onOtherControl(event.target)) return;
       open();
     },
+    // Keys on the focused name. Handled here rather than through the click
+    // the browser makes from them: Enter opens, Space selects (and, on a
+    // preview button, doesn't also press it on key-up).
     onKeyDown: (event: KeyboardEvent) => {
-      if (event.key !== " " || onOtherControl(event.target)) return;
-      event.preventDefault();
-      update((state, order) => clickItem(state, order, item.id, "toggle"));
+      if (onOtherControl(event.target) || event.repeat) return;
+      if (event.key === "Enter") {
+        event.preventDefault();
+        open();
+      } else if (event.key === " ") {
+        event.preventDefault();
+        update((state, order) => clickItem(state, order, item.id, "toggle"));
+      }
+    },
+    onKeyUp: (event: KeyboardEvent) => {
+      if (event.key === " " && !onOtherControl(event.target)) event.preventDefault();
     },
     onPointerDown: (event: PointerEvent) => {
       if (event.pointerType !== "touch" || onOtherControl(event.target)) return;

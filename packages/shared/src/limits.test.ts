@@ -94,6 +94,17 @@ describe("zipLimitError", () => {
   });
 });
 
+describe("zipLimitError for selected items", () => {
+  it("says these items instead of this folder", () => {
+    expect(zipLimitError({ files: 0, bytes: 0, ops: noOps, selection: true })).toBe(
+      "These items have no files to download.",
+    );
+    expect(
+      zipLimitError({ files: ZIP_MAX_FILES + 1, bytes: 10, ops: noOps, selection: true }),
+    ).toMatch(/^These items are too big to download as a ZIP .*download fewer items\.$/);
+  });
+});
+
 describe("quotaMessage", () => {
   it("shows used and quota in readable units", () => {
     expect(quotaMessage(512 * 1024 ** 2, 1024 ** 3)).toBe("Not enough space: 512 MB of 1 GB used.");

@@ -78,7 +78,12 @@ const FolderView = async ({ folderId, ownerId, userId, access }: FolderViewProps
         <div className="flex shrink-0 gap-2 md:shrink md:flex-wrap">
           <ViewToggle />
           {/* While items are selected, their actions take the buttons' place. */}
-          <SelectionBar parentId={folderId} actions={actions} moveRoot={moveRoot}>
+          <SelectionBar
+            parentId={folderId}
+            actions={actions}
+            canDownload={can(access, "download")}
+            moveRoot={moveRoot}
+          >
             <FolderActions
               parentId={folderId}
               folder={current ?? null}

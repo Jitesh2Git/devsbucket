@@ -99,6 +99,46 @@ test("zip download: the folder's tree with contents; empty and too big are refus
     expect(rows).toEqual([{ metadata: { files: 2 } }]);
   });
 
+  await test.step("selected items download as one ZIP; one file as itself", async () => {
+    await upload("top.txt", "top");
+    const bar = page.getByRole("toolbar", { name: "Selection" });
+    const name = (text: string) => page.getByRole("link", { name: text, exact: true });
+    await name("Project").click();
+    await name("top.txt").click({ modifiers: ["ControlOrMeta"] });
+    const zip = await zipFrom(() => bar.getByRole("button", { name: "Download" }).click());
+    expect(zip.name).toBe("DevsBucket (2 items).zip");
+    await expect(page.getByText("3 files, 27 B. Your browser shows the progress.")).toBeVisible();
+    expect(Object.fromEntries(zip.entries)).toEqual({
+      "Project/": null,
+      "Project/a.txt": "alpha",
+      "Project/src/": null,
+      "Project/src/b.ts": "export const b = 1;",
+      "Project/src/empty/": null,
+      "top.txt": "top",
+    });
+    const { rows } = await db.query<{ name: string; metadata: object }>(
+      `select i.name, a.metadata from activities a join items i on i.id = a.item_id
+       join users u on u.id = i.owner_id
+       where u.email = $1 and a.action = 'downloaded' order by i.name, a.created_at`,
+      [email],
+    );
+    expect(rows).toEqual([
+      { name: "Project", metadata: { files: 2 } },
+      { name: "Project", metadata: { files: 2 } },
+      { name: "top.txt", metadata: {} },
+    ]);
+
+    await name("top.txt").click();
+    const download = page.waitForEvent("download");
+    await bar.getByRole("button", { name: "Download" }).click();
+    expect((await download).suggestedFilename()).toBe("top.txt");
+    await page.keyboard.press("Escape");
+
+    // Not from our own page (no Sec-Fetch-Site: same-origin): refused.
+    const outside = await page.request.post("/api/zip", { form: { itemIds: "[]" } });
+    expect(outside.status()).toBe(403);
+  });
+
   await test.step("the folder page's button gives that folder", async () => {
     await open("Project");
     await open("src");

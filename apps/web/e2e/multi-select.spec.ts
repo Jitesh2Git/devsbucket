@@ -76,6 +76,7 @@ test("multi-select: click, Cmd-click, Shift-click, drag a box, then move and tra
     await name("Beta").focus();
     await page.keyboard.press("Space");
     await expect(bar.getByText("1 selected")).toBeVisible();
+    await expect(name("Beta")).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(page.getByRole("heading", { name: "Beta" })).toBeVisible();
     await page.getByRole("link", { name: "My Drive" }).first().click();

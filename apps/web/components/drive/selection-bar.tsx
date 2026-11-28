@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { FolderInput, Trash2, X } from "lucide-react";
+import { Download, FolderInput, Trash2, X } from "lucide-react";
 import { type ReactNode, useLayoutEffect, useState } from "react";
 import { toast } from "sonner";
 import { restoreItems, trashItems } from "@/app/drive/trash-actions";
@@ -13,11 +13,14 @@ import { itemsQueryKey } from "@/lib/query-keys";
 import { restoreMessage } from "@/lib/restore-message";
 import { useSelection } from "@/lib/selection";
 import { cn } from "@/lib/utils";
+import { downloadSelection } from "@/lib/zip-download";
 
 type SelectionBarProps = {
   parentId: string | null;
   // What the user's role allows here (the folder's role, as on each row).
   actions: ItemActions;
+  // Download (anyone with a role here, decision 0012).
+  canDownload: boolean;
   moveRoot: Crumb | null;
   // Shown while nothing is selected: the folder's own buttons.
   children: ReactNode;
@@ -28,7 +31,13 @@ const count = (n: number) => `${n} ${n === 1 ? "item" : "items"}`;
 // While items are selected, the folder's buttons make way for what can be
 // done to all of them (Google Drive style). Every item is checked again on
 // the server.
-const SelectionBar = ({ parentId, actions, moveRoot, children }: SelectionBarProps) => {
+const SelectionBar = ({
+  parentId,
+  actions,
+  canDownload,
+  moveRoot,
+  children,
+}: SelectionBarProps) => {
   const { selectedItems, clear } = useSelection<ItemRef & { type: "folder" | "file" }>();
   const [moving, setMoving] = useState<ItemRef[] | null>(null);
   // Leaving the page only hides it (Activity): close the dialog.
@@ -115,8 +124,19 @@ const SelectionBar = ({ parentId, actions, moveRoot, children }: SelectionBarPro
           <span className="pr-1 text-sm font-medium whitespace-nowrap text-primary-text">
             {selectedItems.length} selected
           </span>
-          {(actions.move || actions.trash) && (
+          {(canDownload || actions.move || actions.trash) && (
             <span aria-hidden className="mx-1 h-5 w-px bg-primary/30" />
+          )}
+          {canDownload && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-full hover:bg-primary/15"
+              onClick={() => downloadSelection(selectedItems)}
+            >
+              <Download />
+              <span className="sr-only md:not-sr-only">Download</span>
+            </Button>
           )}
           {actions.move && (
             <Button
